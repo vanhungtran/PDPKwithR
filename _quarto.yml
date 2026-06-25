@@ -1,0 +1,112 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  title: "Master Pharmacokinetics and Pharmacodynamics (PKPD) with R"
+  subtitle: "21 Hands-On Chapters — From Fundamentals to Advanced Modeling and Real-World Applications"
+  author: "Lucas VHH TRAN"
+  date: today
+  cover-image: cover.png
+  cover-image-alt: "Book cover for Master Pharmacokinetics and Pharmacodynamics (PKPD) with R"
+  site-url: https://vanhungtran.github.io/PDPKwithR/
+  repo-url: https://github.com/vanhungtran/PDPKwithR
+  repo-actions: [edit, issue]
+
+  chapters:
+    - index.qmd
+
+    - part: "Part I — Foundations: PK/PD Concepts, Biology, Math, and R"
+      chapters:
+        - 01-intro-pkpd.qmd
+        - 02-biology-drug-action.qmd
+        - 03-math-foundations.qmd
+        - 04-r-setup.qmd
+
+    - part: "Part II — Classical Pharmacokinetic Analysis"
+      chapters:
+        - 05-noncompartmental.qmd
+        - 06-one-compartment.qmd
+        - 07-multi-compartment.qmd
+        - 08-absorption-bioavailability.qmd
+
+    - part: "Part III — Pharmacodynamics and PK/PD Linkage"
+      chapters:
+        - 09-pd-dose-response.qmd
+        - 10-pkpd-link.qmd
+        - 11-nonlinear-pk.qmd
+
+    - part: "Part IV — Population Modeling and Clinical Application"
+      chapters:
+        - 12-population-pk.qmd
+        - 13-model-diagnostics.qmd
+        - 14-simulation-dose.qmd
+        - 15-exposure-response.qmd
+        - 16-special-populations.qmd
+
+    - part: "Part V — Advanced Topics and Applied Practice"
+      chapters:
+        - 17-pbpk.qmd
+        - 18-bayesian-pkpd.qmd
+        - 19-case-studies.qmd
+        - 20-sensitivity-analysis.qmd
+        - 21-reporting.qmd
+
+    - summary.qmd
+    - references.qmd
+
+  appendices:
+    - appendix-a-packages.qmd
+    - appendix-b-equations.qmd
+    - appendix-c-unit-conversions.qmd
+    - appendix-d-glossary.qmd
+    - appendix-e-estimation-methods.qmd
+    - appendix-f-datasets-exercises.qmd
+
+bibliography: references.bib
+
+execute:
+  freeze: auto
+  warning: false
+  message: false
+  echo: true
+  eval: true
+  output: true
+
+format:
+  html:
+    theme:
+      - cosmo
+      - custom.scss
+    toc: true
+    toc-depth: 3
+    toc-expand: 2
+    toc-title: "On this page"
+    number-sections: true
+    number-depth: 3
+    code-fold: true
+    code-tools: true
+    code-copy: true
+    code-link: false
+    code-block-bg: true
+    highlight-style: arrow
+    anchor-sections: true
+    link-external-newwindow: true
+    link-external-icon: true
+    smooth-scroll: true
+    citations-hover: true
+    footnotes-hover: true
+    fig-width: 8
+    fig-height: 6
+    fig-dpi: 300
+    fig-cap-location: bottom
+    prefer-html: true
+    html-math-method: katex
+    fontsize: 1rem
+    linestretch: 1.65
+    mainfont: "Inter"
+    monofont: "Fira Code"
+    grid:
+      sidebar-width: 300px
+      body-width: 850px
+      margin-width: 250px
