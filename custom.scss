@@ -183,6 +183,11 @@ main.content > p:first-of-type::first-letter {
    BOOK COVER (preface page)
    ============================================ */
 
+/* Hide Quarto's auto-generated cover image — we use our own .book-cover div */
+.quarto-cover-image {
+  display: none;
+}
+
 .book-cover {
   display: flex;
   justify-content: center;
@@ -190,7 +195,7 @@ main.content > p:first-of-type::first-letter {
 }
 
 .book-cover img {
-  max-width: 320px;
+  max-width: 400px;
   width: 100%;
   height: auto;
   border-radius: 10px;
@@ -199,7 +204,7 @@ main.content > p:first-of-type::first-letter {
 }
 
 .book-cover img:hover {
-  transform: translateY(-4px) scale(1.01);
+  transform: translateY(-4px) scale(1.02);
   box-shadow: 0 18px 50px rgba(11, 27, 61, 0.45);
 }
 
