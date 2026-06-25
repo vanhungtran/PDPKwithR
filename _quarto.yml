@@ -100,6 +100,7 @@ format:
     fig-height: 6
     fig-dpi: 300
     fig-cap-location: bottom
+    lightbox: true
     prefer-html: true
     html-math-method: katex
     fontsize: 1rem
