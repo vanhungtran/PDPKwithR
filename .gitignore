@@ -18,14 +18,12 @@ skill.md
 skills.md
 .claude/
 
-# Keep these in source control — needed for CI/CD rendering
-# *.qmd  ← un-ignored: book chapters
-# *.R    ← un-ignored: R scripts
-# *.bib  ← un-ignored: references
-# *.Rproj ← un-ignored: R project file
-# *.csv  ← un-ignored: data files
-# *.scss ← un-ignored: custom theme
-# *.css  ← un-ignored: custom styles
+# Source files — keep locally, NOT on GitHub
+*.qmd
+*.R
+*.bib
+*.Rproj
+*.csv
 
 # Local R profile (may contain secrets)
 .Rprofile
