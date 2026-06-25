@@ -1,0 +1,203 @@
+---
+title: "Foundations in Biology and Drug Action"
+---
+
+
+## Learning Objectives
+
+By the end of this chapter you will be able to:
+
+- Describe the key anatomical and physiological systems relevant to drug disposition
+- Understand drug transport across biological membranes
+- Explain receptor binding, signal transduction, and dose-response concepts
+- Define therapeutic window, potency, efficacy, and safety margins
+- Relate physicochemical drug properties to PK and PD behavior
+
+---
+
+## Anatomy and Physiology for Drug Disposition
+
+### The Circulatory System and Drug Distribution
+
+Drugs enter the bloodstream and are carried throughout the body. The cardiovascular system is the primary distribution network:
+
+```{r}
+library(ggplot2)
+
+# Conceptual diagram of drug distribution compartments
+# Blood flow distribution to major organs
+organ_flow <- data.frame(
+  Organ = c("Liver", "Kidneys", "Brain", "Heart", "Muscle", "Skin", "Adipose", "Other"),
+  BloodFlow_percent = c(25, 20, 15, 4, 15, 5, 5, 11)
+)
+
+ggplot(organ_flow, aes(x = reorder(Organ, -BloodFlow_percent), y = BloodFlow_percent)) +
+  geom_col(fill = "#0B6E6B", alpha = 0.8) +
+  labs(title = "Distribution of Cardiac Output to Major Organs",
+       x = "Organ/Tissue", y = "Blood Flow (%)") +
+  theme_minimal()
+```
+
+### Key Organs in Drug Disposition
+
+- **Liver**: Primary site of drug metabolism (CYP450 enzymes)
+- **Kidneys**: Primary route of excretion for water-soluble drugs and metabolites
+- **Gastrointestinal tract**: Site of oral drug absorption; also involved in metabolism (CYP3A4) and efflux transport (P-glycoprotein)
+- **Lungs**: Route for inhaled drugs; also involved in first-pass for IV drugs
+- **Brain**: Protected by the blood-brain barrier; requires specific drug properties for penetration
+
+---
+
+## Drug Transport Across Membranes
+
+### Mechanisms of Transport
+
+Drugs cross biological membranes through several mechanisms:
+
+1. **Passive diffusion**: Driven by concentration gradient; favors small, lipophilic, uncharged molecules
+2. **Facilitated diffusion**: Carrier-mediated but not energy-dependent
+3. **Active transport**: Energy-dependent; can work against concentration gradient (e.g., P-glycoprotein efflux)
+4. **Endocytosis/Pinocytosis**: Cellular engulfment for large molecules
+
+::: {.theory-box}
+### Factors Affecting Membrane Permeability
+
+The ability of a drug to cross membranes depends on:
+
+- **Lipophilicity** (logP): Higher logP → better membrane penetration
+- **Molecular size**: Smaller molecules diffuse more easily
+- **Ionization state** (pKa): Only uncharged forms cross lipid membranes efficiently
+- **Protein binding**: Only free (unbound) drug can cross membranes
+:::
+
+### The pH-Partition Hypothesis
+
+For weak acids and bases, the degree of ionization depends on the drug's pKa and the local pH:
+
+For a weak acid:
+$$\text{Fraction ionized} = \frac{1}{1 + 10^{(pKa - pH)}}$$
+
+For a weak base:
+$$\text{Fraction ionized} = \frac{1}{1 + 10^{(pH - pKa)}}$$
+
+```{r}
+# pH-partition: fraction ionized vs pH for weak acid (pKa = 4.5) and weak base (pKa = 8.5)
+pH <- seq(0, 14, by = 0.1)
+pKa_acid <- 4.5
+pKa_base <- 8.5
+
+f_ionized_acid <- 1 / (1 + 10^(pKa_acid - pH))
+f_ionized_base <- 1 / (1 + 10^(pH - pKa_base))
+
+df <- data.frame(
+  pH = rep(pH, 2),
+  Fraction_Ionized = c(f_ionized_acid, f_ionized_base),
+  Drug = rep(c("Weak Acid (pKa=4.5)", "Weak Base (pKa=8.5)"), each = length(pH))
+)
+
+ggplot(df, aes(pH, Fraction_Ionized, color = Drug)) +
+  geom_line(linewidth = 1.2) +
+  geom_vline(xintercept = c(1.5, 6.8, 7.4),
+             linetype = "dashed", alpha = 0.5) +
+  annotate("text", x = c(1.5, 6.8, 7.4), y = 0.95,
+           label = c("Stomach\npH 1.5", "Intestine\npH 6.8", "Blood\npH 7.4"),
+           size = 3, vjust = 1) +
+  labs(title = "pH-Partition: Ionization vs pH",
+       x = "pH", y = "Fraction Ionized") +
+  scale_color_manual(values = c("#0B6E6B", "#C44536")) +
+  theme_minimal()
+```
+
+---
+
+## Receptor Theory and Drug Action
+
+### The Receptor Concept
+
+Most drugs exert their effects by binding to specific cellular macromolecules (receptors). The drug-receptor interaction follows the law of mass action:
+
+$$D + R \rightleftharpoons DR \rightarrow \text{Effect}$$
+
+where $D$ is drug, $R$ is receptor, and $DR$ is the drug-receptor complex.
+
+### Occupancy Theory
+
+The classical occupancy model assumes effect is proportional to receptor occupancy:
+
+$$E = \frac{E_{max} \cdot [D]}{EC_{50} + [D]}$$
+
+where:
+- $E_{max}$ is the maximum possible effect
+- $EC_{50}$ is the concentration producing 50% of $E_{max}$
+- $[D]$ is drug concentration
+
+```{r}
+# Visualize the Emax model
+conc <- 10^seq(-2, 3, length.out = 200)
+Emax <- 100
+EC50 <- 10
+
+effect <- (Emax * conc) / (EC50 + conc)
+
+ggplot(data.frame(conc, effect), aes(conc, effect)) +
+  geom_line(color = "#C44536", linewidth = 1.2) +
+  geom_vline(xintercept = EC50, linetype = "dashed", color = "gray50") +
+  geom_hline(yintercept = 0.5 * Emax, linetype = "dashed", color = "gray50") +
+  annotate("text", x = EC50 * 1.5, y = 0.5 * Emax,
+           label = paste0("EC50 = ", EC50), hjust = 0) +
+  scale_x_log10() +
+  labs(title = "Emax Dose-Response Model",
+       x = "Drug Concentration (log scale)", y = "Effect (% of maximum)") +
+  theme_minimal()
+```
+
+---
+
+## Key Pharmacological Concepts
+
+::: {.theory-box}
+### Potency vs Efficacy
+
+| Property | Definition | Parameter |
+|----------|-----------|-----------|
+| **Potency** | Amount of drug needed to produce a given effect | $EC_{50}$ (lower = more potent) |
+| **Efficacy** | Maximum effect a drug can produce | $E_{max}$ |
+| **Therapeutic window** | Range between minimum effective and minimum toxic concentration | Therapeutic index |
+:::
+
+---
+
+## Drug Properties That Influence PK/PD
+
+| Property | PK Impact | Example |
+|----------|-----------|---------|
+| Molecular weight | Affects membrane permeability and renal filtration | Large molecules > 500 Da less permeable |
+| Lipophilicity (logP) | Higher logP → better absorption, distribution, but may slow renal excretion | CNS drugs typically logP 2–5 |
+| pKa | Determines ionization at physiological pH | Weak bases accumulate in acidic compartments |
+| Protein binding | Only free drug is active and cleared | Warfarin: 99% bound |
+| Solubility | Affects dissolution and absorption rate | BCS classification system |
+
+::: {.exercise-box}
+### Exercises
+
+1. Explain why a weak acid (pKa = 4.0) is better absorbed from the stomach (pH = 1.5) than from the intestine (pH = 6.8).
+2. Draw the concentration-effect curve for two drugs with the same $E_{max}$ but different $EC_{50}$ values. Which is more potent?
+3. How does high protein binding affect the volume of distribution?
+4. List three physicochemical properties that favor good oral absorption.
+:::
+
+::: {.mistakes-box}
+### Common Mistakes
+
+- **Confusing potency with clinical superiority**: A more potent drug is not necessarily better — efficacy and safety matter more
+- **Ignoring active metabolites**: Some drugs (prodrugs) are inactive until metabolized
+- **Assuming linear PK without evidence**: Many drugs show nonlinear behavior at therapeutic doses
+- **Forgetting free drug principle**: Only unbound drug interacts with receptors and is cleared
+:::
+
+::: {.key-box}
+### Key Takeaway
+
+A drug's journey through the body is governed by both its physicochemical properties (lipophilicity, pKa, size) and the body's physiological systems (blood flow, transporters, enzymes). Understanding these fundamentals is essential before building quantitative PK/PD models.
+:::
+

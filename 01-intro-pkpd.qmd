@@ -1,0 +1,165 @@
+---
+title: "What PK/PD Is and Why It Matters"
+---
+
+
+## Learning Objectives
+
+By the end of this chapter you will be able to:
+
+- Define pharmacokinetics, pharmacodynamics, and pharmacometrics
+- Describe the drug journey through the body (ADME)
+- Distinguish PK questions from PD questions with real examples
+- Understand why modeling is essential in drug development
+- Navigate the book's structure and learning path
+
+---
+
+## What Is Pharmacokinetics?
+
+**Pharmacokinetics (PK)** answers the question: *What does the body do to the drug?*
+
+It describes the time course of drug concentration in the body — how the drug is **absorbed**, **distributed**, **metabolized**, and **excreted** (ADME). Pharmacokinetics quantifies:
+
+- **Absorption**: How the drug enters systemic circulation from the site of administration
+- **Distribution**: How the drug spreads throughout tissues and organs
+- **Metabolism**: How enzymes (primarily in the liver) chemically modify the drug
+- **Excretion**: How the drug and its metabolites are eliminated (kidneys, bile, lungs)
+
+```{r}
+# A simple conceptual PK simulation
+# Visualizing concentration over time after an IV bolus
+library(ggplot2)
+
+time <- seq(0, 24, by = 0.1)
+dose <- 100  # mg
+Vd   <- 10   # L (volume of distribution)
+ke   <- 0.3  # 1/h (elimination rate constant)
+
+conc <- (dose / Vd) * exp(-ke * time)
+
+ggplot(data.frame(time, conc), aes(time, conc)) +
+  geom_line(color = "#0B6E6B", linewidth = 1.2) +
+  labs(title = "Simulated Drug Concentration After IV Bolus",
+       subtitle = "One-compartment model with first-order elimination",
+       x = "Time (hours)", y = "Concentration (mg/L)") +
+  theme_minimal()
+```
+
+## What Is Pharmacodynamics?
+
+**Pharmacodynamics (PD)** answers the question: *What does the drug do to the body?*
+
+It describes the relationship between drug concentration at the site of action and the resulting pharmacological effect — both therapeutic and toxic. Pharmacodynamics involves:
+
+- **Receptor binding**: Drug molecules interacting with cellular targets
+- **Signal transduction**: How receptor activation leads to cellular response
+- **Dose-response**: The relationship between dose (or concentration) and effect magnitude
+- **Potency and efficacy**: How much drug is needed and what maximum effect it can produce
+
+## What Is Pharmacometrics?
+
+**Pharmacometrics** is the science of quantitative pharmacology — the integration of PK, PD, and disease progression using mathematical and statistical models. It is the engine behind:
+
+- Model-informed drug development (MIDD)
+- Optimal dose selection
+- Clinical trial simulation
+- Regulatory decision support
+
+Pharmacometrics uses R extensively, making it a core skill for modern pharmaceutical scientists.
+
+::: {.theory-box}
+### The ADME Framework
+
+| Process | Definition | Key Parameter |
+|---------|-----------|---------------|
+| **A**bsorption | Drug enters bloodstream | $k_a$, $F$ (bioavailability) |
+| **D**istribution | Drug spreads through body | $V_d$ (volume of distribution) |
+| **M**etabolism | Drug chemically modified | $CL_{int}$ (intrinsic clearance) |
+| **E**xcretion | Drug removed from body | $CL$ (clearance), $k_e$ |
+:::
+
+---
+
+## PK vs. PD Questions: Real Examples
+
+::: {.example-box}
+### Example Scenarios
+
+| Question | Type | Why It Matters |
+|----------|------|----------------|
+| How long does the drug stay in the body? | PK | Determines dosing frequency |
+| What is the minimum effective concentration? | PD | Sets the target for dosing |
+| Does food affect absorption? | PK | Guides administration instructions |
+| Is the drug more potent than the standard? | PD | Informs dose selection in trials |
+| Does kidney function alter clearance? | PK | Guides dose adjustment in renal impairment |
+| What is the relationship between dose and side effects? | PD | Determines therapeutic window |
+:::
+
+---
+
+## Why Use R for PK/PD?
+
+R has become a leading platform for PK/PD analysis because:
+
+1. **Comprehensive PK packages**: `PK`, `PKNCA`, `nlmixr2`, `mrgsolve`, `rxode2` — purpose-built for pharmacometrics
+2. **Reproducibility**: Scripts, Quarto, and R Markdown ensure every analysis is traceable
+3. **Statistical power**: Mixed-effects models (`nlme`, `lme4`, `saemix`) for population PK
+4. **Visualization**: `ggplot2` for publication-quality PK/PD plots
+5. **Open source**: No licensing costs, community-driven development
+6. **Regulatory acceptance**: FDA and EMA accept R-based analyses
+
+```{r}
+# Key R packages for PK/PD (we'll use these throughout the book)
+pkpd_packages <- data.frame(
+  Package = c("PK", "PKNCA", "nlmixr2", "rxode2", "mrgsolve",
+              "nlme", "saemix", "ggplot2", "dplyr", "shiny"),
+  Purpose = c("Basic PK analysis", "Noncompartmental analysis",
+              "Population PK (FOCEi/SAEM)", "ODE-based PK/PD simulation",
+              "PK/PD simulation engine", "Nonlinear mixed effects",
+              "SAEM estimation", "Visualization", "Data manipulation",
+              "Interactive apps")
+)
+knitr::kable(pkpd_packages, caption = "Core R packages for PK/PD analysis")
+```
+
+---
+
+## Overview of the Book
+
+This book is structured in five parts:
+
+1. **Part I (Ch 1–4)**: Foundations — concepts, biology, math, and R setup
+2. **Part II (Ch 5–8)**: Classical PK — from noncompartmental analysis to multi-compartment models
+3. **Part III (Ch 9–11)**: Pharmacodynamics and PK/PD linkage
+4. **Part IV (Ch 12–16)**: Population modeling, simulation, and clinical applications
+5. **Part V (Ch 17–20)**: Advanced methods and case studies
+
+::: {.exercise-box}
+### Exercises
+
+1. Define pharmacokinetics and pharmacodynamics in your own words.
+2. For each of the following, classify as PK or PD:
+   - A drug has a half-life of 12 hours
+   - 50% of patients respond at a dose of 10 mg
+   - The drug is 95% protein-bound
+   - The maximum effect plateaus at 80% inhibition
+3. List three advantages of using R for PK/PD analysis compared to commercial software.
+4. Explain the difference between potency and efficacy.
+:::
+
+::: {.mistakes-box}
+### Common Mistakes
+
+- **Confusing PK with PD**: PK = concentration over time (body → drug); PD = effect vs concentration (drug → body)
+- **Thinking models are reality**: All models are simplifications. A model is useful if it answers the question at hand
+- **Ignoring units**: Always check that your units are consistent. Mixing mg, μg, and ng is a frequent source of error
+- **Skipping exploratory plots**: Always plot your concentration-time and dose-response data before modeling
+:::
+
+::: {.key-box}
+### Key Takeaway
+
+Pharmacokinetics describes drug movement (ADME); pharmacodynamics describes drug effect. Together they form the basis for model-informed drug development. R provides a powerful, reproducible environment for PK/PD analysis at every level — from exploratory plots to regulatory submissions.
+:::
+

@@ -1,0 +1,107 @@
+---
+title: "Glossary of PK/PD Terms"
+---
+
+
+**Absorption** — The process by which a drug moves from the site of administration into systemic circulation.
+
+**ADME** — Absorption, Distribution, Metabolism, and Excretion; the four processes governing drug disposition.
+
+**Allometric scaling** — Extrapolation of PK parameters across species or body sizes using power functions of body weight.
+
+**AUC (Area Under the Curve)** — Total drug exposure over time; computed as the integral of the concentration-time profile.
+
+**Bioavailability ($F$)** — The fraction of an administered dose that reaches systemic circulation unchanged.
+
+**BLOQ (Below Limit of Quantification)** — A concentration below the assay's lower limit of reliable measurement.
+
+**BSV (Between-Subject Variability)** — Variability in PK parameters between different individuals.
+
+**Clearance ($CL$)** — The volume of plasma completely cleared of drug per unit time (L/h).
+
+**Cmax** — Maximum observed drug concentration after dosing.
+
+**Compartment** — A mathematical abstraction representing a kinetically homogeneous pool of drug.
+
+**Covariate** — A patient characteristic (e.g., weight, age, renal function) that explains variability in PK parameters.
+
+**Css** — Steady-state concentration achieved when the rate of drug input equals the rate of elimination.
+
+**Distribution** — The reversible transfer of drug between blood and tissues.
+
+**EC50** — Concentration producing 50% of the maximum drug effect.
+
+**Effect compartment** — A hypothetical compartment linking plasma concentration to the site of drug action.
+
+**Elimination** — Irreversible removal of drug from the body (metabolism + excretion).
+
+**Emax** — Maximum drug-attributable effect.
+
+**Exposure-response** — The relationship between a drug exposure metric and a clinical outcome.
+
+**First-order kinetics** — A process where the rate is proportional to the amount/concentration present.
+
+**First-pass metabolism** — Drug metabolism occurring before reaching systemic circulation (gut wall, liver).
+
+**Flip-flop kinetics** — When the absorption rate constant is slower than the elimination rate constant.
+
+**Half-life ($t_{1/2}$)** — Time required for drug concentration to decrease by 50%.
+
+**Hill coefficient ($\gamma$)** — Parameter controlling the steepness of the sigmoid Emax curve.
+
+**Hysteresis** — The phenomenon where concentration-effect relationship differs between rising and falling concentrations.
+
+**Indirect response model** — A PD model where drug affects the production or loss of an endogenous mediator.
+
+**IVIVE** — In Vitro to In Vivo Extrapolation; scaling in vitro data to predict in vivo PK.
+
+**ka** — First-order absorption rate constant.
+
+**ke ($k_{el}$)** — First-order elimination rate constant.
+
+**Km** — Michaelis constant; concentration at which elimination rate is half of Vmax.
+
+**Kp** — Tissue:plasma partition coefficient in PBPK models.
+
+**Michaelis–Menten kinetics** — Saturable (capacity-limited) elimination described by Vmax and Km.
+
+**Micro-constants** — Fundamental rate constants in a compartmental model ($k_{10}$, $k_{12}$, $k_{21}$).
+
+**Model-informed drug development (MIDD)** — Use of quantitative models to inform drug development decisions.
+
+**NCA (Noncompartmental Analysis)** — Estimation of PK parameters without assuming a specific compartmental model.
+
+**ODE (Ordinary Differential Equation)** — Mathematical description of how quantities change over time.
+
+**PBPK (Physiologically Based Pharmacokinetics)** — Mechanistic PK model incorporating anatomical and physiological compartments.
+
+**Pharmacodynamics (PD)** — Study of the biochemical and physiological effects of drugs (what the drug does to the body).
+
+**Pharmacogenomics** — Study of how genetic variation affects drug response.
+
+**Pharmacokinetics (PK)** — Study of drug absorption, distribution, metabolism, and excretion (what the body does to the drug).
+
+**Pharmacometrics** — The science of quantitative pharmacology using mathematical and statistical models.
+
+**Potency** — Amount of drug needed to produce a given effect; reflected by EC50 (lower = more potent).
+
+**PTA (Probability of Target Attainment)** — The probability that a dosing regimen achieves a predefined PK/PD target.
+
+**RSE (Relative Standard Error)** — Measure of parameter estimate precision; RSE% = (SE / estimate) × 100.
+
+**Shrinkage** — The tendency of individual parameter estimates to "shrink" toward the population mean when data are sparse.
+
+**TDM (Therapeutic Drug Monitoring)** — Individualization of dosing based on measured drug concentrations.
+
+**Tmax** — Time at which Cmax occurs.
+
+**TMDD (Target-Mediated Drug Disposition)** — Nonlinear PK due to saturable binding to the pharmacological target.
+
+**Vd (Volume of Distribution)** — Apparent volume relating the amount of drug in the body to plasma concentration.
+
+**Vmax** — Maximum rate of capacity-limited elimination.
+
+**VPC (Visual Predictive Check)** — Simulation-based diagnostic comparing observed data to model predictions.
+
+**Zero-order kinetics** — A process where the rate is constant and independent of concentration.
+

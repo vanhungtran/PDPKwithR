@@ -1,0 +1,244 @@
+---
+title: "Absorption, Bioavailability, and Routes of Administration"
+---
+
+
+## Learning Objectives
+
+By the end of this chapter you will be able to:
+
+- Compare PK profiles across different routes of administration
+- Understand and compute absolute and relative bioavailability
+- Model absorption with lag time, zero-order, and first-order processes
+- Analyze modified-release formulations
+- Select appropriate absorption models based on route and formulation
+
+---
+
+## Routes of Administration and PK Implications
+
+### Comparison of Routes
+
+| Route | Absorption Process | Key Feature |
+|-------|-------------------|-------------|
+| **Intravenous (IV)** | None (direct to blood) | 100% bioavailability, immediate |
+| **Oral (PO)** | GI tract → portal vein → liver → systemic | First-pass metabolism, variable $F$ |
+| **Subcutaneous (SC)** | Diffusion from tissue | Slower than IV, may have flip-flop |
+| **Intramuscular (IM)** | Diffusion from muscle | Faster than SC, affected by blood flow |
+| **Inhalation** | Lung epithelium | Rapid absorption, local + systemic |
+| **Transdermal** | Skin diffusion | Very slow, zero-order kinetics |
+
+---
+
+## Bioavailability
+
+### Absolute Bioavailability
+
+$$F = \frac{AUC_{extravascular} \cdot Dose_{IV}}{AUC_{IV} \cdot Dose_{extravascular}}$$
+
+$F$ represents the fraction of the administered dose that reaches systemic circulation.
+
+### Relative Bioavailability
+
+$$F_{rel} = \frac{AUC_{test} \cdot Dose_{reference}}{AUC_{reference} \cdot Dose_{test}}$$
+
+Used to compare two formulations (e.g., tablet vs capsule).
+
+```{r}
+library(rxode2)
+library(dplyr)
+library(ggplot2)
+
+# Simulate IV and oral profiles to compute bioavailability
+mod_1cmt <- rxode2({
+  d/dt(depot)   <- -ka * depot
+  d/dt(central) <-  ka * depot - ke * central
+  conc <- central / V
+})
+
+times <- seq(0, 24, by = 0.1)
+
+# IV dose
+event_iv <- et(time = 0, amt = 50)  # central compartment
+sim_iv <- rxSolve(rxode2({
+  d/dt(central) <- -ke * central
+  conc <- central / V
+}), c(ke = 0.3, V = 10), event_iv %>% et(times))
+
+# Oral dose
+event_po <- et(time = 0, amt = 100)
+sim_po <- rxSolve(mod_1cmt, c(ka = 1.0, ke = 0.3, V = 10), event_po %>% et(times))
+
+# Compute AUC
+auc_iv <- sum(diff(times) * (sim_iv$conc[-1] + sim_iv$conc[-length(sim_iv$conc)]) / 2)
+auc_po <- sum(diff(times) * (sim_po$conc[-1] + sim_po$conc[-length(sim_po$conc)]) / 2)
+
+F_abs <- (auc_po * 50) / (auc_iv * 100)
+cat("Absolute Bioavailability (F):", round(F_abs * 100, 1), "%\n")
+```
+
+---
+
+## First-Pass Metabolism
+
+Drugs absorbed from the GI tract pass through the liver before reaching systemic circulation. The fraction escaping first-pass metabolism is:
+
+$$F = f_{abs} \cdot (1 - E_H)$$
+
+where $f_{abs}$ is the fraction absorbed from the gut and $E_H$ is the hepatic extraction ratio.
+
+```{r}
+# Bioavailability vs hepatic extraction ratio
+E_H <- seq(0, 1, by = 0.01)
+F_for_EH <- 1 - E_H
+
+ggplot(data.frame(E_H, F_for_EH), aes(E_H, F_for_EH)) +
+  geom_line(color = "#C44536", linewidth = 1.2) +
+  labs(title = "Effect of Hepatic Extraction on Bioavailability",
+       subtitle = "Assuming complete absorption (f_abs = 1)",
+       x = "Hepatic Extraction Ratio (E_H)", y = "Bioavailability (F)") +
+  theme_minimal()
+```
+
+---
+
+## Absorption Lag Time
+
+Some formulations have a delay before absorption begins (e.g., gastric emptying, tablet disintegration):
+
+$$C(t) = \frac{F \cdot D \cdot k_a}{V \cdot (k_a - k_e)} \cdot (e^{-k_e(t - t_{lag})} - e^{-k_a(t - t_{lag})}), \quad t \geq t_{lag}$$
+
+```{r}
+# Model with absorption lag time
+mod_lag <- rxode2({
+  d/dt(depot)   <- -ka * depot
+  d/dt(central) <-  ka * depot - ke * central
+  conc <- central / V
+
+  # Parameter constraint
+  alag(depot) <- tlag  # lag time for depot compartment
+})
+
+# Simulate with and without lag
+event_po <- et(time = 0, amt = 100)
+times <- seq(0, 24, by = 0.1)
+
+sim_no_lag <- rxSolve(mod_1cmt, c(ka = 1.0, ke = 0.3, V = 10), event_po %>% et(times))
+sim_lag    <- rxSolve(mod_lag, c(ka = 1.0, ke = 0.3, V = 10, tlag = 0.5), event_po %>% et(times))
+
+df_lag <- bind_rows(
+  as.data.frame(sim_no_lag) %>% mutate(Type = "No Lag"),
+  as.data.frame(sim_lag) %>% mutate(Type = "t_lag = 0.5 h")
+)
+
+ggplot(df_lag, aes(time, conc, color = Type)) +
+  geom_line(linewidth = 1) +
+  labs(title = "Effect of Absorption Lag Time",
+       x = "Time (hours)", y = "Concentration (mg/L)") +
+  scale_color_manual(values = c("#0B6E6B", "#C44536")) +
+  theme_minimal()
+```
+
+---
+
+## Modified-Release Formulations
+
+### Types of Modified Release
+
+- **Extended release (ER/XR)**: Slower absorption → lower $C_{max}$, longer apparent $t_{1/2}$
+- **Delayed release (DR)**: Release begins after a delay (e.g., enteric coating)
+- **Pulsatile release**: Drug released in pulses at specific times
+
+```{r}
+# Model zero-order absorption (constant rate over duration D)
+mod_zero <- rxode2({
+  d/dt(depot)   <- -ka * depot  # but with zero-order into depot
+  d/dt(central) <-  ka * depot - ke * central
+  conc <- central / V
+})
+
+# Simulate extended release using a slow ka
+event_er <- et(time = 0, amt = 100)
+times <- seq(0, 48, by = 0.1)
+
+sim_ir <- rxSolve(mod_1cmt, c(ka = 2.0, ke = 0.3, V = 10), event_er %>% et(times))
+sim_er <- rxSolve(mod_1cmt, c(ka = 0.2, ke = 0.3, V = 10), event_er %>% et(times))
+
+df_mr <- bind_rows(
+  as.data.frame(sim_ir) %>% mutate(Formulation = "Immediate Release (ka=2.0)"),
+  as.data.frame(sim_er) %>% mutate(Formulation = "Extended Release (ka=0.2)")
+)
+
+ggplot(df_mr, aes(time, conc, color = Formulation)) +
+  geom_line(linewidth = 1) +
+  labs(title = "Immediate vs Extended Release",
+       x = "Time (hours)", y = "Concentration (mg/L)") +
+  scale_color_manual(values = c("#C44536", "#0B6E6B")) +
+  theme_minimal()
+```
+
+---
+
+## Subcutaneous and Intramuscular Absorption
+
+For SC/IM routes, absorption often follows first-order kinetics, but the rate can be slower than elimination (flip-flop):
+
+```{r}
+# Compare SC absorption rates
+ka_values <- c(0.1, 0.3, 0.8, 2.0)
+times <- seq(0, 48, by = 0.1)
+
+sims_sc <- lapply(ka_values, function(ka_val) {
+  sim <- rxSolve(mod_1cmt, c(ka = ka_val, ke = 0.3, V = 10), et(time = 0, amt = 100) %>% et(times))
+  as.data.frame(sim) %>% mutate(ka = factor(paste0("ka = ", ka_val)))
+})
+
+df_sc <- bind_rows(sims_sc)
+
+ggplot(df_sc, aes(time, conc, color = ka)) +
+  geom_line(linewidth = 1) +
+  labs(title = "Effect of Absorption Rate on SC Profile",
+       subtitle = "ke = 0.3 (fixed); note flip-flop when ka < ke",
+       x = "Time (hours)", y = "Concentration (mg/L)",
+       color = "Absorption Rate") +
+  theme_minimal()
+```
+
+---
+
+## How Route Affects Modeling Choices
+
+| Route | Recommended Absorption Model | Key Considerations |
+|-------|------------------------------|-------------------|
+| IV bolus | None | Instantaneous distribution |
+| IV infusion | Zero-order input | Duration, rate |
+| Oral (IR) | First-order ± lag | $T_{max}$, flip-flop risk |
+| Oral (MR) | Sequential zero/first-order | Deconvolution may be needed |
+| SC/IM | First-order | Often flip-flop |
+| Transdermal | Zero-order (patch) | Constant rate until removal |
+
+::: {.exercise-box}
+### Exercises
+
+1. Compute the absolute bioavailability of an oral tablet ($AUC$ = 85 mg·h/L, dose = 200 mg) given IV $AUC$ = 150 mg·h/L for a 50 mg IV dose.
+2. Simulate an oral profile with $t_{lag}$ = 1 h. How does $T_{max}$ change compared to no lag?
+3. An extended-release formulation has $k_a$ = 0.15 1/h while the IR has $k_a$ = 1.5 1/h. Compare $C_{max}$, $T_{max}$, and fluctuation.
+4. Why might a SC injection show flip-flop kinetics? How would you confirm this?
+:::
+
+::: {.mistakes-box}
+### Common Mistakes
+
+- **Assuming 100% bioavailability for oral drugs** — always verify with IV data
+- **Ignoring first-pass metabolism** — especially for high-extraction drugs
+- **Not accounting for lag time** — can bias $k_a$ and $T_{max}$ estimates
+- **Using the same absorption model for all routes** — SC/IM often need different treatment
+- **Confusing absolute and relative bioavailability**
+:::
+
+::: {.key-box}
+### Key Takeaway
+
+The route of administration determines the absorption model you need. Master the concepts of bioavailability ($F$), first-pass metabolism, lag time, and how absorption rate interacts with elimination rate. Always check for flip-flop kinetics with extravascular data.
+:::
+

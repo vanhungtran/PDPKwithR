@@ -1,0 +1,286 @@
+---
+title: "The Two-Compartment and Multi-Compartment Models"
+---
+
+
+## Learning Objectives
+
+By the end of this chapter you will be able to:
+
+- Understand why multi-compartment models are necessary
+- Distinguish distribution and elimination phases
+- Simulate and fit two-compartment models in R
+- Interpret micro- and macro-constants
+- Compare one- and two-compartment models
+- Understand identifiability in multi-compartment models
+
+---
+
+## Why Multi-Compartment Models?
+
+After IV bolus dosing, many drugs show a **biphasic decline** in concentration: a rapid initial drop (distribution phase) followed by a slower decline (elimination phase). A one-compartment model cannot capture this behavior.
+
+```{r}
+library(rxode2)
+library(dplyr)
+library(ggplot2)
+
+# Compare one- vs two-compartment profiles
+times <- seq(0, 24, by = 0.05)
+
+# One-compartment
+mod_1cmt <- rxode2({
+  d/dt(central) <- -ke * central
+  conc <- central / V
+})
+
+# Two-compartment
+mod_2cmt <- rxode2({
+  d/dt(central)    <- -k10 * central - k12 * central + k21 * peripheral
+  d/dt(peripheral) <-  k12 * central - k21 * peripheral
+  conc <- central / V1
+})
+
+params_1 <- c(ke = 0.3, V = 15)
+params_2 <- c(k10 = 0.3, k12 = 1.5, k21 = 0.8, V1 = 5)
+
+event <- et(time = 0, amt = 100)
+
+sim1 <- rxSolve(mod_1cmt, params_1, event %>% et(times))
+sim2 <- rxSolve(mod_2cmt, params_2, event %>% et(times))
+
+df <- bind_rows(
+  as.data.frame(sim1) %>% mutate(Model = "One-Compartment"),
+  as.data.frame(sim2) %>% mutate(Model = "Two-Compartment")
+)
+
+ggplot(df, aes(time, conc, color = Model)) +
+  geom_line(linewidth = 1) +
+  scale_y_log10() +
+  labs(title = "One- vs Two-Compartment Models",
+       subtitle = "Note the biphasic decline in the two-compartment model",
+       x = "Time (hours)", y = "Concentration (mg/L, log scale)") +
+  scale_color_manual(values = c("#0B6E6B", "#C44536")) +
+  theme_minimal()
+```
+
+---
+
+## Two-Compartment Model Structure
+
+### Model Equations
+
+$$\frac{dA_1}{dt} = -k_{10}A_1 - k_{12}A_1 + k_{21}A_2$$
+$$\frac{dA_2}{dt} = k_{12}A_1 - k_{21}A_2$$
+$$C_1(t) = \frac{A_1(t)}{V_1}$$
+
+where:
+- $A_1$, $A_2$: amounts in central and peripheral compartments
+- $V_1$: volume of central compartment
+- $k_{10}$: elimination rate constant from central compartment
+- $k_{12}$: transfer rate from central to peripheral
+- $k_{21}$: transfer rate from peripheral to central
+
+### Analytical Solution
+
+$$C(t) = A \cdot e^{-\alpha t} + B \cdot e^{-\beta t}$$
+
+where $\alpha$ (distribution) and $\beta$ (elimination) are hybrid rate constants ($\alpha > \beta$), and $A$ and $B$ are hybrid coefficients.
+
+```{r}
+# Visualize the analytical solution components
+alpha <- 2.8
+beta  <- 0.25
+A_coef <- 12
+B_coef <- 8
+
+times <- seq(0, 24, by = 0.05)
+C_distribution <- A_coef * exp(-alpha * times)
+C_elimination  <- B_coef * exp(-beta * times)
+C_total <- C_distribution + C_elimination
+
+df_comp <- data.frame(
+  time = rep(times, 3),
+  conc = c(C_total, C_distribution, C_elimination),
+  Component = rep(c("Total", "Distribution (α)", "Elimination (β)"), each = length(times))
+)
+
+ggplot(df_comp, aes(time, conc, color = Component, linetype = Component)) +
+  geom_line(linewidth = 1) +
+  scale_y_log10() +
+  labs(title = "Two-Compartment Model: Analytical Components",
+       subtitle = paste0("C(t) = ", round(A_coef, 1), "·e^{-", alpha, "t} + ",
+                         round(B_coef, 1), "·e^{-", beta, "t}"),
+       x = "Time (hours)", y = "Concentration (mg/L, log scale)") +
+  scale_color_manual(values = c("#0B6E6B", "#D4A843", "#C44536")) +
+  theme_minimal()
+```
+
+---
+
+## Micro- and Macro-Constants
+
+| Parameter Type | Symbols | Meaning |
+|----------------|---------|---------|
+| **Micro-constants** | $k_{10}, k_{12}, k_{21}$ | Rate constants between compartments |
+| **Macro-constants** | $A, B, \alpha, \beta$ | Hybrid coefficients and exponents |
+
+### Conversion Between Micro and Macro
+
+$$\alpha + \beta = k_{10} + k_{12} + k_{21}$$
+$$\alpha \cdot \beta = k_{10} \cdot k_{21}$$
+$$A = \frac{D(\alpha - k_{21})}{V_1(\alpha - \beta)}, \quad B = \frac{D(k_{21} - \beta)}{V_1(\alpha - \beta)}$$
+
+```{r}
+# Convert micro to macro constants
+micro_to_macro <- function(k10, k12, k21, V1, dose) {
+  sum_k <- k10 + k12 + k21
+  prod_k <- k10 * k21
+
+  # Alpha and beta are roots of: r^2 - sum_k * r + prod_k = 0
+  disc <- sqrt(sum_k^2 - 4 * prod_k)
+  alpha <- (sum_k + disc) / 2
+  beta  <- (sum_k - disc) / 2
+
+  A <- dose * (alpha - k21) / (V1 * (alpha - beta))
+  B <- dose * (k21 - beta) / (V1 * (alpha - beta))
+
+  c(alpha = alpha, beta = beta, A = A, B = B)
+}
+
+macro <- micro_to_macro(k10 = 0.3, k12 = 1.5, k21 = 0.8, V1 = 5, dose = 100)
+macro
+```
+
+---
+
+## Fitting a Two-Compartment Model
+
+### Using nls() with the Analytical Solution
+
+```{r}
+# Simulate noisy two-compartment data
+set.seed(42)
+sample_times <- c(0.05, 0.1, 0.25, 0.5, 1, 2, 4, 6, 8, 12, 24)
+true_macro <- micro_to_macro(0.3, 1.5, 0.8, 5, 100)
+
+true_conc <- true_macro["A"] * exp(-true_macro["alpha"] * sample_times) +
+             true_macro["B"] * exp(-true_macro["beta"] * sample_times)
+
+obs_2cmt <- data.frame(
+  time = sample_times,
+  conc = true_conc * rlnorm(length(sample_times), 0, 0.1)
+)
+
+# Fit two-compartment model
+fit_2cmt <- nls(conc ~ A * exp(-alpha * time) + B * exp(-beta * time),
+                data = obs_2cmt,
+                start = list(A = 15, alpha = 2.0, B = 10, beta = 0.2),
+                lower = c(0, 0, 0, 0),
+                algorithm = "port")
+
+summary(fit_2cmt)
+```
+
+```{r}
+# Plot observed vs fitted
+coefs <- coef(fit_2cmt)
+pred_times <- seq(0, 24, by = 0.05)
+pred_conc <- coefs["A"] * exp(-coefs["alpha"] * pred_times) +
+             coefs["B"] * exp(-coefs["beta"] * pred_times)
+
+ggplot(obs_2cmt, aes(time, conc)) +
+  geom_point(size = 3, color = "#C44536") +
+  geom_line(data = data.frame(time = pred_times, conc = pred_conc),
+            aes(time, conc), color = "#0B6E6B", linewidth = 1.2) +
+  scale_y_log10() +
+  labs(title = "Fitted Two-Compartment Model",
+       x = "Time (hours)", y = "Concentration (mg/L, log scale)") +
+  theme_minimal()
+```
+
+---
+
+## Model Comparison: One vs Two Compartments
+
+```{r}
+# Fit one-compartment model for comparison
+fit_1cmt <- nls(conc ~ C0 * exp(-ke * time),
+                data = obs_2cmt,
+                start = list(C0 = 20, ke = 0.3))
+
+# Compare using AIC
+aic_1cmt <- AIC(fit_1cmt)
+aic_2cmt <- AIC(fit_2cmt)
+
+comparison <- data.frame(
+  Model = c("One-Compartment", "Two-Compartment"),
+  AIC = round(c(aic_1cmt, aic_2cmt), 1),
+  Parameters = c(2, 4)
+)
+knitr::kable(comparison, caption = "Model Comparison via AIC")
+```
+
+---
+
+## Identifiability and Parameter Interpretation
+
+::: {.theory-box}
+### When One-Compartment Models Are Not Enough
+
+- Distribution phase is clinically relevant (e.g., rapid onset drugs)
+- Drug shows clear biphasic decline on semi-log plot
+- Peripheral compartment has physiological meaning (e.g., tissue binding)
+- Accurate prediction of early time points is needed
+:::
+
+### Common Issues
+
+- **Parameter identifiability**: With sparse data, 4 parameters ($A, B, \alpha, \beta$) may not be uniquely estimable
+- **Correlation**: $A$ and $\alpha$ are often highly correlated
+- **Initial estimates**: Good starting values are critical; use graphical methods (method of residuals)
+
+```{r}
+# Method of residuals for initial estimates
+# Step 1: Fit terminal phase to get B and beta
+terminal_idx <- 6:length(sample_times)  # Choose terminal points
+lm_term <- lm(log(obs_2cmt$conc[terminal_idx]) ~ obs_2cmt$time[terminal_idx])
+B_init <- exp(coef(lm_term)[1])
+beta_init <- -coef(lm_term)[2]
+
+# Step 2: Calculate residuals and fit distribution phase
+terminal_pred <- B_init * exp(-beta_init * sample_times)
+residuals <- obs_2cmt$conc - terminal_pred
+residuals <- residuals[residuals > 0]
+
+cat("Initial estimates from method of residuals:\n")
+cat("B =", round(B_init, 2), ", beta =", round(beta_init, 3), "\n")
+```
+
+---
+
+::: {.exercise-box}
+### Exercises
+
+1. Simulate a two-compartment model with $k_{10}$ = 0.2, $k_{12}$ = 2.0, $k_{21}$ = 1.0, $V_1$ = 8 L. Plot on semi-log scale.
+2. Convert the micro-constants from Exercise 1 to macro-constants ($A, B, \alpha, \beta$).
+3. Fit a two-compartment model to the simulated data. How well do you recover the true parameters?
+4. When would you choose a two-compartment model over a one-compartment model? Use AIC to compare.
+5. Explain what happens to the concentration-time profile when $k_{12}$ is very large compared to $k_{21}$.
+:::
+
+::: {.mistakes-box}
+### Common Mistakes
+
+- **Over-parameterization**: A two-compartment model with sparse data may fit noise, not signal
+- **Misidentifying phases**: The initial rapid decline may be due to distribution, not elimination
+- **Using one-compartment model when distribution matters**: e.g., for drugs with rapid onset of action
+- **Poor initial estimates**: nls() is sensitive to starting values; use method of residuals
+:::
+
+::: {.key-box}
+### Key Takeaway
+
+Multi-compartment models capture the distribution phase that one-compartment models miss. The two-compartment model with parameters ($A, B, \alpha, \beta$) or ($k_{10}, k_{12}, k_{21}, V_1$) is the most common structural model in PK. Always check semi-log plots for biphasic behavior before choosing your model.
+:::
+

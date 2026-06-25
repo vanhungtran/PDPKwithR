@@ -1,0 +1,105 @@
+---
+title: "Estimation Methods Reference"
+---
+
+
+## Nonlinear Least Squares (NLS)
+
+Minimizes the sum of squared residuals:
+
+$$\hat{\theta} = \arg\min_\theta \sum_{i=1}^n (y_i - f(t_i, \theta))^2$$
+
+**R function**: `nls()`, `minpack.lm::nlsLM()`
+
+**Use**: Individual PK model fitting with rich data.
+
+**Assumptions**: Independent, identically distributed residuals; correct structural model.
+
+---
+
+## Maximum Likelihood Estimation (MLE)
+
+Maximizes the likelihood function (or minimizes -2 × log-likelihood):
+
+$$\hat{\theta} = \arg\max_\theta \prod_{i=1}^n p(y_i \mid \theta)$$
+
+**R function**: `stats::optim()`, `bbmle::mle2()`
+
+**Use**: Flexible estimation with custom error models.
+
+---
+
+## First-Order Conditional Estimation (FOCE)
+
+Approximates the marginal likelihood in nonlinear mixed-effects models by linearizing around individual estimates:
+
+$$L(\theta, \Omega, \Sigma) \approx \prod_{i=1}^N \int p(y_i \mid \eta_i, \theta) \cdot p(\eta_i \mid \Omega) \, d\eta_i$$
+
+**R function**: `nlmixr2(..., est = "focei")`
+
+**Use**: Standard population PK estimation method.
+
+---
+
+## SAEM (Stochastic Approximation Expectation-Maximization)
+
+An iterative algorithm that alternates between:
+
+1. **Simulation step**: Simulate individual parameters
+2. **Stochastic approximation step**: Update sufficient statistics
+3. **Maximization step**: Update population parameters
+
+**R function**: `nlmixr2(..., est = "saem")`, `saemix::saemix()`
+
+**Use**: Robust population PK estimation, handles complex models better than FOCE.
+
+---
+
+## Bayesian MCMC (Markov Chain Monte Carlo)
+
+Samples from the posterior distribution:
+
+$$p(\theta \mid y) \propto p(y \mid \theta) \cdot p(\theta)$$
+
+**Algorithms**: Hamiltonian Monte Carlo (HMC), No-U-Turn Sampler (NUTS)
+
+**R function**: `cmdstanr::cmdstan_model()`, `brms::brm()`
+
+**Use**: When prior information is available; sparse data; TDM.
+
+---
+
+## Method Comparison
+
+| Method | Speed | Handles Sparse Data | Prior Information | Convergence Issues |
+|--------|-------|--------------------|--------------------|--------------------|
+| **NLS** | Fast | No | No | Sensitive to initial values |
+| **MLE** | Moderate | Limited | No (can add penalties) | Can get stuck in local optima |
+| **FOCE** | Moderate | Yes | No | Can be unstable |
+| **SAEM** | Slower | Yes | No | Very robust |
+| **Bayesian** | Slowest | Yes | Yes | Must check MCMC diagnostics |
+
+---
+
+## Model Selection Criteria
+
+### AIC (Akaike Information Criterion)
+
+$$AIC = -2 \ln(L) + 2p$$
+
+where $p$ is the number of parameters. Lower AIC = better.
+
+### BIC (Bayesian Information Criterion)
+
+$$BIC = -2 \ln(L) + p \ln(n)$$
+
+Penalizes model complexity more heavily for large $n$.
+
+### Likelihood Ratio Test (LRT)
+
+For nested models:
+
+$$\Delta OFV = -2 \ln(L_1) + 2 \ln(L_2) \sim \chi^2_{p_2 - p_1}$$
+
+$\Delta OFV > 3.84$ = significant at p < 0.05 (1 degree of freedom).
+

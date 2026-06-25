@@ -1,0 +1,87 @@
+---
+title: "Unit Conversions"
+---
+
+
+## Mass Units
+
+| From | To | Multiply By |
+|------|----|-------------|
+| g | mg | 1000 |
+| mg | μg | 1000 |
+| μg | ng | 1000 |
+| ng | pg | 1000 |
+| kg | g | 1000 |
+
+## Volume Units
+
+| From | To | Multiply By |
+|------|----|-------------|
+| L | mL | 1000 |
+| mL | μL | 1000 |
+| dL | L | 0.1 |
+| L | dL | 10 |
+
+## Concentration Units
+
+| From | To | Multiply By |
+|------|----|-------------|
+| mg/L | μg/mL | 1 |
+| μg/mL | ng/mL | 1000 |
+| mg/dL | mg/L | 10 |
+| g/L | mg/mL | 1 |
+| % (w/v) | mg/mL | 10 |
+
+## Time Units
+
+| From | To | Multiply By |
+|------|----|-------------|
+| hours | minutes | 60 |
+| days | hours | 24 |
+| hours | days | 1/24 |
+| minutes | hours | 1/60 |
+
+## Clearance Units
+
+| From | To | Multiply By |
+|------|----|-------------|
+| L/h | mL/min | 16.67 |
+| mL/min | L/h | 0.06 |
+| L/h | L/day | 24 |
+| mL/min/kg | L/h/70kg | × 4.2 |
+
+## AUC Units
+
+| From | To | Multiply By |
+|------|----|-------------|
+| mg·h/L | μg·h/mL | 1 |
+| μg·h/mL | ng·h/mL | 1000 |
+
+## Common PK Unit Conversions in R
+
+```{r}
+# Useful conversion functions
+mg_to_ug <- function(x) x * 1000
+ug_to_ng <- function(x) x * 1000
+L_to_mL <- function(x) x * 1000
+hour_to_min <- function(x) x * 60
+min_to_hour <- function(x) x / 60
+CL_Lh_to_mLmin <- function(x) x * 1000 / 60
+CL_mLmin_to_Lh <- function(x) x * 60 / 1000
+
+# Example
+CL_mLmin_to_Lh(120)  # 120 mL/min = 7.2 L/h
+```
+
+## Dose Normalization
+
+- mg/kg → mg: multiply by body weight (kg)
+- mg/m² → mg: multiply by body surface area (m²)
+
+$$BSA (m^2) = \sqrt{\frac{Height(cm) \times Weight(kg)}{3600}}$$
+
+## Temperature
+
+- °C to K: add 273.15
+- K to °C: subtract 273.15
+

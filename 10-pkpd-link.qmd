@@ -1,0 +1,421 @@
+---
+title: "PK/PD Link Models"
+---
+
+
+## Learning Objectives
+
+By the end of this chapter you will be able to:
+
+- Understand why concentration and effect are often misaligned in time
+- Build and simulate direct link, effect compartment, and indirect response models
+- Identify and interpret hysteresis loops
+- Estimate PK/PD link parameters in R
+- Choose the appropriate link model for your data
+
+---
+
+## The PK/PD Disconnect
+
+In many cases, the time course of drug effect does not parallel the time course of plasma concentration. This happens because:
+
+1. The site of action is not in plasma (effect compartment delay)
+2. The physiological response is indirect (signal transduction takes time)
+3. The drug affects the production or loss of a response mediator
+
+This leads to **hysteresis** — different concentrations produce different effects depending on whether concentration is rising or falling.
+
+```{r}
+library(rxode2)
+library(ggplot2)
+library(dplyr)
+
+# Simulate PK with a delayed PD effect to demonstrate hysteresis
+mod_pk <- rxode2({
+  d/dt(depot)   <- -ka * depot
+  d/dt(central) <-  ka * depot - ke * central
+  conc <- central / V
+})
+
+times <- seq(0, 24, by = 0.1)
+params <- c(ka = 1.5, ke = 0.3, V = 10)
+event <- et(time = 0, amt = 100)
+
+sim_pk <- rxSolve(mod_pk, params, event %>% et(times))
+pk_df <- as.data.frame(sim_pk)
+
+# Add a delayed effect (simple shift)
+pk_df <- pk_df %>%
+  mutate(Effect = 100 * conc / (5 + conc))  # no delay
+
+# Simulate with effect compartment delay
+mod_link <- rxode2({
+  d/dt(depot)   <- -ka * depot
+  d/dt(central) <-  ka * depot - ke * central
+  d/dt(effect)  <- ke0 * (central/V - effect)
+  conc <- central / V
+  Ce   <- effect
+})
+
+params_link <- c(ka = 1.5, ke = 0.3, V = 10, ke0 = 0.4)
+sim_link <- rxSolve(mod_link, params_link, event %>% et(times))
+link_df <- as.data.frame(sim_link) %>%
+  mutate(Effect_delayed = 100 * Ce / (5 + Ce))
+
+# Hysteresis plot
+ggplot(link_df, aes(conc, Effect_delayed)) +
+  geom_path(color = "#0B6E6B", linewidth = 1) +
+  geom_point(data = link_df[seq(1, nrow(link_df), by = 5), ],
+             aes(conc, Effect_delayed), size = 1, alpha = 0.5) +
+  labs(title = "Hysteresis Loop: Concentration vs Effect",
+       subtitle = "Counter-clockwise hysteresis indicates effect compartment delay",
+       x = "Plasma Concentration (mg/L)", y = "Effect") +
+  theme_minimal()
+```
+
+---
+
+## Direct Link Models
+
+The simplest PK/PD model assumes the effect is directly related to plasma concentration without delay:
+
+$$E(t) = f(C_p(t))$$
+
+This works when the site of action equilibrates rapidly with plasma.
+
+```{r}
+# Direct link: Emax model driven by PK
+mod_direct <- rxode2({
+  d/dt(depot)   <- -ka * depot
+  d/dt(central) <-  ka * depot - ke * central
+  conc <- central / V
+  effect <- E0 + (Emax * conc) / (EC50 + conc)
+})
+
+params_dir <- c(ka = 1.5, ke = 0.3, V = 10,
+                E0 = 5, Emax = 90, EC50 = 3)
+
+sim_dir <- rxSolve(mod_direct, params_dir, event %>% et(times))
+
+dir_df <- as.data.frame(sim_dir)
+
+ggplot(dir_df, aes(time)) +
+  geom_line(aes(y = conc, color = "Concentration"), linewidth = 1) +
+  geom_line(aes(y = effect, color = "Effect"), linewidth = 1) +
+  scale_y_continuous(
+    name = "Concentration (mg/L)",
+    sec.axis = sec_axis(~., name = "Effect")
+  ) +
+  labs(title = "Direct Link PK/PD Model",
+       x = "Time (hours)", color = "") +
+  scale_color_manual(values = c("#C44536", "#0B6E6B")) +
+  theme_minimal()
+```
+
+---
+
+## Effect Compartment Model
+
+When there is a delay between plasma concentration and effect, we add an **effect compartment**:
+
+$$\frac{dC_e}{dt} = k_{e0} \cdot (C_p - C_e)$$
+
+where $k_{e0}$ is the equilibration rate constant between plasma and effect site.
+
+```{r}
+# Effect compartment model
+mod_effect <- rxode2({
+  d/dt(depot)   <- -ka * depot
+  d/dt(central) <-  ka * depot - ke * central
+  d/dt(effect_c) <- ke0 * (central/V - effect_c)  # effect compartment
+  conc <- central / V
+  Ce   <- effect_c
+  effect <- E0 + (Emax * Ce) / (EC50 + Ce)
+})
+
+params_ec <- c(ka = 1.5, ke = 0.3, V = 10,
+               ke0 = 0.5, E0 = 5, Emax = 90, EC50 = 3)
+
+sim_ec <- rxSolve(mod_effect, params_ec, event %>% et(times))
+ec_df <- as.data.frame(sim_ec)
+
+# Compare plasma concentration and effect-site concentration
+ggplot(ec_df, aes(time)) +
+  geom_line(aes(y = conc, color = "Plasma (Cp)"), linewidth = 1) +
+  geom_line(aes(y = Ce, color = "Effect Site (Ce)"), linewidth = 1) +
+  geom_line(aes(y = effect / 10, color = "Effect (÷10)"), linewidth = 1, linetype = "dashed") +
+  labs(title = "Effect Compartment Model",
+       subtitle = paste0("ke0 = ", params_ec["ke0"], " 1/h"),
+       x = "Time (hours)", y = "Concentration (mg/L)", color = "") +
+  scale_color_manual(values = c("#C44536", "#0B6E6B", "#D4A843")) +
+  theme_minimal()
+```
+
+### Effect of $k_{e0}$ on Hysteresis
+
+- **Large $k_{e0}$** → rapid equilibration → minimal hysteresis (approaches direct link)
+- **Small $k_{e0}$** → slow equilibration → pronounced hysteresis
+
+```{r}
+# Compare different ke0 values
+ke0_values <- c(0.1, 0.5, 2.0, 10)
+hysteresis_data <- lapply(ke0_values, function(k) {
+  params_k <- c(ka = 1.5, ke = 0.3, V = 10, ke0 = k, E0 = 5, Emax = 90, EC50 = 3)
+  sim <- rxSolve(mod_effect, params_k, event %>% et(times))
+  as.data.frame(sim) %>% mutate(ke0 = factor(paste0("ke0 = ", k)))
+})
+
+df_hyst <- bind_rows(hysteresis_data)
+
+ggplot(df_hyst, aes(conc, effect, color = ke0)) +
+  geom_path(linewidth = 0.8) +
+  labs(title = "Hysteresis at Different ke0 Values",
+       x = "Plasma Concentration (mg/L)", y = "Effect") +
+  scale_color_manual(values = c("#D4A843", "#C44536", "#0B6E6B", "#1B365D")) +
+  facet_wrap(~ke0, scales = "free_x") +
+  theme_minimal()
+```
+
+---
+
+## Indirect Response Models
+
+In indirect response models, the drug does not directly cause the effect — it modulates the production ($k_{in}$) or loss ($k_{out}$) of an endogenous response mediator:
+
+### Basic Indirect Response Model
+
+$$\frac{dR}{dt} = k_{in} - k_{out} \cdot R$$
+
+At baseline: $R_0 = k_{in} / k_{out}$
+
+### Four Basic Indirect Response Models
+
+| Model | Drug Action | Equation |
+|-------|-------------|----------|
+| Type I | Inhibits $k_{in}$ | $\frac{dR}{dt} = k_{in} \cdot (1 - \frac{I_{max}C}{IC_{50}+C}) - k_{out}R$ |
+| Type II | Inhibits $k_{out}$ | $\frac{dR}{dt} = k_{in} - k_{out} \cdot (1 - \frac{I_{max}C}{IC_{50}+C}) \cdot R$ |
+| Type III | Stimulates $k_{in}$ | $\frac{dR}{dt} = k_{in} \cdot (1 + \frac{S_{max}C}{SC_{50}+C}) - k_{out}R$ |
+| Type IV | Stimulates $k_{out}$ | $\frac{dR}{dt} = k_{in} - k_{out} \cdot (1 + \frac{S_{max}C}{SC_{50}+C}) \cdot R$ |
+
+```{r}
+# Indirect Response Type I (inhibition of kin)
+mod_idr1 <- rxode2({
+  d/dt(depot)   <- -ka * depot
+  d/dt(central) <-  ka * depot - ke * central
+  C <- central / V
+
+  # Drug effect: inhibition of response production
+  inhibition <- Imax * C / (IC50 + C)
+
+  d/dt(R) <- kin * (1 - inhibition) - kout * R
+  response <- R
+})
+
+# Parameters
+params_idr <- c(ka = 1.5, ke = 0.3, V = 10,
+                kin = 10, kout = 0.5,  # R0 = kin/kout = 20
+                Imax = 0.9, IC50 = 2)
+
+sim_idr <- rxSolve(mod_idr1, params_idr, event %>% et(times))
+idr_df <- as.data.frame(sim_idr)
+
+# Plot PK and response
+ggplot(idr_df, aes(time)) +
+  geom_line(aes(y = C, color = "Concentration"), linewidth = 1) +
+  geom_line(aes(y = response, color = "Response"), linewidth = 1) +
+  labs(title = "Indirect Response Model (Type I)",
+       subtitle = "Inhibition of response production (kin)",
+       x = "Time (hours)", y = "Value", color = "") +
+  scale_color_manual(values = c("#0B6E6B", "#C44536")) +
+  theme_minimal()
+```
+
+### Characteristic Profiles
+
+```{r}
+# Compare all four indirect response types
+simulate_idr <- function(type, params, event, times) {
+  mod <- switch(type,
+    "I" = rxode2({
+      d/dt(depot) <- -ka*depot; d/dt(central) <- ka*depot - ke*central
+      C <- central/V; d/dt(R) <- kin*(1 - Imax*C/(IC50+C)) - kout*R; response <- R
+    }),
+    "II" = rxode2({
+      d/dt(depot) <- -ka*depot; d/dt(central) <- ka*depot - ke*central
+      C <- central/V; d/dt(R) <- kin - kout*(1 - Imax*C/(IC50+C))*R; response <- R
+    }),
+    "III" = rxode2({
+      d/dt(depot) <- -ka*depot; d/dt(central) <- ka*depot - ke*central
+      C <- central/V; d/dt(R) <- kin*(1 + Smax*C/(SC50+C)) - kout*R; response <- R
+    }),
+    "IV" = rxode2({
+      d/dt(depot) <- -ka*depot; d/dt(central) <- ka*depot - ke*central
+      C <- central/V; d/dt(R) <- kin - kout*(1 + Smax*C/(SC50+C))*R; response <- R
+    })
+  )
+  sim <- rxSolve(mod, params, event %>% et(times))
+  as.data.frame(sim) %>% mutate(Type = paste("Type", type))
+}
+
+types <- c("I", "II", "III", "IV")
+idr_all <- bind_rows(lapply(types, function(t) {
+  p <- c(ka = 1.5, ke = 0.3, V = 10, kin = 10, kout = 0.5,
+         Imax = 0.9, IC50 = 2, Smax = 4, SC50 = 2)
+  simulate_idr(t, p, event, times)
+}))
+
+ggplot(idr_all, aes(time, response, color = Type)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~Type, scales = "free_y") +
+  labs(title = "Four Types of Indirect Response Models",
+       x = "Time (hours)", y = "Response") +
+  scale_color_manual(values = c("#0B6E6B", "#C44536", "#D4A843", "#1B365D")) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+---
+
+## Disease Progression Models
+
+Disease progression models extend PK/PD by coupling a third state variable — the disease state $D(t)$ — to the drug concentration and effect. This captures the reality that diseases evolve over time, and drugs modify that trajectory.
+
+### The Basic Disease Progression ODE
+
+A simple model for disease natural history:
+
+$$\frac{dD}{dt} = \alpha - \beta \cdot D$$
+
+where $\alpha$ is the disease progression rate and $\beta$ is the natural recovery/remission rate. At steady state without treatment: $D_{ss} = \alpha/\beta$.
+
+Drug effect is coupled in through the effect $E(t)$:
+
+$$\frac{dD}{dt} = \alpha - \beta \cdot D - \gamma \cdot E(t)$$
+
+where $\gamma$ quantifies how strongly the drug effect translates into disease modification.
+
+### Symptomatic vs Disease-Modifying Effects
+
+| Effect Type | Mathematical Signature | Clinical Implication |
+|---|---|---|
+| **Symptomatic** | Effect on $D$ reverses when drug stops | Disease returns to natural trajectory |
+| **Disease-modifying** | Effect persists or slows $\alpha$ permanently | Long-term benefit beyond drug exposure |
+
+```{r}
+library(rxode2)
+library(ggplot2)
+library(dplyr)
+
+# Disease progression coupled with PK/PD
+mod_disease <- rxode2({
+  # PK: one-compartment oral
+  d/dt(depot)   <- -ka * depot
+  d/dt(central) <-  ka * depot - ke * central
+  C <- central / V
+  
+  # PD: Emax effect driven by concentration
+  E <- Emax * C / (EC50 + C)
+  
+  # Disease state
+  d/dt(D) <- alpha - beta * D - gamma_drug * E
+  
+  # Outputs
+  conc    <- C
+  effect  <- E
+  disease <- D
+})
+
+# Parameters
+params_disease <- c(
+  ka = 0.9, ke = 0.22, V = 28,         # PK
+  Emax = -4, EC50 = 3.5,               # PD (negative = improvement)
+  alpha = 0.35, beta = 0.035,          # Disease: steady state D = 10
+  gamma_drug = 0.8                     # Drug effect coupling
+)
+
+times <- seq(0, 72, by = 0.2)
+event <- et(time = 0, amt = 200) %>%
+  et(seq(24, 72, 24), amt = rep(200, 3))  # daily dosing
+
+sim_disease <- rxSolve(mod_disease, params_disease, event %>% et(times))
+df_disease <- as.data.frame(sim_disease)
+
+# Plot all three coupled states
+ggplot(df_disease, aes(time)) +
+  geom_line(aes(y = disease, color = "Disease State (D)"), linewidth = 1) +
+  geom_line(aes(y = conc * 5, color = "Conc (×5)"), linewidth = 0.8, alpha = 0.6) +
+  labs(title = "Disease Progression with PK/PD Coupling",
+       subtitle = "Drug slows disease progression; symptomatic relief reverses when drug stops",
+       x = "Time (hours)", y = "Disease Severity", color = "") +
+  scale_color_manual(values = c("#C44536", "#0B6E6B")) +
+  theme_minimal()
+```
+
+### The General Pattern: Coupled Multi-State ODE Systems
+
+Once you have concentration $C(t)$ and effect $E(t)$ as ODE states, you can couple in additional states:
+
+- **Enzyme level** (induction): $dE_{enz}/dt = k_{syn} \cdot (1 + I_{max}C/(IC_{50}+C)) - k_{deg} \cdot E_{enz}$
+- **Second drug** (DDI): $dC_B/dt = \dots$ with combined or competitive clearance
+- **Biomarker**: $dM/dt = k_{in} \cdot f(C) - k_{out} \cdot M$
+
+The pattern is always the same: each new state's derivative is a function of the existing states, and the whole system is solved with a single `ode()` call.
+
+::: {.warning-box}
+### The Identifiability Risk
+
+As you couple more states, the parameter count multiplies rapidly.
+A PK+PD+disease model may have 10+ parameters. When the number of
+informative data points doesn't grow proportionally, parameters become
+unidentifiable — the model can produce the same fit with very different
+parameter sets. **Fix parameters obtainable from independent sources**
+(e.g., $V$ from NCA, $\alpha$ from natural history studies) before
+estimating the rest.
+:::
+
+---
+
+## Choosing a PK/PD Link Model
+
+::: {.theory-box}
+### Decision Flow
+
+1. Plot concentration vs effect over time — are they in phase?
+   - **Yes** → Direct link model
+   - **No** → Check hysteresis direction
+
+2. Plot concentration vs effect (hysteresis plot)
+   - **No loop** → Direct link
+   - **Counter-clockwise loop** → Effect compartment model
+   - **Clockwise loop** → Tolerance or indirect response
+
+3. Consider mechanism
+   - Receptor-mediated, rapid onset → Direct link or effect compartment
+   - Physiological mediator turnover → Indirect response
+   - Gene expression, protein synthesis → Signal transduction cascade
+:::
+
+::: {.exercise-box}
+### Exercises
+
+1. Simulate an effect compartment model with $k_{e0}$ = 0.2, 0.5, 1.0, and 3.0. How does the peak effect time change?
+2. Create a hysteresis plot (concentration vs effect) for an effect compartment model and identify the direction of the loop.
+3. Simulate an indirect response Type I model. What happens to the response when $k_{out}$ is doubled?
+4. Explain why a clockwise hysteresis loop suggests tolerance rather than effect compartment delay.
+:::
+
+::: {.mistakes-box}
+### Common Mistakes
+
+- **Assuming direct link by default** — always check for hysteresis
+- **Misinterpreting hysteresis direction**: Counter-clockwise = distribution delay; Clockwise = tolerance
+- **Using wrong indirect response type**: The four types produce different response profiles
+- **Ignoring baseline turnover**: $R_0 = k_{in}/k_{out}$ must match observed baseline
+:::
+
+::: {.key-box}
+### Key Takeaway
+
+PK/PD link models bridge the gap between drug concentration and effect. Master the three main types: direct link (no delay), effect compartment (distributional delay), and indirect response (pharmacological delay). Always visualize hysteresis before choosing your model.
+:::
+

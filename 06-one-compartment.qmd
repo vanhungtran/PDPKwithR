@@ -1,0 +1,414 @@
+---
+title: "The One-Compartment Model"
+---
+
+
+## Learning Objectives
+
+By the end of this chapter you will be able to:
+
+- Understand the concept of a pharmacokinetic compartment
+- Derive and simulate one-compartment models for IV bolus, IV infusion, and oral dosing
+- Estimate PK parameters from concentration-time data using nonlinear regression
+- Understand and identify flip-flop kinetics
+- Compare model predictions to observed data
+
+---
+
+## What Is a Compartment?
+
+A **compartment** is a mathematical abstraction representing a kinetically homogeneous pool of drug in the body. It does NOT correspond to a specific anatomical space — it is defined by the rate at which drug equilibrates.
+
+In a one-compartment model, we assume the drug distributes instantaneously and uniformly throughout the body.
+
+::: {.theory-box}
+### Core Mental Models
+
+1. **The Null Model**: Always fit the one-compartment model first as a baseline. Only escalate to multi-compartment (Ch 7) if residuals show systematic biphasic curvature.
+
+2. **The CL-V-ke Triad**: These three parameters are interchangeable — know any two and derive the third via $CL = k_e \cdot V$ and $t_{1/2} = \ln(2)/k_e$. This means the model has only two independent parameters.
+
+3. **Oral C(t) = Difference of Exponentials**: For first-order absorption, the concentration-time curve is $C(t) = \frac{F \cdot D \cdot k_a}{V(k_a - k_e)}(e^{-k_e t} - e^{-k_a t})$ — whichever rate constant is smaller (the "flip-flop" condition) dominates the terminal slope.
+
+4. **AUC = Dose/CL quick sanity check**: For IV bolus, AUC is independent of the full time-course — compute it directly as Dose/CL to validate simulation output.
+:::
+
+---
+
+## IV Bolus: The Simplest Model
+
+### Model Equations
+
+For a single IV bolus dose:
+
+$$\frac{dA}{dt} = -k_e \cdot A$$
+
+$$C(t) = \frac{D}{V} \cdot e^{-k_e t} = C_0 \cdot e^{-k_e t}$$
+
+where $C_0$ is the concentration at $t = 0$ (immediately after injection).
+
+```{r}
+library(rxode2)
+library(dplyr)
+library(ggplot2)
+
+# Define the one-compartment IV bolus model
+mod_iv_bolus <- rxode2({
+  d/dt(central) <- -ke * central
+  conc <- central / V
+})
+
+# Parameters
+params <- c(ke = 0.3, V = 10)  # ke = 0.3 1/h, V = 10 L
+dose_amount <- 100  # mg
+
+# Simulate
+times <- seq(0, 24, by = 0.1)
+event <- et(time = 0, amt = dose_amount) %>%  # IV bolus at t=0
+  et(times)                                   # observation times
+
+sim_iv <- rxSolve(mod_iv_bolus, params, event)
+
+ggplot(as.data.frame(sim_iv), aes(time, conc)) +
+  geom_line(color = "#0B6E6B", linewidth = 1.2) +
+  labs(title = "One-Compartment IV Bolus",
+       subtitle = paste0("Dose = ", dose_amount, " mg, V = ", params["V"],
+                         " L, ke = ", params["ke"], " 1/h"),
+       x = "Time (hours)", y = "Concentration (mg/L)") +
+  theme_minimal()
+```
+
+### Route-Specific Solutions
+
+| Route | C(t) Formula | Notes |
+|---|---|---|
+| **IV bolus** | $C(t) = \frac{D}{V}e^{-k_e t}$ | F = 1, instantaneous |
+| **Oral (1st-order absorption)** | $C(t) = \frac{F D k_a}{V(k_a - k_e)}(e^{-k_e t} - e^{-k_a t})$ | F < 1 typically |
+| **Constant infusion** | $C(t) = \frac{R}{k_e V}(1 - e^{-k_e t}) + C_0 e^{-k_e t}$ | Approaches steady state $R/(k_e V)$ |
+
+### Core Parameter Relationships
+
+| Parameter | Formula | Note |
+|---|---|---|
+| $CL$ | $k_e \cdot V$ | Clearance (volume/time) |
+| $V$ | $D / C(0)$ | Volume of distribution |
+| $t_{1/2}$ | $\ln(2)/k_e$ | Half-life |
+| AUC (IV) | $Dose/CL$ | Quick sanity check independent of time-course |
+
+### Worked Example: Manual Calculation
+
+Bolus IV dose: D = 500 mg, V = 50 L, $k_e = 0.2$ h$^{-1}$.
+
+$$C(t) = \frac{500}{50} \cdot e^{-0.2t} = 10 \cdot e^{-0.2t} \text{ mg/L}$$
+
+- $C(0) = 10$ mg/L
+- $t_{1/2} = \ln(2)/0.2 \approx 3.47$ h $\rightarrow$ $C(3.47) = 5$ mg/L (verifies half-life)
+- $CL = k_e \cdot V = 0.2 \cdot 50 = 10$ L/h
+- AUC = Dose/CL = 500/10 = 50 mg·h/L
+
+---
+
+## IV Infusion
+
+### Model Equations
+
+For a constant-rate IV infusion:
+
+$$\frac{dA}{dt} = R - k_e \cdot A$$
+
+where $R$ is the infusion rate (amount/time).
+
+At steady state: $C_{ss} = \frac{R}{CL} = \frac{R}{k_e \cdot V}$
+
+```{r}
+# Define the IV infusion model
+mod_iv_infusion <- rxode2({
+  d/dt(central) <- rate - ke * central
+  conc <- central / V
+})
+
+# Simulation parameters
+rate_infusion <- 10   # mg/h
+duration <- Inf        # infinite infusion (until steady state)
+params <- c(ke = 0.3, V = 10)
+
+# Set up infusion event
+times <- seq(0, 48, by = 0.1)
+event <- et(time = 0, amt = rate_infusion, rate = rate_infusion, addl = 0)
+
+sim_inf <- rxSolve(mod_iv_infusion, params, event %>% et(times))
+
+# Compute steady state concentration
+Css <- rate_infusion / (params["ke"] * params["V"])
+
+ggplot(as.data.frame(sim_inf), aes(time, conc)) +
+  geom_line(color = "#0B6E6B", linewidth = 1.2) +
+  geom_hline(yintercept = Css, linetype = "dashed", color = "#C44536") +
+  annotate("text", x = 40, y = Css * 1.1,
+           label = paste0("Css = ", round(Css, 2), " mg/L"), color = "#C44536") +
+  labs(title = "One-Compartment IV Infusion",
+       subtitle = paste0("Infusion rate = ", rate_infusion, " mg/h"),
+       x = "Time (hours)", y = "Concentration (mg/L)") +
+  theme_minimal()
+```
+
+### Time to Steady State
+
+Steady state is reached after approximately 5 half-lives (97% of $C_{ss}$):
+
+```{r}
+t_half <- log(2) / params["ke"]
+cat("Half-life:", round(t_half, 2), "hours\n")
+cat("Time to ~97% steady state:", round(5 * t_half, 1), "hours\n")
+```
+
+---
+
+## Oral Dosing (First-Order Absorption)
+
+### Model Equations
+
+For oral dosing with first-order absorption:
+
+$$\frac{dA_{gut}}{dt} = -k_a \cdot A_{gut}$$
+
+$$\frac{dA}{dt} = k_a \cdot A_{gut} - k_e \cdot A$$
+
+$$C(t) = \frac{F \cdot D \cdot k_a}{V \cdot (k_a - k_e)} \cdot (e^{-k_e t} - e^{-k_a t})$$
+
+```{r}
+# Define the one-compartment oral model
+mod_oral <- rxode2({
+  d/dt(depot)  <- -ka * depot
+  d/dt(central) <- ka * depot - ke * central
+  conc <- central / V
+})
+
+# Parameters
+params_oral <- c(ka = 1.0, ke = 0.3, V = 10)
+dose_oral <- 100  # mg
+
+times_oral <- seq(0, 24, by = 0.1)
+event_oral <- et(time = 0, amt = dose_oral)
+
+sim_oral <- rxSolve(mod_oral, params_oral, event_oral %>% et(times_oral))
+
+ggplot(as.data.frame(sim_oral), aes(time, conc)) +
+  geom_line(color = "#0B6E6B", linewidth = 1.2) +
+  labs(title = "One-Compartment Oral Dosing",
+       subtitle = paste0("Dose = ", dose_oral, " mg, ka = ", params_oral["ka"],
+                         " 1/h, ke = ", params_oral["ke"], " 1/h"),
+       x = "Time (hours)", y = "Concentration (mg/L)") +
+  theme_minimal()
+```
+
+### Key Oral PK Parameters
+
+| Parameter | Formula | Description |
+|-----------|---------|-------------|
+| $C_{max}$ | Read from profile | Peak concentration |
+| $T_{max}$ | $\frac{\ln(k_a/k_e)}{k_a - k_e}$ | Time to peak |
+| $AUC$ | $\frac{F \cdot D}{CL}$ | Total exposure |
+
+```{r}
+# Compute Tmax analytically
+ka <- params_oral["ka"]
+ke <- params_oral["ke"]
+Tmax_formula <- log(ka / ke) / (ka - ke)
+cat("Theoretical Tmax:", round(Tmax_formula, 2), "hours\n")
+```
+
+---
+
+## Multiple Dosing and Accumulation
+
+### Accumulation Factor
+
+With repeated dosing at interval $\tau$:
+
+$$R_{acc} = \frac{1}{1 - e^{-k_e \tau}}$$
+
+```{r}
+# Simulate multiple oral doses
+event_multi <- et(time = rep(0, 7), amt = rep(100, 7)) %>%
+  et(rate = 0, ii = 8, addl = 6)  # Every 8h, 7 doses total
+# Note: rxode2 handles addl differently; let's use a simpler approach
+
+# Manual multiple dosing
+mod_multi <- rxode2({
+  d/dt(depot)  <- -ka * depot
+  d/dt(central) <- ka * depot - ke * central
+  conc <- central / V
+})
+
+# Create dosing events every 8 hours
+dose_times <- seq(0, 48, by = 8)
+event_multi <- et(time = dose_times, amt = rep(100, length(dose_times)))
+times_multi <- seq(0, 72, by = 0.1)
+
+sim_multi <- rxSolve(mod_multi, params_oral, event_multi %>% et(times_multi))
+
+ggplot(as.data.frame(sim_multi), aes(time, conc)) +
+  geom_line(color = "#0B6E6B", linewidth = 1) +
+  labs(title = "Multiple Oral Dosing (q8h)",
+       subtitle = "Accumulation to steady state",
+       x = "Time (hours)", y = "Concentration (mg/L)") +
+  theme_minimal()
+```
+
+---
+
+## Flip-Flop Kinetics
+
+**Flip-flop kinetics** occurs when $k_a < k_e$ (absorption is slower than elimination). In this case, the terminal slope reflects $k_a$, not $k_e$, and parameter estimation from oral data alone becomes ambiguous.
+
+```{r}
+# Compare normal vs flip-flop kinetics
+params_normal  <- c(ka = 1.5, ke = 0.3, V = 10)
+params_flipflop <- c(ka = 0.15, ke = 0.4, V = 10)
+
+sim_normal   <- rxSolve(mod_oral, params_normal, event_oral %>% et(times_oral))
+sim_flipflop <- rxSolve(mod_oral, params_flipflop, event_oral %>% et(times_oral))
+
+df_compare <- bind_rows(
+  as.data.frame(sim_normal) %>% mutate(Type = "Normal (ka > ke)"),
+  as.data.frame(sim_flipflop) %>% mutate(Type = "Flip-Flop (ka < ke)")
+)
+
+ggplot(df_compare, aes(time, conc, color = Type)) +
+  geom_line(linewidth = 1) +
+  scale_y_log10() +
+  labs(title = "Normal vs Flip-Flop Kinetics",
+       x = "Time (hours)", y = "Concentration (mg/L, log scale)") +
+  scale_color_manual(values = c("#C44536", "#0B6E6B")) +
+  theme_minimal()
+```
+
+---
+
+## Parameter Estimation from Data
+
+### Nonlinear Least Squares
+
+Fit a one-compartment oral model to data using `nls()`:
+
+```{r}
+# Simulate some noisy oral data
+set.seed(123)
+sample_times <- c(0.25, 0.5, 1, 2, 3, 4, 6, 8, 12, 24)
+true_params <- data.frame(V = 12, ka = 0.8, ke = 0.25)
+
+# Generate "observed" data with noise
+obs_data <- data.frame(
+  time = sample_times,
+  conc = (100 * true_params$ka) / (true_params$V * (true_params$ka - true_params$ke)) *
+         (exp(-true_params$ke * sample_times) - exp(-true_params$ka * sample_times))
+)
+obs_data$conc <- obs_data$conc * rlnorm(nrow(obs_data), 0, 0.15)
+
+# Fit the model using nls
+D <- 100  # administered dose (mg)
+fit <- nls(conc ~ (D * ka) / (V * (ka - ke)) * (exp(-ke * time) - exp(-ka * time)),
+           data = obs_data,
+           start = list(V = 10, ka = 1.0, ke = 0.3),
+           lower = c(0.01, 0.01, 0.01),
+           algorithm = "port")
+
+summary(fit)
+```
+
+```{r}
+# Plot observed vs fitted
+coefs <- coef(fit)
+pred_times <- seq(0, 24, by = 0.1)
+pred_conc <- (100 * coefs["ka"]) / (coefs["V"] * (coefs["ka"] - coefs["ke"])) *
+             (exp(-coefs["ke"] * pred_times) - exp(-coefs["ka"] * pred_times))
+
+ggplot(obs_data, aes(time, conc)) +
+  geom_point(size = 3, color = "#C44536") +
+  geom_line(data = data.frame(time = pred_times, conc = pred_conc),
+            aes(time, conc), color = "#0B6E6B", linewidth = 1.2) +
+  labs(title = "Fitted One-Compartment Oral Model",
+       x = "Time (hours)", y = "Concentration (mg/L)") +
+  theme_minimal()
+```
+
+---
+
+::: {.exercise-box}
+### Exercises
+
+1. Simulate an IV bolus with $D$ = 50 mg, $V$ = 8 L, $k_e$ = 0.4 1/h. What is $C_0$ and $t_{1/2}$?
+2. For IV infusion at 5 mg/h with $CL$ = 2 L/h, compute $C_{ss}$. How does doubling the infusion rate affect $C_{ss}$ and time to steady state?
+3. Simulate oral dosing with $k_a$ = 0.6 and $k_e$ = 0.3. Then swap $k_a$ = 0.3 and $k_e$ = 0.6. Why are the profiles different even though the parameters are the same values?
+4. Fit a one-compartment oral model to a dataset and compute $t_{max}$ from the fitted parameters.
+:::
+
+## Alternative: ODE-Based Simulation with deSolve
+
+While we use `rxode2` throughout this book, the same model can be implemented with the `deSolve` package for readers who prefer it:
+
+```{r}
+#| eval: false
+library(deSolve)
+
+# Single-compartment ODE with optional constant infusion input
+pk_ode <- function(time, state, parameters) {
+  C <- state[1]
+  k_e <- parameters["k_e"]
+  V <- parameters["V"]
+  input_rate <- parameters["RateIn"]
+  dCdt <- -k_e * C + input_rate / V
+  list(c(dCdt))
+}
+
+simulate_pk <- function(k_e, V, Dose, RateIn, t_max, dt, route = "IV-bolus") {
+  C0 <- if (route == "IV-bolus") Dose / V else if (route == "Infusion") 0 else
+    stop("Unsupported route. Choose 'IV-bolus' or 'Infusion'.")
+  ode(y = c(C = C0), times = seq(0, t_max, by = dt), func = pk_ode,
+      parms = c(k_e = k_e, V = V, RateIn = RateIn)) |> as.data.frame()
+}
+
+calc_half_life <- function(k_e) log(2) / k_e
+calc_clearance <- function(k_e, V) k_e * V
+calc_auc       <- function(Dose, CL) Dose / CL
+```
+
+This demonstrates route-aware initial conditions ($C_0 = Dose/V$ for bolus vs $0$ for infusion) feeding a single shared ODE.
+
+---
+
+::: {.mistakes-box}
+### Common Mistakes
+
+- **Assuming $k_a > k_e$ always** — always verify with IV data
+- **Not checking for flip-flop**: oral-only data cannot distinguish $k_a$ from $k_e$ without IV reference
+- **Using linear scale for terminal slope** — use semi-log
+- **Ignoring the absorption lag time** — some oral formulations have a delay before absorption begins
+- **Fitting too many parameters with too few data points**
+- **Ignoring tissue/protein binding when V is unexpectedly large or small**: the one-compartment model assumes no significant binding alters free drug concentration. Large discrepancies in V often signal binding effects better handled in Ch 11.
+- **Fitting $k_e$ and $V$ via `nls` with poor initial guesses**: nonlinear least squares can fail to converge or find local minima. Use `nls.control(maxiter = 500)` and reasonable starting values. Always verify against the analytical formulas.
+:::
+
+::: {.key-box}
+### Key Takeaway
+
+The one-compartment model is the foundation of all PK modeling. Key principles:
+
+1. **One ODE, many routes**: $dC/dt = -k_e C + D(t)/V$ — the master equation; $D(t) = 0$ for bolus, constant for infusion, involves $k_a$ for oral.
+2. **CL-V-ke are interchangeable**: $CL = k_e \cdot V$, $t_{1/2} = \ln(2)/k_e$ — any two give the third.
+3. **AUC = Dose/CL for IV** is a fast independent check on simulation correctness.
+4. **Always fit one-compartment first** as a baseline before adding compartments.
+5. **Check for flip-flop** when analyzing oral data without IV reference.
+:::
+
+---
+
+## Connections to Other Chapters
+
+- **Ch 1**: Reuses CL, V, $t_{1/2}$, F definitions
+- **Ch 5**: NCA provides model-independent AUC and $k_e$ estimates to validate compartmental fits
+- **Ch 7**: Extends to multi-compartment systems when one-compartment residuals show biphasic structure
+- **Ch 8**: Oral absorption solution here is generalized with zero-order and more complex absorption models
+- **Ch 13**: `nls()`-based estimation here is a precursor to formal parameter-estimation techniques (OLS, WLS, MLE)
+

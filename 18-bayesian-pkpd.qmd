@@ -1,0 +1,408 @@
+---
+title: "Bayesian PK/PD and Advanced Modeling"
+---
+
+
+## Learning Objectives
+
+By the end of this chapter you will be able to:
+
+- Understand Bayesian principles applied to PK/PD estimation
+- Implement Bayesian parameter estimation with prior information
+- Interpret MCMC output and posterior distributions in PK/PD context
+- Choose appropriate priors for PK/PD parameters
+- Compare Bayesian and frequentist (maximum likelihood) approaches
+- Use Stan/brms for Bayesian PK/PD modeling in R
+
+---
+
+## Why Bayesian PK/PD?
+
+Bayesian methods are increasingly used in pharmacometrics because they:
+
+1. **Incorporate prior knowledge**: Leverage previous studies, preclinical data, or physiological constraints
+2. **Handle sparse data naturally**: Individual Bayesian posteriors can be stable with 1–2 samples
+3. **Quantify uncertainty fully**: Posterior distributions show all parameter uncertainty
+4. **Enable TDM**: Bayesian forecasting for individualized dosing
+5. **Avoid asymptotic approximations**: Exact finite-sample inference
+
+---
+
+## Bayes' Theorem in PK/PD
+
+$$p(\theta \mid y) = \frac{p(y \mid \theta) \cdot p(\theta)}{p(y)} \propto p(y \mid \theta) \cdot p(\theta)$$
+
+where:
+- $p(\theta)$: Prior distribution (what we believe about PK parameters before seeing data)
+- $p(y \mid \theta)$: Likelihood (probability of observed data given parameters)
+- $p(\theta \mid y)$: Posterior distribution (updated beliefs after seeing data)
+
+---
+
+## A Bayesian PK Example: One-Compartment IV
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Simulate PK data for one subject
+set.seed(42)
+dose <- 500  # mg
+true_CL <- 5.0  # L/h
+true_V  <- 45   # L
+true_ke <- true_CL / true_V
+
+sample_times <- c(0.25, 0.5, 1, 2, 4, 8, 12, 24)
+obs_data <- data.frame(
+  time = sample_times,
+  conc = (dose / true_V) * exp(-true_ke * sample_times)
+)
+obs_data$conc <- obs_data$conc * exp(rnorm(nrow(obs_data), 0, 0.15))
+
+# Visualize the data
+ggplot(obs_data, aes(time, conc)) +
+  geom_point(size = 3, color = "#C44536") +
+  scale_y_log10() +
+  labs(title = "Observed PK Data (Single Subject)",
+       x = "Time (hours)", y = "Concentration (mg/L, log scale)") +
+  theme_minimal()
+```
+
+### Prior Distributions
+
+For PK parameters, we typically use log-normal priors because parameters are positive:
+
+$$CL \sim \text{LogNormal}(\log(4), 0.5)$$
+$$V \sim \text{LogNormal}(\log(40), 0.3)$$
+$$\sigma \sim \text{HalfNormal}(0, 2)$$
+
+```{r}
+# Visualize priors
+CL_seq <- seq(0.5, 20, length.out = 200)
+V_seq  <- seq(10, 100, length.out = 200)
+
+prior_CL <- dlnorm(CL_seq, log(4), 0.5)
+prior_V  <- dlnorm(V_seq, log(40), 0.3)
+
+df_priors <- bind_rows(
+  data.frame(value = CL_seq, density = prior_CL, Parameter = "CL (L/h)"),
+  data.frame(value = V_seq,  density = prior_V,  Parameter = "V (L)")
+)
+
+ggplot(df_priors, aes(value, density, fill = Parameter)) +
+  geom_area(alpha = 0.5) +
+  geom_vline(data = data.frame(Parameter = c("CL (L/h)", "V (L)"),
+                                true = c(true_CL, true_V)),
+             aes(xintercept = true), color = "#C44536", linewidth = 1, linetype = "dashed") +
+  annotate("text", x = c(true_CL, true_V), y = max(c(prior_CL, prior_V)) * 0.9,
+           label = "True value", color = "#C44536", hjust = -0.2, size = 3) +
+  facet_wrap(~Parameter, scales = "free") +
+  labs(title = "Prior Distributions for PK Parameters",
+       x = "Parameter Value", y = "Density") +
+  scale_fill_manual(values = c("#0B6E6B", "#D4A843")) +
+  theme_minimal()
+```
+
+---
+
+## MCMC Sampling for PK Parameters
+
+### Using Stan via cmdstanr
+
+```{r}
+#| eval: false
+library(cmdstanr)
+
+# Stan model for one-compartment IV bolus
+stan_code <- "
+data {
+  int<lower=0> N;
+  array[N] real time;
+  array[N] real conc;
+  real dose;
+}
+parameters {
+  real<lower=0> CL;
+  real<lower=0> V;
+  real<lower=0> sigma;
+}
+transformed parameters {
+  real ke = CL / V;
+  array[N] real conc_pred;
+  for (i in 1:N) {
+    conc_pred[i] = (dose / V) * exp(-ke * time[i]);
+  }
+}
+model {
+  // Priors
+  CL ~ lognormal(log(4), 0.5);
+  V  ~ lognormal(log(40), 0.3);
+  sigma ~ normal(0, 2);
+
+  // Likelihood
+  conc ~ lognormal(log(conc_pred), sigma);
+}
+"
+
+# Compile and sample
+# mod <- cmdstan_model(write_stan_file(stan_code))
+# fit <- mod$sample(
+#   data = list(N = nrow(obs_data), time = obs_data$time,
+#               conc = obs_data$conc, dose = dose),
+#   seed = 123, chains = 4, parallel_chains = 4,
+#   iter_warmup = 1000, iter_sampling = 2000
+# )
+# fit$summary()
+```
+
+---
+
+## Simulating MCMC Results
+
+```{r}
+# Simulate posterior samples (normally we get these from MCMC)
+set.seed(123)
+n_post <- 4000
+
+posterior_samples <- data.frame(
+  CL = rlnorm(n_post, log(true_CL), 0.15),
+  V  = rlnorm(n_post, log(true_V), 0.10),
+  sigma = abs(rnorm(n_post, 0.2, 0.05))
+) %>%
+  mutate(ke = CL / V)
+
+# Posterior summary
+post_summary <- posterior_samples %>%
+  summarise(
+    across(everything(),
+           list(mean = ~mean(.x), sd = ~sd(.x),
+                q025 = ~quantile(.x, 0.025), q975 = ~quantile(.x, 0.975)))
+  )
+
+knitr::kable(
+  data.frame(
+    Parameter = c("CL (L/h)", "V (L)", "ke (1/h)", "sigma"),
+    Mean = round(c(mean(posterior_samples$CL), mean(posterior_samples$V),
+                   mean(posterior_samples$ke), mean(posterior_samples$sigma)), 2),
+    SD = round(c(sd(posterior_samples$CL), sd(posterior_samples$V),
+                  sd(posterior_samples$ke), sd(posterior_samples$sigma)), 2),
+    `2.5%` = round(c(quantile(posterior_samples$CL, 0.025),
+                      quantile(posterior_samples$V, 0.025),
+                      quantile(posterior_samples$ke, 0.025),
+                      quantile(posterior_samples$sigma, 0.025)), 2),
+    `97.5%` = round(c(quantile(posterior_samples$CL, 0.975),
+                       quantile(posterior_samples$V, 0.975),
+                       quantile(posterior_samples$ke, 0.975),
+                       quantile(posterior_samples$sigma, 0.975)), 2)
+  ),
+  caption = "Posterior Summary (Simulated MCMC)"
+)
+```
+
+---
+
+## Visualizing the Posterior
+
+```{r}
+# Posterior distributions
+df_post <- posterior_samples %>%
+  tidyr::pivot_longer(c(CL, V, ke), names_to = "Parameter", values_to = "Value")
+
+ggplot(df_post, aes(Value, after_stat(density), fill = Parameter)) +
+  geom_histogram(alpha = 0.5, bins = 50, position = "identity") +
+  geom_vline(data = data.frame(Parameter = c("CL", "V", "ke"),
+                                true = c(true_CL, true_V, true_ke)),
+             aes(xintercept = true), color = "#C44536", linewidth = 1, linetype = "dashed") +
+  facet_wrap(~Parameter, scales = "free") +
+  labs(title = "Posterior Distributions of PK Parameters",
+       subtitle = "Dashed line = true value used to simulate data",
+       x = "Parameter Value", y = "Density") +
+  scale_fill_manual(values = c("#0B6E6B", "#C44536", "#D4A843")) +
+  theme_minimal()
+```
+
+---
+
+## Posterior Predictive Check
+
+```{r}
+# Generate posterior predictive samples
+n_ppc <- 200
+ppc_times <- seq(0, 24, by = 0.2)
+ppc_idx <- sample(n_post, n_ppc)
+
+ppc_df <- lapply(seq_along(ppc_idx), function(i) {
+  idx <- ppc_idx[i]
+  data.frame(
+    time = ppc_times,
+    conc = (dose / posterior_samples$V[idx]) *
+           exp(-posterior_samples$ke[idx] * ppc_times),
+    draw = i
+  )
+}) %>% bind_rows()
+
+# Compute prediction intervals
+ppc_summary <- ppc_df %>%
+  group_by(time) %>%
+  summarise(
+    p05 = quantile(conc, 0.05),
+    p50 = quantile(conc, 0.50),
+    p95 = quantile(conc, 0.95),
+    .groups = "drop"
+  )
+
+ggplot() +
+  geom_ribbon(data = ppc_summary, aes(time, ymin = p05, ymax = p95),
+              fill = "#0B6E6B", alpha = 0.2) +
+  geom_line(data = ppc_summary, aes(time, p50),
+            color = "#0B6E6B", linewidth = 1) +
+  geom_point(data = obs_data, aes(time, conc),
+             color = "#C44536", size = 3) +
+  scale_y_log10() +
+  labs(title = "Posterior Predictive Check",
+       subtitle = "Shaded: 90% prediction interval; Dashed: median; Points: observed",
+       x = "Time (hours)", y = "Concentration (mg/L, log scale)") +
+  theme_minimal()
+```
+
+---
+
+## Bayesian vs Frequentist: Key Differences
+
+| Aspect | Frequentist (MLE) | Bayesian |
+|--------|------------------|----------|
+| **Parameter interpretation** | Fixed, unknown constant | Random variable with distribution |
+| **Uncertainty** | Confidence intervals (asymptotic) | Credible intervals (direct probability) |
+| **Prior information** | Not used | Formally incorporated |
+| **Sparse data** | May be unstable | Priors stabilize estimates |
+| **Computation** | Optimization (fast) | MCMC sampling (slower) |
+| **P-value** | Yes | No (posterior probabilities instead) |
+| **TDM application** | MAP estimation | Full posterior / MAP |
+
+---
+
+## MCMC Convergence Diagnostics
+
+A non-converged MCMC posterior is meaningless — regardless of how plausible the estimates look. Always check these diagnostics before interpreting results:
+
+### The Convergence Checklist
+
+| Diagnostic | Threshold | Action If Failed |
+|---|---|---|
+| **$\hat{R}$ (Gelman-Rubin)** | $\hat{R} < 1.1$ for all parameters | Run more iterations; reparameterize (non-centered) |
+| **Effective Sample Size (ESS)** | ESS > 400 per chain (bulk & tail) | Thin less aggressively; increase total iterations |
+| **Acceptance rate (MH)** | 20-50% | < 20%: decrease step size; > 50%: increase step size |
+| **Trace plots** | Stationary, well-mixed "hairy caterpillar" | Drift/trend: discard more burn-in; check model specification |
+| **Divergent transitions (HMC)** | 0 (or < 1%) | Use non-centered parameterization; increase `adapt_delta` |
+| **Pairs plots** | No funnel shapes or extreme correlations | Funnel at small $\omega$: non-centered $\eta \sim N(0,1)$, $\theta = \exp(\mu + \omega \cdot \eta)$ |
+
+### The Funnel Problem
+
+In hierarchical models, when the between-subject SD $\omega$ is near zero, the posterior develops a "funnel" shape — very narrow at small $\omega$, wide at large $\omega$. Standard samplers struggle with this geometry.
+
+**The fix: Non-centered parameterization.** Instead of sampling $\theta_i \sim \text{LogNormal}(\mu, \omega)$, sample:
+
+$$\eta_i \sim N(0, 1), \quad \theta_i = \exp(\mu + \omega \cdot \eta_i)$$
+
+This removes the dependence of the geometry on $\omega$ and dramatically improves sampling.
+
+```{r}
+# Visualize the difference between centered and non-centered parameterization
+set.seed(123)
+n_samples <- 2000
+
+# Centered: direct sampling of theta (creates funnel)
+mu <- 1; omega <- 0.1
+theta_centered <- rlnorm(n_samples, mu, omega)
+
+# Non-centered: sample eta ~ N(0,1), then transform
+eta <- rnorm(n_samples, 0, 1)
+theta_noncentered <- exp(mu + omega * eta)
+
+# Both give the same marginal distribution
+# But for MCMC, the non-centered form is far more efficient
+
+df_param <- data.frame(
+  theta = c(theta_centered, theta_noncentered),
+  Method = rep(c("Centered", "Non-centered"), each = n_samples)
+)
+
+ggplot(df_param, aes(theta, after_stat(density), fill = Method)) +
+  geom_histogram(alpha = 0.5, bins = 50, position = "identity") +
+  labs(title = "Centered vs Non-Centered Parameterization",
+       subtitle = "Both give identical marginal distributions, but non-centered is MCMC-friendly",
+       x = expression(theta), y = "Density") +
+  scale_fill_manual(values = c("#C44536", "#0B6E6B")) +
+  theme_minimal()
+```
+
+::: {.key-box}
+### Default Rules of Thumb for MCMC
+
+- Always use **log-scale parameterization** for strictly-positive PK parameters ($CL$, $V$, $k_a$, $k_e$): sample $\log(CL)$ not $CL$
+- For hierarchical (population) models: **always start with non-centered parameterization**
+- Target acceptance rate: **~20-50%** for random-walk MH; **> 80%** for HMC/NUTS (`adapt_delta = 0.9` or higher)
+- Burn-in: discard at minimum the **first 50%** of warmup iterations; inspect trace plots to confirm
+- **Never use a single chain** — run at least 4 chains from different starting values and compare $\hat{R}$
+:::
+
+---
+
+## Choosing Priors
+
+### Types of Priors
+
+| Prior Type | Purpose | Example |
+|-----------|---------|---------|
+| **Informative** | Strong prior knowledge | CL ~ LogNormal(log(5), 0.1) |
+| **Weakly informative** | Regularization without strong influence | CL ~ LogNormal(log(5), 1.0) |
+| **Non-informative** | Let data dominate | CL ~ Uniform(0, 1000) |
+| **Physiological** | Based on known constraints | $V_{plasma}$ ≈ 3 L |
+
+```{r}
+# Compare informative vs weakly informative priors
+CL_seq <- seq(0.1, 20, length.out = 200)
+
+df_prior_comp <- data.frame(
+  CL = rep(CL_seq, 2),
+  Density = c(dlnorm(CL_seq, log(5), 0.15),   # Informative
+              dlnorm(CL_seq, log(5), 1.0)),    # Weakly informative
+  Prior = rep(c("Informative (σ=0.15)", "Weakly Informative (σ=1.0)"),
+              each = length(CL_seq))
+)
+
+ggplot(df_prior_comp, aes(CL, Density, color = Prior)) +
+  geom_line(linewidth = 1.2) +
+  labs(title = "Informative vs Weakly Informative Priors",
+       x = "Clearance (L/h)", y = "Density") +
+  scale_color_manual(values = c("#C44536", "#0B6E6B")) +
+  theme_minimal()
+```
+
+---
+
+::: {.exercise-box}
+### Exercises
+
+1. Run a Bayesian PK analysis for one-compartment oral data. Use Stan or brms to estimate $k_a$, $CL$, and $V$.
+2. Compare posterior means and 95% credible intervals to MLE estimates. Are they different? When and why?
+3. Perform a prior sensitivity analysis: how do different prior choices affect the posterior for CL?
+4. Generate a posterior predictive check and interpret whether the model adequately captures the data.
+:::
+
+::: {.mistakes-box}
+### Common Mistakes
+
+- **Using overly informative priors**: May dominate the data and bias results
+- **Not checking MCMC convergence**: R-hat > 1.01 indicates problems
+- **Confusing credible intervals with confidence intervals**: They have different interpretations
+- **Ignoring prior sensitivity analysis**: Always check that conclusions aren't driven by prior choice
+- **Using flat priors on unbounded parameters**: Can cause improper posteriors
+:::
+
+::: {.key-box}
+### Key Takeaway
+
+Bayesian methods provide a natural framework for PK/PD modeling, especially when prior information is available or data are sparse. The posterior distribution fully quantifies parameter uncertainty, enabling robust TDM and dose individualization. Always check MCMC convergence and prior sensitivity.
+:::
+
