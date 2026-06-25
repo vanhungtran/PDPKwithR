@@ -1,0 +1,15 @@
+{
+  "hash": "6052f4b0ab6bc774c13ba8534561ce45",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Unit Conversions {#sec-appendix-units .unnumbered}\n\n## Mass Units\n\n| From | To | Multiply By |\n|------|----|-------------|\n| g | mg | 1000 |\n| mg | μg | 1000 |\n| μg | ng | 1000 |\n| ng | pg | 1000 |\n| kg | g | 1000 |\n\n## Volume Units\n\n| From | To | Multiply By |\n|------|----|-------------|\n| L | mL | 1000 |\n| mL | μL | 1000 |\n| dL | L | 0.1 |\n| L | dL | 10 |\n\n## Concentration Units\n\n| From | To | Multiply By |\n|------|----|-------------|\n| mg/L | μg/mL | 1 |\n| μg/mL | ng/mL | 1000 |\n| mg/dL | mg/L | 10 |\n| g/L | mg/mL | 1 |\n| % (w/v) | mg/mL | 10 |\n\n## Time Units\n\n| From | To | Multiply By |\n|------|----|-------------|\n| hours | minutes | 60 |\n| days | hours | 24 |\n| hours | days | 1/24 |\n| minutes | hours | 1/60 |\n\n## Clearance Units\n\n| From | To | Multiply By |\n|------|----|-------------|\n| L/h | mL/min | 16.67 |\n| mL/min | L/h | 0.06 |\n| L/h | L/day | 24 |\n| mL/min/kg | L/h/70kg | × 4.2 |\n\n## AUC Units\n\n| From | To | Multiply By |\n|------|----|-------------|\n| mg·h/L | μg·h/mL | 1 |\n| μg·h/mL | ng·h/mL | 1000 |\n\n## Common PK Unit Conversions in R\n\n\n::: {.cell}\n\n```{.r .cell-code}\n# Useful conversion functions\nmg_to_ug <- function(x) x * 1000\nug_to_ng <- function(x) x * 1000\nL_to_mL <- function(x) x * 1000\nhour_to_min <- function(x) x * 60\nmin_to_hour <- function(x) x / 60\nCL_Lh_to_mLmin <- function(x) x * 1000 / 60\nCL_mLmin_to_Lh <- function(x) x * 60 / 1000\n\n# Example\nCL_mLmin_to_Lh(120)  # 120 mL/min = 7.2 L/h\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] 7.2\n```\n\n\n:::\n:::\n\n\n## Dose Normalization\n\n- mg/kg → mg: multiply by body weight (kg)\n- mg/m² → mg: multiply by body surface area (m²)\n\n$$BSA (m^2) = \\sqrt{\\frac{Height(cm) \\times Weight(kg)}{3600}}$$\n\n## Temperature\n\n- °C to K: add 273.15\n- K to °C: subtract 273.15\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

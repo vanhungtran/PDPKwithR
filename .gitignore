@@ -1,0 +1,31 @@
+# Quarto / R build artifacts (not source)
+/.quarto/
+.Rproj.user
+.Rhistory
+.RData
+*_cache/
+*_files/
+**/*.quarto_ipynb
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# AI assistant files
+CLAUDE.md
+session_handoff.md
+skill.md
+skills.md
+.claude/
+
+# Keep these in source control — needed for CI/CD rendering
+# *.qmd  ← un-ignored: book chapters
+# *.R    ← un-ignored: R scripts
+# *.bib  ← un-ignored: references
+# *.Rproj ← un-ignored: R project file
+# *.csv  ← un-ignored: data files
+# *.scss ← un-ignored: custom theme
+# *.css  ← un-ignored: custom styles
+
+# Local R profile (may contain secrets)
+.Rprofile
