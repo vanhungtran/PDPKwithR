@@ -4,7 +4,6 @@
 .Rhistory
 .RData
 *_cache/
-*_files/
 **/*.quarto_ipynb
 
 # OS junk

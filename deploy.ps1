@@ -57,6 +57,14 @@ if (Test-Path "docs\site_libs") {
     Write-Host "  Copied: site_libs/" -ForegroundColor Gray
 }
 
+# Copy *_files directories (plot images, figures)
+$fileDirs = Get-ChildItem -Path "docs" -Directory -Filter "*_files"
+foreach ($dir in $fileDirs) {
+    if (Test-Path $dir.Name) { Remove-Item -Path $dir.Name -Recurse -Force }
+    Copy-Item -Path $dir.FullName -Destination "." -Recurse -Force
+    Write-Host "  Copied: $($dir.Name)/" -ForegroundColor Gray
+}
+
 Write-Host "✓ Additional files copied" -ForegroundColor Green
 Write-Host ""
 
@@ -74,7 +82,8 @@ git add .nojekyll
 
 # Add site_libs (including CSS files)
 git add site_libs/ --force
-
+# Add figure/image files (*_files directories)
+git add *_files/ --force
 # Add zoom-controls.html
 if (Test-Path "zoom-controls.html") {
     git add zoom-controls.html

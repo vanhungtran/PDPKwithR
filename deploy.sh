@@ -66,6 +66,16 @@ if [ -d "docs/site_libs" ]; then
     powershell.exe -Command "New-Item -ItemType Directory -Path 'site_libs' -Force | Out-Null; Copy-Item -Path 'docs/site_libs/*' -Destination 'site_libs' -Recurse -Force"
     echo "  Copied: site_libs/"
 fi
+
+# Copy *_files directories (plot images, figures)
+for dir in docs/*_files; do
+    if [ -d "$dir" ]; then
+        dirname=$(basename "$dir")
+        rm -rf "$dirname" 2>/dev/null
+        cp -r "$dir" .
+        echo "  Copied: $dirname/"
+    fi
+done
 echo "✓ Additional files copied"
 echo ""
 
@@ -80,7 +90,8 @@ git add robots.txt sitemap.xml search.json .nojekyll 2>/dev/null
 
 # Add site_libs (including CSS files)
 git add site_libs/ 2>/dev/null || true
-
+# Add figure/image files (*_files directories)
+git add *_files/ 2>/dev/null || true
 # Add zoom-controls.html
 if [ -f "zoom-controls.html" ]; then
     git add zoom-controls.html
