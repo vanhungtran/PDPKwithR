@@ -390,6 +390,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Practice Datasets and Exercises with Solutions</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./appendix-g-bioequivalence.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Bioequivalence Analysis in R</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./appendix-h-phase1-escalation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Phase I Dose-Escalation Designs in R</span></a>
+  </div>
+</li>
       </ul>
   </li>
     </ul>
@@ -486,16 +498,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="differential-equation-solvers" class="level2">
 <h2 class="anchored" data-anchor-id="differential-equation-solvers">Differential Equation Solvers</h2>
 <ul>
-<li><strong><code>deSolve</code></strong> — General ODE/PDE/DDE solver</li>
-<li><strong><code>minpack.lm</code></strong> — Levenberg-Marquardt nonlinear least squares</li>
+<li><p><strong><code>deSolve</code></strong> — General ODE/PDE/DDE solver</p></li>
+<li><p><strong><code>minpack.lm</code></strong> — Levenberg-Marquardt nonlinear least squares</p></li>
+<li><p><strong><code>linpk</code></strong> â€” Closed-form linear PK profiles</p></li>
+<li><p><strong><code>pmxTools</code></strong> â€” Compartmental PK closed-form solutions</p></li>
+<li><p><strong><code>PKconverter</code></strong> â€” Micro-macro parameter conversion</p></li>
+<li><p><strong><code>drc</code></strong> â€” 30+ dose-response models with robust fitting</p></li>
+<li><p><strong><code>dr4pl</code></strong> â€” Outlier-resistant 4PL logistic regression</p></li>
+<li><p><strong><code>DoseFinding</code></strong> â€” MCP-Mod for Phase II dose-finding</p></li>
+<li><p><strong><code>clinDR</code></strong> â€” Bayesian Emax meta-analytic priors</p></li>
+<li><p><strong><code>bayesnec</code></strong> â€” No-effect concentration estimation</p></li>
+<li><p><strong><code>vpc</code></strong> â€” Visual predictive checks (classic binned)</p></li>
+<li><p><strong><code>tidyvpc</code></strong> â€” Binless VPC with AQR/LOESS</p></li>
+<li><p><strong><code>xpose</code></strong> â€” NONMEM/nlmixr2 model diagnostics</p></li>
+<li><p><strong><code>xgxr</code></strong> â€” Exploratory PK/PD graphics (Novartis)</p></li>
+<li><p><strong><code>nlmixr2rpt</code></strong> â€” Automated Word/PowerPoint reporting</p></li>
+<li><p><strong><code>pmxpartab</code></strong> â€” HTML parameter estimate tables</p></li>
+<li><p><strong><code>BElikelihood</code></strong> â€” Profile likelihood bioequivalence</p></li>
+<li><p><strong><code>Power2Stage</code></strong> â€” Two-stage BE designs</p></li>
+<li><p><strong><code>replicateBE</code></strong> â€” ABEL for highly variable drugs</p></li>
+<li><p><strong><code>escalation</code></strong> â€” CRM, mTPI, BOIN dose-finding</p></li>
+<li><p><strong><code>BOIN</code></strong> â€” Bayesian optimal interval design</p></li>
+<li><p><strong><code>dfcrm</code></strong> â€” Continual reassessment method</p></li>
+<li><p><strong><code>NonCompart</code></strong> â€” Alternative NCA implementation</p></li>
+<li><p><strong><code>qpNCA</code></strong> â€” Multi-dose steady-state NCA</p></li>
 </ul>
 </section>
 <section id="other-useful-packages" class="level2">
 <h2 class="anchored" data-anchor-id="other-useful-packages">Other Useful Packages</h2>
 <ul>
-<li><strong><code>shiny</code></strong> — Interactive web applications for PK/PD</li>
-<li><strong><code>scales</code></strong> — Axis scaling utilities</li>
-<li><strong><code>MASS</code></strong> — Various statistical functions</li>
+<li><strong><code>shiny</code></strong> â€” Interactive web applications for PK/PD</li>
+<li><strong><code>scales</code></strong> â€” Axis scaling utilities</li>
+<li><strong><code>MASS</code></strong> â€” Various statistical functions</li>
 </ul>
 </section>
 <section id="installation" class="level2">
@@ -508,8 +542,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"knitr"</span>, <span class="st">"rmarkdown"</span>, <span class="st">"quarto"</span>,</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"survival"</span>, <span class="st">"survminer"</span>,</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"deSolve"</span>, <span class="st">"minpack.lm"</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"shiny"</span>, <span class="st">"scales"</span>, <span class="st">"MASS"</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"shiny"</span>, <span class="st">"scales"</span>, <span class="st">"MASS"</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"linpk"</span>, <span class="st">"pmxTools"</span>, <span class="st">"PKconverter"</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"drc"</span>, <span class="st">"dr4pl"</span>, <span class="st">"DoseFinding"</span>, <span class="st">"clinDR"</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"bayesnec"</span>, <span class="st">"vpc"</span>, <span class="st">"tidyvpc"</span>, <span class="st">"xpose"</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"xgxr"</span>, <span class="st">"nlmixr2rpt"</span>, <span class="st">"pmxpartab"</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"BElikelihood"</span>, <span class="st">"Power2Stage"</span>, <span class="st">"replicateBE"</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"escalation"</span>, <span class="st">"BOIN"</span>, <span class="st">"dfcrm"</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"NonCompart"</span>, <span class="st">"qpNCA"</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
 
 <!-- -->
@@ -1032,26 +1073,56 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`deSolve`** — General ODE/PDE/DDE solver</span>
 <span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`minpack.lm`** — Levenberg-Marquardt nonlinear least squares</span>
 <span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="fu">## Other Useful Packages</span></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`shiny`** — Interactive web applications for PK/PD</span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`scales`** — Axis scaling utilities</span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`MASS`** — Various statistical functions</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="fu">## Installation</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(</span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>  <span class="st">"rxode2"</span>, <span class="st">"nlmixr2"</span>, <span class="st">"mrgsolve"</span>, <span class="st">"PKNCA"</span>, <span class="st">"PK"</span>,</span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>  <span class="st">"nlme"</span>, <span class="st">"lme4"</span>, <span class="st">"saemix"</span>, <span class="st">"brms"</span>, <span class="st">"cmdstanr"</span>,</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ggplot2"</span>, <span class="st">"dplyr"</span>, <span class="st">"tidyr"</span>, <span class="st">"readr"</span>, <span class="st">"readxl"</span>,</span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>  <span class="st">"patchwork"</span>, <span class="st">"ggrepel"</span>,</span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  <span class="st">"knitr"</span>, <span class="st">"rmarkdown"</span>, <span class="st">"quarto"</span>,</span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>  <span class="st">"survival"</span>, <span class="st">"survminer"</span>,</span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>  <span class="st">"deSolve"</span>, <span class="st">"minpack.lm"</span>,</span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>  <span class="st">"shiny"</span>, <span class="st">"scales"</span>, <span class="st">"MASS"</span></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`linpk`** â€” Closed-form linear PK profiles</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`pmxTools`** â€” Compartmental PK closed-form solutions</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`PKconverter`** â€” Micro-macro parameter conversion</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`drc`** â€” 30+ dose-response models with robust fitting</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`dr4pl`** â€” Outlier-resistant 4PL logistic regression</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`DoseFinding`** â€” MCP-Mod for Phase II dose-finding</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`clinDR`** â€” Bayesian Emax meta-analytic priors</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`bayesnec`** â€” No-effect concentration estimation</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`vpc`** â€” Visual predictive checks (classic binned)</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`tidyvpc`** â€” Binless VPC with AQR/LOESS</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`xpose`** â€” NONMEM/nlmixr2 model diagnostics</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`xgxr`** â€” Exploratory PK/PD graphics (Novartis)</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`nlmixr2rpt`** â€” Automated Word/PowerPoint reporting</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`pmxpartab`** â€” HTML parameter estimate tables</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`BElikelihood`** â€” Profile likelihood bioequivalence</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`Power2Stage`** â€” Two-stage BE designs</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`replicateBE`** â€” ABEL for highly variable drugs</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`escalation`** â€” CRM, mTPI, BOIN dose-finding</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`BOIN`** â€” Bayesian optimal interval design</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`dfcrm`** â€” Continual reassessment method</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`NonCompart`** â€” Alternative NCA implementation</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`qpNCA`** â€” Multi-dose steady-state NCA</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="fu">## Other Useful Packages</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`shiny`** â€” Interactive web applications for PK/PD</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`scales`** â€” Axis scaling utilities</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`MASS`** â€” Various statistical functions</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="fu">## Installation</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>  <span class="st">"rxode2"</span>, <span class="st">"nlmixr2"</span>, <span class="st">"mrgsolve"</span>, <span class="st">"PKNCA"</span>, <span class="st">"PK"</span>,</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>  <span class="st">"nlme"</span>, <span class="st">"lme4"</span>, <span class="st">"saemix"</span>, <span class="st">"brms"</span>, <span class="st">"cmdstanr"</span>,</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ggplot2"</span>, <span class="st">"dplyr"</span>, <span class="st">"tidyr"</span>, <span class="st">"readr"</span>, <span class="st">"readxl"</span>,</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>  <span class="st">"patchwork"</span>, <span class="st">"ggrepel"</span>,</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>  <span class="st">"knitr"</span>, <span class="st">"rmarkdown"</span>, <span class="st">"quarto"</span>,</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>  <span class="st">"survival"</span>, <span class="st">"survminer"</span>,</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>  <span class="st">"deSolve"</span>, <span class="st">"minpack.lm"</span>,</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>  <span class="st">"shiny"</span>, <span class="st">"scales"</span>, <span class="st">"MASS"</span>,</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>  <span class="st">"linpk"</span>, <span class="st">"pmxTools"</span>, <span class="st">"PKconverter"</span>,</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>  <span class="st">"drc"</span>, <span class="st">"dr4pl"</span>, <span class="st">"DoseFinding"</span>, <span class="st">"clinDR"</span>,</span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>  <span class="st">"bayesnec"</span>, <span class="st">"vpc"</span>, <span class="st">"tidyvpc"</span>, <span class="st">"xpose"</span>,</span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>  <span class="st">"xgxr"</span>, <span class="st">"nlmixr2rpt"</span>, <span class="st">"pmxpartab"</span>,</span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>  <span class="st">"BElikelihood"</span>, <span class="st">"Power2Stage"</span>, <span class="st">"replicateBE"</span>,</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>  <span class="st">"escalation"</span>, <span class="st">"BOIN"</span>, <span class="st">"dfcrm"</span>,</span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>  <span class="st">"NonCompart"</span>, <span class="st">"qpNCA"</span></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

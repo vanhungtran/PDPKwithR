@@ -62,6 +62,8 @@ book:
     - appendix-d-glossary.qmd
     - appendix-e-estimation-methods.qmd
     - appendix-f-datasets-exercises.qmd
+    - appendix-g-bioequivalence.qmd
+    - appendix-h-phase1-escalation.qmd
 
 bibliography: references.bib
 
