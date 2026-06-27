@@ -647,8 +647,8 @@ window.Quarto = {
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">is.na</span>(pk_data))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>  ID TIME DOSE CONC 
-   0    0    0    0 </code></pre>
+<pre><code>    ID   TIME   CONC   DOSE    AGE WEIGHT    SEX 
+     0      0      0      0      0      0      0 </code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -988,63 +988,69 @@ window.Quarto = {
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Simulated patient parameters ----</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">CL  =</span> <span class="dv">5</span>,     <span class="co"># L/h</span></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">Vc  =</span> <span class="dv">50</span>,    <span class="co"># L (central)</span></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">Q   =</span> <span class="dv">4</span>,     <span class="co"># L/h (inter-compartmental)</span></span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">Vp  =</span> <span class="dv">30</span>     <span class="co"># L (peripheral)</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- rxode2 model ----</span></span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>rx_model <span class="ot">&lt;-</span> <span class="fu">rxode2</span>({</span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A1) <span class="ot">&lt;-</span> <span class="sc">-</span> (CL<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">-</span> (Q<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">+</span> (Q<span class="sc">/</span>Vp) <span class="sc">*</span> A2</span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A2) <span class="ot">&lt;-</span>   (Q<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">-</span> (Q<span class="sc">/</span>Vp) <span class="sc">*</span> A2</span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  Cp <span class="ot">&lt;-</span> A1 <span class="sc">/</span> Vc</span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>rx_sim <span class="ot">&lt;-</span> rx_model <span class="sc">|&gt;</span></span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rxSolve</span>(</span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">params  =</span> params,</span>
-<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">events  =</span> <span class="fu">et</span>(<span class="at">time =</span> <span class="dv">0</span>, <span class="at">amt =</span> <span class="dv">500</span>, <span class="at">cmt =</span> <span class="dv">1</span>),</span>
-<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">times   =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">48</span>, <span class="at">by =</span> <span class="fl">0.5</span>)</span>
-<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
-<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">engine =</span> <span class="st">"rxode2"</span>)</span>
-<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- mrgsolve model ----</span></span>
-<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>mrg_code <span class="ot">&lt;-</span> <span class="st">"</span></span>
-<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a><span class="st">$PARAM CL = 5, Vc = 50, Q = 4, Vp = 30</span></span>
-<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a><span class="st">$CMT A1 A2</span></span>
-<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a><span class="st">$ODE</span></span>
-<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a><span class="st">dxdt_A1 = - (CL/Vc) * A1 - (Q/Vc) * A1 + (Q/Vp) * A2;</span></span>
-<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a><span class="st">dxdt_A2 =   (Q/Vc) * A1 - (Q/Vp) * A2;</span></span>
-<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a><span class="st">$TABLE</span></span>
-<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a><span class="st">double Cp = A1 / Vc;</span></span>
-<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a><span class="st">$CAPTURE Cp</span></span>
-<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a><span class="st">"</span></span>
-<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>mrg_model <span class="ot">&lt;-</span> <span class="fu">mcode</span>(<span class="st">"twocmt"</span>, mrg_code)</span>
-<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>mrg_sim <span class="ot">&lt;-</span> mrg_model <span class="sc">|&gt;</span></span>
-<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ev</span>(<span class="at">amt =</span> <span class="dv">500</span>, <span class="at">cmt =</span> <span class="dv">1</span>, <span class="at">time =</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
-<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mrgsim</span>(<span class="at">end =</span> <span class="dv">48</span>, <span class="at">delta =</span> <span class="fl">0.5</span>) <span class="sc">|&gt;</span></span>
-<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
-<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">engine =</span> <span class="st">"mrgsolve"</span>)</span>
-<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Combine &amp; Plot ----</span></span>
-<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(rx_sim, mrg_sim) <span class="sc">|&gt;</span></span>
-<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> Cp, <span class="at">color =</span> engine, <span class="at">linetype =</span> engine)) <span class="sc">+</span></span>
-<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.0</span>) <span class="sc">+</span></span>
-<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"rxode2"</span> <span class="ot">=</span> <span class="st">"#00A8B0"</span>, <span class="st">"mrgsolve"</span> <span class="ot">=</span> <span class="st">"#E0533D"</span>)) <span class="sc">+</span></span>
-<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_linetype_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"rxode2"</span> <span class="ot">=</span> <span class="st">"solid"</span>, <span class="st">"mrgsolve"</span> <span class="ot">=</span> <span class="st">"dashed"</span>)) <span class="sc">+</span></span>
-<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
-<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"rxode2 vs mrgsolve: 2-Compartment IV Bolus"</span>,</span>
-<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Both engines converge to identical solutions"</span>,</span>
-<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Time (h)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>,</span>
-<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"Engine"</span>, <span class="at">linetype =</span> <span class="st">"Engine"</span></span>
-<span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb20-62"><a href="#cb20-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">CL =</span> <span class="dv">5</span>, <span class="at">Vc =</span> <span class="dv">50</span>, <span class="at">Q =</span> <span class="dv">4</span>, <span class="at">Vp =</span> <span class="dv">30</span>)  <span class="co"># named numeric vector</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- rxode2 model ----</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>rx_model <span class="ot">&lt;-</span> <span class="fu">rxode2</span>({</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A1) <span class="ot">&lt;-</span> <span class="sc">-</span> (CL<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">-</span> (Q<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">+</span> (Q<span class="sc">/</span>Vp) <span class="sc">*</span> A2</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A2) <span class="ot">&lt;-</span>   (Q<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">-</span> (Q<span class="sc">/</span>Vp) <span class="sc">*</span> A2</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  Cp <span class="ot">&lt;-</span> A1 <span class="sc">/</span> Vc</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>rx_sim <span class="ot">&lt;-</span> rx_model <span class="sc">|&gt;</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rxSolve</span>(</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">params  =</span> params,</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">events  =</span> <span class="fu">et</span>(<span class="at">time =</span> <span class="dv">0</span>, <span class="at">amt =</span> <span class="dv">500</span>, <span class="at">cmt =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span> <span class="fu">et</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">48</span>, <span class="at">by =</span> <span class="fl">0.5</span>))</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">engine =</span> <span class="st">"rxode2"</span>)</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- mrgsolve model ----</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>mrg_code <span class="ot">&lt;-</span> <span class="st">"</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a><span class="st">$PARAM CL = 5, Vc = 50, Q = 4, Vp = 30</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a><span class="st">$CMT A1 A2</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a><span class="st">$ODE</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a><span class="st">dxdt_A1 = - (CL/Vc) * A1 - (Q/Vc) * A1 + (Q/Vp) * A2;</span></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a><span class="st">dxdt_A2 =   (Q/Vc) * A1 - (Q/Vp) * A2;</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a><span class="st">$TABLE</span></span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a><span class="st">double Cp = A1 / Vc;</span></span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a><span class="st">$CAPTURE Cp</span></span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a><span class="st">"</span></span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>mrg_model <span class="ot">&lt;-</span> <span class="fu">mcode</span>(<span class="st">"twocmt"</span>, mrg_code)</span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>mrg_sim <span class="ot">&lt;-</span> mrg_model <span class="sc">|&gt;</span></span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ev</span>(<span class="at">amt =</span> <span class="dv">500</span>, <span class="at">cmt =</span> <span class="dv">1</span>, <span class="at">time =</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mrgsim</span>(<span class="at">end =</span> <span class="dv">48</span>, <span class="at">delta =</span> <span class="fl">0.5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">engine =</span> <span class="st">"mrgsolve"</span>)</span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Combine &amp; Plot ----</span></span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(rx_sim, mrg_sim) <span class="sc">|&gt;</span></span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> Cp, <span class="at">color =</span> engine, <span class="at">linetype =</span> engine)) <span class="sc">+</span></span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.0</span>) <span class="sc">+</span></span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"rxode2"</span> <span class="ot">=</span> <span class="st">"#00A8B0"</span>, <span class="st">"mrgsolve"</span> <span class="ot">=</span> <span class="st">"#E0533D"</span>)) <span class="sc">+</span></span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_linetype_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"rxode2"</span> <span class="ot">=</span> <span class="st">"solid"</span>, <span class="st">"mrgsolve"</span> <span class="ot">=</span> <span class="st">"dashed"</span>)) <span class="sc">+</span></span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"rxode2 vs mrgsolve: 2-Compartment IV Bolus"</span>,</span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Both engines converge to identical solutions"</span>,</span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Time (h)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>,</span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"Engine"</span>, <span class="at">linetype =</span> <span class="st">"Engine"</span></span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<div id="fig-engine-comparison" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-engine-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="04-r-setup_files/figure-html/fig-engine-comparison-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;4.1: Two-compartment IV bolus simulated with rxode2 (solid teal) and mrgsolve (dashed coral). Both engines produce identical results, confirming model equivalence."><img src="04-r-setup_files/figure-html/fig-engine-comparison-1.png" class="img-fluid figure-img" width="2400"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-engine-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4.1: Two-compartment IV bolus simulated with rxode2 (solid teal) and mrgsolve (dashed coral). Both engines produce identical results, confirming model equivalence.
+</figcaption>
+</figure>
+</div>
+</div>
 </div>
 <table class="caption-top table">
 <colgroup>
@@ -1114,6 +1120,18 @@ window.Quarto = {
 <span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<div id="fig-linpk-demo" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-linpk-demo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="04-r-setup_files/figure-html/fig-linpk-demo-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;4.2: Multi-dose oral profile generated with linpk using closed-form equations. No ODE solver required."><img src="04-r-setup_files/figure-html/fig-linpk-demo-1.png" class="img-fluid figure-img" width="2100"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-linpk-demo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4.2: Multi-dose oral profile generated with linpk using closed-form equations. No ODE solver required.
+</figcaption>
+</figure>
+</div>
+</div>
 </div>
 </section>
 <section id="nlme-linear-mixed-effects-for-pk-summary-statistics" class="level3" data-number="4.9.3">
@@ -1133,14 +1151,40 @@ window.Quarto = {
 <span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cmax    =</span> <span class="cn">NA</span></span>
 <span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>pk_summary<span class="sc">$</span>cmax <span class="ot">&lt;-</span> <span class="fu">with</span>(pk_summary,</span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="fl">2.5</span> <span class="sc">*</span> dose<span class="sc">^</span><span class="fl">0.85</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="dv">0</span>, <span class="fl">0.2</span>)) <span class="sc">+</span></span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="dv">0</span>, <span class="fl">0.5</span>)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="fl">2.5</span> <span class="sc">*</span> dose<span class="sc">^</span><span class="fl">0.85</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="fu">nrow</span>(pk_summary), <span class="dv">0</span>, <span class="fl">0.2</span>)) <span class="sc">+</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(<span class="fu">nrow</span>(pk_summary), <span class="dv">0</span>, <span class="fl">0.5</span>)</span>
 <span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lme</span>(<span class="fu">log</span>(cmax) <span class="sc">~</span> <span class="fu">log</span>(dose), <span class="at">random =</span> <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> subject,</span>
 <span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">data =</span> pk_summary)</span>
 <span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed-effects model fit by REML
+  Data: pk_summary 
+        AIC      BIC  logLik
+  -5.953581 2.288191 6.97679
+
+Random effects:
+ Formula: ~1 | subject
+        (Intercept)  Residual
+StdDev:  0.02105444 0.2008386
+
+Fixed effects:  log(cmax) ~ log(dose) 
+                Value  Std.Error DF  t-value p-value
+(Intercept) 1.0461150 0.21488876 30  4.86817       0
+log(dose)   0.8301846 0.04631407 28 17.92511       0
+ Correlation: 
+          (Intr)
+log(dose) -0.993
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-2.12086963 -0.66342228 -0.01970859  0.60944753  1.95146249 
+
+Number of Observations: 60
+Number of Groups: 30 </code></pre>
+</div>
 </div>
 <p>The power model <span class="math inline">\text{C}_{max} \propto \text{dose}^{\beta}</span> estimates <span class="math inline">\beta \approx 0.85</span>, confirming near-linear dose proportionality — a common regulatory question. We’ll revisit <code>nlme</code> for full PK curve fitting in Chapter 12.</p>
 <p>:::</p>
@@ -1645,510 +1689,502 @@ window.Quarto = {
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="sourceCode" id="cb23" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># R Fundamentals and Workflow for PK/PD</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">## Learning Objectives</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>By the end of this chapter you will be able to:</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Set up a complete R environment for PK/PD analysis</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Understand R data structures through a pharmacometric lens</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Master the "Tidyverse" workflow for data cleaning and transformation</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Handle common PK/PD data hurdles (BLQ values, units, and pivoting)</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build sophisticated, faceted <span class="in">`ggplot2`</span> visualizations</span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Organize reproducible PK/PD analysis projects</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="fu">## Setting Up Your R Environment</span></span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="fu">### Installing R and RStudio</span></span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Download R from <span class="co">[</span><span class="ot">cran.r-project.org</span><span class="co">](https://cran.r-project.org)</span></span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Download RStudio (or VS Code with the R extension).</span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**The PK/PD Ecosystem:** Unlike other fields, PK/PD in R relies on a specific set of high-performance packages.</span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
-<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(</span>
-<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>  <span class="st">"tidyverse"</span>,  <span class="co"># Data manipulation &amp; plotting (dplyr, ggplot2, tidyr)</span></span>
-<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>  <span class="st">"PKNCA"</span>,      <span class="co"># Industrial-strength Noncompartmental Analysis</span></span>
-<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>  <span class="st">"rxode2"</span>,     <span class="co"># Fast ODE simulation</span></span>
-<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>  <span class="st">"nlmixr2"</span>,    <span class="co"># Nonlinear Mixed Effects Modeling</span></span>
-<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mrgsolve"</span>,   <span class="co"># Simulation for clinical trial design</span></span>
-<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>  <span class="st">"patchwork"</span>,  <span class="co"># Combining multiple plots</span></span>
-<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>  <span class="st">"janitor"</span>,    <span class="co"># Cleaning messy column names</span></span>
-<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>  <span class="st">"here"</span>        <span class="co"># Robust file paths</span></span>
-<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a><span class="fu">### Recommended Project Structure</span></span>
-<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a><span class="in">PKPD_Project/</span></span>
-<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a><span class="in">├── data/            # Raw and processed data files</span></span>
-<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a><span class="in">├── R/               # Custom R functions</span></span>
-<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a><span class="in">├── scripts/         # Analysis scripts</span></span>
-<span id="cb23-47"><a href="#cb23-47" aria-hidden="true" tabindex="-1"></a><span class="in">├── output/          # Generated tables and figures</span></span>
-<span id="cb23-48"><a href="#cb23-48" aria-hidden="true" tabindex="-1"></a><span class="in">├── reports/         # Quarto/R Markdown reports</span></span>
-<span id="cb23-49"><a href="#cb23-49" aria-hidden="true" tabindex="-1"></a><span class="in">├── renv/            # Package version management (optional)</span></span>
-<span id="cb23-50"><a href="#cb23-50" aria-hidden="true" tabindex="-1"></a><span class="in">└── PKPD_Project.Rproj</span></span>
-<span id="cb23-51"><a href="#cb23-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-52"><a href="#cb23-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-53"><a href="#cb23-53" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb23-54"><a href="#cb23-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-55"><a href="#cb23-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## Importing PK/PD Data</span></span>
-<span id="cb23-56"><a href="#cb23-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-57"><a href="#cb23-57" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Data Formats in PK/PD</span></span>
-<span id="cb23-58"><a href="#cb23-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-59"><a href="#cb23-59" aria-hidden="true" tabindex="-1"></a>PK data typically has a "long" structure with columns for subject ID, time, concentration, and dose information.</span>
-<span id="cb23-60"><a href="#cb23-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-63"><a href="#cb23-63" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-64"><a href="#cb23-64" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb23-65"><a href="#cb23-65" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
-<span id="cb23-66"><a href="#cb23-66" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb23-67"><a href="#cb23-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-68"><a href="#cb23-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate a typical PK dataset</span></span>
-<span id="cb23-69"><a href="#cb23-69" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb23-70"><a href="#cb23-70" aria-hidden="true" tabindex="-1"></a>n_subjects <span class="ot">&lt;-</span> <span class="dv">6</span></span>
-<span id="cb23-71"><a href="#cb23-71" aria-hidden="true" tabindex="-1"></a>times <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>)</span>
-<span id="cb23-72"><a href="#cb23-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-73"><a href="#cb23-73" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(</span>
-<span id="cb23-74"><a href="#cb23-74" aria-hidden="true" tabindex="-1"></a>  <span class="at">ID =</span> <span class="dv">1</span><span class="sc">:</span>n_subjects,</span>
-<span id="cb23-75"><a href="#cb23-75" aria-hidden="true" tabindex="-1"></a>  <span class="at">TIME =</span> times</span>
-<span id="cb23-76"><a href="#cb23-76" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
-<span id="cb23-77"><a href="#cb23-77" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb23-78"><a href="#cb23-78" aria-hidden="true" tabindex="-1"></a>    <span class="at">DOSE =</span> <span class="dv">100</span>,</span>
-<span id="cb23-79"><a href="#cb23-79" aria-hidden="true" tabindex="-1"></a>    <span class="at">CONC =</span> (DOSE <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.3</span> <span class="sc">*</span> TIME) <span class="sc">*</span> <span class="fu">rlnorm</span>(<span class="fu">n</span>(), <span class="at">meanlog =</span> <span class="dv">0</span>, <span class="at">sdlog =</span> <span class="fl">0.2</span>),</span>
-<span id="cb23-80"><a href="#cb23-80" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> ID</span>
-<span id="cb23-81"><a href="#cb23-81" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb23-82"><a href="#cb23-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-83"><a href="#cb23-83" aria-hidden="true" tabindex="-1"></a><span class="co"># View the first few rows</span></span>
-<span id="cb23-84"><a href="#cb23-84" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(pk_data, <span class="dv">12</span>)</span>
-<span id="cb23-85"><a href="#cb23-85" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-86"><a href="#cb23-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-87"><a href="#cb23-87" aria-hidden="true" tabindex="-1"></a><span class="fu">### Importing from Files</span></span>
-<span id="cb23-88"><a href="#cb23-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-91"><a href="#cb23-91" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-92"><a href="#cb23-92" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
-<span id="cb23-93"><a href="#cb23-93" aria-hidden="true" tabindex="-1"></a><span class="co"># Import CSV</span></span>
-<span id="cb23-94"><a href="#cb23-94" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/pk_concentrations.csv"</span>)</span>
-<span id="cb23-95"><a href="#cb23-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-96"><a href="#cb23-96" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Excel</span></span>
-<span id="cb23-97"><a href="#cb23-97" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
-<span id="cb23-98"><a href="#cb23-98" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/pk_data.xlsx"</span>, <span class="at">sheet =</span> <span class="st">"Concentrations"</span>)</span>
-<span id="cb23-99"><a href="#cb23-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-100"><a href="#cb23-100" aria-hidden="true" tabindex="-1"></a><span class="co"># Import NONMEM-style data</span></span>
-<span id="cb23-101"><a href="#cb23-101" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> <span class="fu">read_table</span>(<span class="st">"data/pk_data.txt"</span>)</span>
-<span id="cb23-102"><a href="#cb23-102" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-103"><a href="#cb23-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-104"><a href="#cb23-104" aria-hidden="true" tabindex="-1"></a><span class="fu">### Data Cleaning and Reshaping</span></span>
-<span id="cb23-105"><a href="#cb23-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-108"><a href="#cb23-108" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-109"><a href="#cb23-109" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for missing values</span></span>
-<span id="cb23-110"><a href="#cb23-110" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">is.na</span>(pk_data))</span>
-<span id="cb23-111"><a href="#cb23-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-112"><a href="#cb23-112" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert columns to correct types</span></span>
-<span id="cb23-113"><a href="#cb23-113" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> pk_data <span class="sc">%&gt;%</span></span>
-<span id="cb23-114"><a href="#cb23-114" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb23-115"><a href="#cb23-115" aria-hidden="true" tabindex="-1"></a>    <span class="at">ID   =</span> <span class="fu">as.factor</span>(ID),</span>
-<span id="cb23-116"><a href="#cb23-116" aria-hidden="true" tabindex="-1"></a>    <span class="at">TIME =</span> <span class="fu">as.numeric</span>(TIME),</span>
-<span id="cb23-117"><a href="#cb23-117" aria-hidden="true" tabindex="-1"></a>    <span class="at">CONC =</span> <span class="fu">as.numeric</span>(CONC)</span>
-<span id="cb23-118"><a href="#cb23-118" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb23-119"><a href="#cb23-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-120"><a href="#cb23-120" aria-hidden="true" tabindex="-1"></a><span class="co"># Reshape wide → long (if needed)</span></span>
-<span id="cb23-121"><a href="#cb23-121" aria-hidden="true" tabindex="-1"></a>pk_wide <span class="ot">&lt;-</span> pk_data <span class="sc">%&gt;%</span></span>
-<span id="cb23-122"><a href="#cb23-122" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> TIME, <span class="at">values_from =</span> CONC,</span>
-<span id="cb23-123"><a href="#cb23-123" aria-hidden="true" tabindex="-1"></a>                     <span class="at">names_prefix =</span> <span class="st">"T_"</span>)</span>
-<span id="cb23-124"><a href="#cb23-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-125"><a href="#cb23-125" aria-hidden="true" tabindex="-1"></a><span class="co"># Reshape long → wide</span></span>
-<span id="cb23-126"><a href="#cb23-126" aria-hidden="true" tabindex="-1"></a>pk_long <span class="ot">&lt;-</span> pk_wide <span class="sc">%&gt;%</span></span>
-<span id="cb23-127"><a href="#cb23-127" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"T_"</span>),</span>
-<span id="cb23-128"><a href="#cb23-128" aria-hidden="true" tabindex="-1"></a>                      <span class="at">names_to =</span> <span class="st">"TIME"</span>,</span>
-<span id="cb23-129"><a href="#cb23-129" aria-hidden="true" tabindex="-1"></a>                      <span class="at">values_to =</span> <span class="st">"CONC"</span>,</span>
-<span id="cb23-130"><a href="#cb23-130" aria-hidden="true" tabindex="-1"></a>                      <span class="at">names_prefix =</span> <span class="st">"T_"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb23-131"><a href="#cb23-131" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">TIME =</span> <span class="fu">as.numeric</span>(TIME))</span>
-<span id="cb23-132"><a href="#cb23-132" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-133"><a href="#cb23-133" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-134"><a href="#cb23-134" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb23-135"><a href="#cb23-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-136"><a href="#cb23-136" aria-hidden="true" tabindex="-1"></a><span class="fu">## Plotting Concentration-Time Profiles</span></span>
-<span id="cb23-137"><a href="#cb23-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-138"><a href="#cb23-138" aria-hidden="true" tabindex="-1"></a><span class="fu">### Individual Profiles</span></span>
-<span id="cb23-139"><a href="#cb23-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-142"><a href="#cb23-142" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-143"><a href="#cb23-143" aria-hidden="true" tabindex="-1"></a><span class="co"># Individual concentration-time plots</span></span>
-<span id="cb23-144"><a href="#cb23-144" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pk_data, <span class="fu">aes</span>(TIME, CONC, <span class="at">group =</span> ID, <span class="at">color =</span> ID)) <span class="sc">+</span></span>
-<span id="cb23-145"><a href="#cb23-145" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb23-146"><a href="#cb23-146" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
-<span id="cb23-147"><a href="#cb23-147" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Individual Concentration-Time Profiles"</span>,</span>
-<span id="cb23-148"><a href="#cb23-148" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"IV Bolus, 100 mg dose"</span>,</span>
-<span id="cb23-149"><a href="#cb23-149" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>,</span>
-<span id="cb23-150"><a href="#cb23-150" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Subject"</span>) <span class="sc">+</span></span>
-<span id="cb23-151"><a href="#cb23-151" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb23-152"><a href="#cb23-152" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-153"><a href="#cb23-153" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-154"><a href="#cb23-154" aria-hidden="true" tabindex="-1"></a><span class="fu">### Mean ± SD Profile</span></span>
-<span id="cb23-155"><a href="#cb23-155" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-158"><a href="#cb23-158" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-159"><a href="#cb23-159" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary statistics and mean ± SD plot</span></span>
-<span id="cb23-160"><a href="#cb23-160" aria-hidden="true" tabindex="-1"></a>pk_summary <span class="ot">&lt;-</span> pk_data <span class="sc">%&gt;%</span></span>
-<span id="cb23-161"><a href="#cb23-161" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb23-162"><a href="#cb23-162" aria-hidden="true" tabindex="-1"></a>    <span class="at">Mean =</span> <span class="fu">mean</span>(CONC),</span>
-<span id="cb23-163"><a href="#cb23-163" aria-hidden="true" tabindex="-1"></a>    <span class="at">SD   =</span> <span class="fu">sd</span>(CONC),</span>
-<span id="cb23-164"><a href="#cb23-164" aria-hidden="true" tabindex="-1"></a>    <span class="at">N    =</span> <span class="fu">n</span>(),</span>
-<span id="cb23-165"><a href="#cb23-165" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> TIME</span>
-<span id="cb23-166"><a href="#cb23-166" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb23-167"><a href="#cb23-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-168"><a href="#cb23-168" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pk_summary, <span class="fu">aes</span>(TIME, Mean)) <span class="sc">+</span></span>
-<span id="cb23-169"><a href="#cb23-169" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> Mean <span class="sc">-</span> SD, <span class="at">ymax =</span> Mean <span class="sc">+</span> SD),</span>
-<span id="cb23-170"><a href="#cb23-170" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill =</span> <span class="st">"#0B6E6B"</span>, <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
-<span id="cb23-171"><a href="#cb23-171" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"#0B6E6B"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb23-172"><a href="#cb23-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#0B6E6B"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb23-173"><a href="#cb23-173" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Mean Concentration-Time Profile (± SD)"</span>,</span>
-<span id="cb23-174"><a href="#cb23-174" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>) <span class="sc">+</span></span>
-<span id="cb23-175"><a href="#cb23-175" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb23-176"><a href="#cb23-176" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-177"><a href="#cb23-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-178"><a href="#cb23-178" aria-hidden="true" tabindex="-1"></a><span class="fu">### Semi-Log Plot (Standard PK View)</span></span>
-<span id="cb23-179"><a href="#cb23-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-182"><a href="#cb23-182" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-183"><a href="#cb23-183" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pk_data, <span class="fu">aes</span>(TIME, CONC, <span class="at">group =</span> ID, <span class="at">color =</span> ID)) <span class="sc">+</span></span>
-<span id="cb23-184"><a href="#cb23-184" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb23-185"><a href="#cb23-185" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
-<span id="cb23-186"><a href="#cb23-186" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
-<span id="cb23-187"><a href="#cb23-187" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Semi-Log Concentration-Time Profiles"</span>,</span>
-<span id="cb23-188"><a href="#cb23-188" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L, log scale)"</span>,</span>
-<span id="cb23-189"><a href="#cb23-189" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Subject"</span>) <span class="sc">+</span></span>
-<span id="cb23-190"><a href="#cb23-190" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb23-191"><a href="#cb23-191" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-192"><a href="#cb23-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-193"><a href="#cb23-193" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb23-194"><a href="#cb23-194" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-195"><a href="#cb23-195" aria-hidden="true" tabindex="-1"></a><span class="fu">## Plotting Dose-Response Data</span></span>
-<span id="cb23-196"><a href="#cb23-196" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-199"><a href="#cb23-199" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-200"><a href="#cb23-200" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate dose-response data</span></span>
-<span id="cb23-201"><a href="#cb23-201" aria-hidden="true" tabindex="-1"></a>doses <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.3</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">10</span>, <span class="dv">30</span>, <span class="dv">100</span>, <span class="dv">300</span>)</span>
-<span id="cb23-202"><a href="#cb23-202" aria-hidden="true" tabindex="-1"></a>n_per_dose <span class="ot">&lt;-</span> <span class="dv">5</span></span>
-<span id="cb23-203"><a href="#cb23-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-204"><a href="#cb23-204" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">456</span>)</span>
-<span id="cb23-205"><a href="#cb23-205" aria-hidden="true" tabindex="-1"></a>dr_data <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">DOSE =</span> doses, <span class="at">REP =</span> <span class="dv">1</span><span class="sc">:</span>n_per_dose) <span class="sc">%&gt;%</span></span>
-<span id="cb23-206"><a href="#cb23-206" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb23-207"><a href="#cb23-207" aria-hidden="true" tabindex="-1"></a>    <span class="at">Emax =</span> <span class="dv">100</span>,</span>
-<span id="cb23-208"><a href="#cb23-208" aria-hidden="true" tabindex="-1"></a>    <span class="at">EC50 =</span> <span class="dv">10</span>,</span>
-<span id="cb23-209"><a href="#cb23-209" aria-hidden="true" tabindex="-1"></a>    <span class="at">EFFECT =</span> (Emax <span class="sc">*</span> DOSE) <span class="sc">/</span> (EC50 <span class="sc">+</span> DOSE) <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="dv">0</span>, <span class="dv">5</span>)</span>
-<span id="cb23-210"><a href="#cb23-210" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb23-211"><a href="#cb23-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-212"><a href="#cb23-212" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dr_data, <span class="fu">aes</span>(DOSE, EFFECT)) <span class="sc">+</span></span>
-<span id="cb23-213"><a href="#cb23-213" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"#C44536"</span>, <span class="at">alpha =</span> <span class="fl">0.6</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb23-214"><a href="#cb23-214" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
-<span id="cb23-215"><a href="#cb23-215" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Dose-Response Data"</span>,</span>
-<span id="cb23-216"><a href="#cb23-216" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Dose (mg, log scale)"</span>, <span class="at">y =</span> <span class="st">"Effect (% of maximum)"</span>) <span class="sc">+</span></span>
-<span id="cb23-217"><a href="#cb23-217" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb23-218"><a href="#cb23-218" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-219"><a href="#cb23-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-220"><a href="#cb23-220" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb23-221"><a href="#cb23-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-222"><a href="#cb23-222" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reproducible Scripts and Version Control</span></span>
-<span id="cb23-223"><a href="#cb23-223" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-224"><a href="#cb23-224" aria-hidden="true" tabindex="-1"></a><span class="fu">### Best Practices for PK/PD Scripts</span></span>
-<span id="cb23-225"><a href="#cb23-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-226"><a href="#cb23-226" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Start every script with a header** describing purpose, author, and date</span>
-<span id="cb23-227"><a href="#cb23-227" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Load all packages at the top**</span>
-<span id="cb23-228"><a href="#cb23-228" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Use relative paths** (not absolute paths like <span class="in">`C:/Users/...`</span>)</span>
-<span id="cb23-229"><a href="#cb23-229" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Comment your code** — explain *why*, not *what*</span>
-<span id="cb23-230"><a href="#cb23-230" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Separate data import, analysis, and visualization**</span>
-<span id="cb23-231"><a href="#cb23-231" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>**Use version control** (Git) for all scripts</span>
-<span id="cb23-232"><a href="#cb23-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-235"><a href="#cb23-235" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-236"><a href="#cb23-236" aria-hidden="true" tabindex="-1"></a><span class="co"># Example script header</span></span>
-<span id="cb23-237"><a href="#cb23-237" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================</span></span>
-<span id="cb23-238"><a href="#cb23-238" aria-hidden="true" tabindex="-1"></a><span class="co"># Script: 01_nca_analysis.R</span></span>
-<span id="cb23-239"><a href="#cb23-239" aria-hidden="true" tabindex="-1"></a><span class="co"># Purpose: Noncompartmental analysis of Study PK-2024-001</span></span>
-<span id="cb23-240"><a href="#cb23-240" aria-hidden="true" tabindex="-1"></a><span class="co"># Author:  Your Name</span></span>
-<span id="cb23-241"><a href="#cb23-241" aria-hidden="true" tabindex="-1"></a><span class="co"># Date:    2024-06-01</span></span>
-<span id="cb23-242"><a href="#cb23-242" aria-hidden="true" tabindex="-1"></a><span class="co"># Packages: PKNCA, dplyr, ggplot2</span></span>
-<span id="cb23-243"><a href="#cb23-243" aria-hidden="true" tabindex="-1"></a><span class="co"># Input:   data/raw/study001_conc.csv</span></span>
-<span id="cb23-244"><a href="#cb23-244" aria-hidden="true" tabindex="-1"></a><span class="co"># Output:  output/nca_parameters.csv, output/figures/conc_time.pdf</span></span>
-<span id="cb23-245"><a href="#cb23-245" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================</span></span>
-<span id="cb23-246"><a href="#cb23-246" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-247"><a href="#cb23-247" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-248"><a href="#cb23-248" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb23-249"><a href="#cb23-249" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-250"><a href="#cb23-250" aria-hidden="true" tabindex="-1"></a><span class="fu">## Creating a Reproducible PK/PD Workflow</span></span>
-<span id="cb23-251"><a href="#cb23-251" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-254"><a href="#cb23-254" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-255"><a href="#cb23-255" aria-hidden="true" tabindex="-1"></a><span class="co"># A minimal reproducible PK analysis workflow</span></span>
-<span id="cb23-256"><a href="#cb23-256" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-257"><a href="#cb23-257" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Load libraries</span></span>
-<span id="cb23-258"><a href="#cb23-258" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PKNCA)</span>
-<span id="cb23-259"><a href="#cb23-259" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb23-260"><a href="#cb23-260" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb23-261"><a href="#cb23-261" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-262"><a href="#cb23-262" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Import data</span></span>
-<span id="cb23-263"><a href="#cb23-263" aria-hidden="true" tabindex="-1"></a><span class="co"># pk_data &lt;- read_csv("data/pk_data.csv")</span></span>
-<span id="cb23-264"><a href="#cb23-264" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-265"><a href="#cb23-265" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Set up NCA intervals</span></span>
-<span id="cb23-266"><a href="#cb23-266" aria-hidden="true" tabindex="-1"></a><span class="co"># my_intervals &lt;- data.frame(start = 0, end = 24, ..., cmax = TRUE, ...)</span></span>
-<span id="cb23-267"><a href="#cb23-267" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-268"><a href="#cb23-268" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Calculate NCA parameters</span></span>
-<span id="cb23-269"><a href="#cb23-269" aria-hidden="true" tabindex="-1"></a><span class="co"># nca_results &lt;- pk.nca(my_data, my_intervals)</span></span>
-<span id="cb23-270"><a href="#cb23-270" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-271"><a href="#cb23-271" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Summarize and export</span></span>
-<span id="cb23-272"><a href="#cb23-272" aria-hidden="true" tabindex="-1"></a><span class="co"># nca_summary &lt;- summary(nca_results)</span></span>
-<span id="cb23-273"><a href="#cb23-273" aria-hidden="true" tabindex="-1"></a><span class="co"># write_csv(nca_summary, "output/nca_results.csv")</span></span>
-<span id="cb23-274"><a href="#cb23-274" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-275"><a href="#cb23-275" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. Visualize</span></span>
-<span id="cb23-276"><a href="#cb23-276" aria-hidden="true" tabindex="-1"></a><span class="co"># plot(nca_results)</span></span>
-<span id="cb23-277"><a href="#cb23-277" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-278"><a href="#cb23-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-279"><a href="#cb23-279" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb23-280"><a href="#cb23-280" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-281"><a href="#cb23-281" aria-hidden="true" tabindex="-1"></a><span class="fu">## Handling Missing Data in PK/PD</span></span>
-<span id="cb23-282"><a href="#cb23-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-283"><a href="#cb23-283" aria-hidden="true" tabindex="-1"></a>Missing concentration values are common in clinical PK studies. The appropriate handling strategy depends on **why** the data are missing.</span>
-<span id="cb23-284"><a href="#cb23-284" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-285"><a href="#cb23-285" aria-hidden="true" tabindex="-1"></a><span class="fu">### The MCAR/MAR/MNAR Framework</span></span>
-<span id="cb23-286"><a href="#cb23-286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-287"><a href="#cb23-287" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Mechanism <span class="pp">|</span> Definition <span class="pp">|</span> Test/Clue <span class="pp">|</span> Action <span class="pp">|</span></span>
-<span id="cb23-288"><a href="#cb23-288" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
-<span id="cb23-289"><a href="#cb23-289" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **MCAR** (Missing Completely at Random) <span class="pp">|</span> Missingness unrelated to any variable <span class="pp">|</span> No pattern in missing vs observed <span class="pp">|</span> Mean/median imputation OK <span class="pp">|</span></span>
-<span id="cb23-290"><a href="#cb23-290" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **MAR** (Missing at Random) <span class="pp">|</span> Missingness explained by observed covariates <span class="pp">|</span> Pattern linked to recorded variables (e.g., more missing at later times) <span class="pp">|</span> Regression imputation, multiple imputation (<span class="in">`mice`</span>), or MLE-based modeling <span class="pp">|</span></span>
-<span id="cb23-291"><a href="#cb23-291" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **MNAR** (Missing Not at Random) | Missingness depends on the unobserved value itself (e.g., samples below LLOQ) | Plausible mechanism: high CL patients drop out, BLQ samples | Selection/pattern-mixture models + sensitivity analysis; **no method is unbiased** <span class="pp">|</span></span>
-<span id="cb23-292"><a href="#cb23-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-295"><a href="#cb23-295" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-296"><a href="#cb23-296" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: Identify and handle missing data patterns</span></span>
-<span id="cb23-297"><a href="#cb23-297" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb23-298"><a href="#cb23-298" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-299"><a href="#cb23-299" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate PK data with different missingness types</span></span>
-<span id="cb23-300"><a href="#cb23-300" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb23-301"><a href="#cb23-301" aria-hidden="true" tabindex="-1"></a>pk_missing <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb23-302"><a href="#cb23-302" aria-hidden="true" tabindex="-1"></a>  <span class="at">ID =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="at">each =</span> <span class="dv">8</span>),</span>
-<span id="cb23-303"><a href="#cb23-303" aria-hidden="true" tabindex="-1"></a>  <span class="at">TIME =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>), <span class="dv">10</span>),</span>
-<span id="cb23-304"><a href="#cb23-304" aria-hidden="true" tabindex="-1"></a>  <span class="at">CONC =</span> <span class="dv">25</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.2</span> <span class="sc">*</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>), <span class="dv">10</span>)) <span class="sc">*</span> </span>
-<span id="cb23-305"><a href="#cb23-305" aria-hidden="true" tabindex="-1"></a>          <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">80</span>, <span class="dv">0</span>, <span class="fl">0.12</span>))</span>
-<span id="cb23-306"><a href="#cb23-306" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-307"><a href="#cb23-307" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-308"><a href="#cb23-308" aria-hidden="true" tabindex="-1"></a><span class="co"># Introduce MCAR: random 10% missing</span></span>
-<span id="cb23-309"><a href="#cb23-309" aria-hidden="true" tabindex="-1"></a>mcar_idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">80</span>, <span class="dv">8</span>)</span>
-<span id="cb23-310"><a href="#cb23-310" aria-hidden="true" tabindex="-1"></a>pk_missing<span class="sc">$</span>CONC_MCAR <span class="ot">&lt;-</span> pk_missing<span class="sc">$</span>CONC</span>
-<span id="cb23-311"><a href="#cb23-311" aria-hidden="true" tabindex="-1"></a>pk_missing<span class="sc">$</span>CONC_MCAR[mcar_idx] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb23-312"><a href="#cb23-312" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-313"><a href="#cb23-313" aria-hidden="true" tabindex="-1"></a><span class="co"># Introduce MAR: more missing at later time points</span></span>
-<span id="cb23-314"><a href="#cb23-314" aria-hidden="true" tabindex="-1"></a>mar_prob <span class="ot">&lt;-</span> <span class="fl">0.1</span> <span class="sc">*</span> pk_missing<span class="sc">$</span>TIME <span class="sc">/</span> <span class="dv">24</span></span>
-<span id="cb23-315"><a href="#cb23-315" aria-hidden="true" tabindex="-1"></a>mar_idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">runif</span>(<span class="dv">80</span>) <span class="sc">&lt;</span> mar_prob)</span>
-<span id="cb23-316"><a href="#cb23-316" aria-hidden="true" tabindex="-1"></a>pk_missing<span class="sc">$</span>CONC_MAR <span class="ot">&lt;-</span> pk_missing<span class="sc">$</span>CONC</span>
-<span id="cb23-317"><a href="#cb23-317" aria-hidden="true" tabindex="-1"></a>pk_missing<span class="sc">$</span>CONC_MAR[mar_idx] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb23-318"><a href="#cb23-318" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-319"><a href="#cb23-319" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize missingness</span></span>
-<span id="cb23-320"><a href="#cb23-320" aria-hidden="true" tabindex="-1"></a>missing_summary <span class="ot">&lt;-</span> pk_missing <span class="sc">%&gt;%</span></span>
-<span id="cb23-321"><a href="#cb23-321" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb23-322"><a href="#cb23-322" aria-hidden="true" tabindex="-1"></a>    <span class="at">MCAR_missing =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(CONC_MCAR)),</span>
-<span id="cb23-323"><a href="#cb23-323" aria-hidden="true" tabindex="-1"></a>    <span class="at">MAR_missing  =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(CONC_MAR)),</span>
-<span id="cb23-324"><a href="#cb23-324" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> TIME</span>
-<span id="cb23-325"><a href="#cb23-325" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb23-326"><a href="#cb23-326" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-327"><a href="#cb23-327" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Missing by time point:</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb23-328"><a href="#cb23-328" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(missing_summary)</span>
-<span id="cb23-329"><a href="#cb23-329" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-330"><a href="#cb23-330" aria-hidden="true" tabindex="-1"></a><span class="co"># Simple imputation: last observation carried forward (LOCF)</span></span>
-<span id="cb23-331"><a href="#cb23-331" aria-hidden="true" tabindex="-1"></a>pk_missing <span class="ot">&lt;-</span> pk_missing <span class="sc">%&gt;%</span></span>
-<span id="cb23-332"><a href="#cb23-332" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ID) <span class="sc">%&gt;%</span></span>
-<span id="cb23-333"><a href="#cb23-333" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">fill</span>(CONC_MCAR, CONC_MAR, <span class="at">.direction =</span> <span class="st">"down"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb23-334"><a href="#cb23-334" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
-<span id="cb23-335"><a href="#cb23-335" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-336"><a href="#cb23-336" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-337"><a href="#cb23-337" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
-<span id="cb23-338"><a href="#cb23-338" aria-hidden="true" tabindex="-1"></a><span class="fu">### BLQ (Below Limit of Quantification) Handling</span></span>
-<span id="cb23-339"><a href="#cb23-339" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-340"><a href="#cb23-340" aria-hidden="true" tabindex="-1"></a>BLQ values are a special case of **MNAR** — the value is missing *because* it's low. Common approaches:</span>
-<span id="cb23-341"><a href="#cb23-341" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-342"><a href="#cb23-342" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**LLOQ/2 substitution** — set BLQ = LLOQ/2 (simple, common in NCA)</span>
-<span id="cb23-343"><a href="#cb23-343" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**M3 method** — likelihood-based approach that treats BLQ as left-censored observations</span>
-<span id="cb23-344"><a href="#cb23-344" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Imputation** — multiple imputation with left-censoring constraint</span>
-<span id="cb23-345"><a href="#cb23-345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-346"><a href="#cb23-346" aria-hidden="true" tabindex="-1"></a>For NCA, LLOQ/2 is standard. For population PK, likelihood-based methods (M3) are preferred as they correctly propagate uncertainty.</span>
-<span id="cb23-347"><a href="#cb23-347" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb23-348"><a href="#cb23-348" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-349"><a href="#cb23-349" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb23-350"><a href="#cb23-350" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-351"><a href="#cb23-351" aria-hidden="true" tabindex="-1"></a><span class="fu">## Beyond `rxode2`: Comparing Simulation Engines</span></span>
-<span id="cb23-352"><a href="#cb23-352" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-353"><a href="#cb23-353" aria-hidden="true" tabindex="-1"></a>While <span class="in">`rxode2`</span> is our workhorse for ODE-based PK modeling, R offers several complementary simulation frameworks. This section introduces <span class="in">`mrgsolve`</span>, <span class="in">`linpk`</span>, and <span class="in">`nlme`</span> — each filling a distinct niche in the PK/PD toolkit.</span>
-<span id="cb23-354"><a href="#cb23-354" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-355"><a href="#cb23-355" aria-hidden="true" tabindex="-1"></a><span class="fu">### `mrgsolve`: C++ Simulation for Clinical Trial Design</span></span>
-<span id="cb23-356"><a href="#cb23-356" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-357"><a href="#cb23-357" aria-hidden="true" tabindex="-1"></a><span class="in">`mrgsolve`</span> compiles ODE models to C++ for blazing-fast simulation. It excels at large-scale clinical trial simulations with complex dosing regimens.</span>
-<span id="cb23-358"><a href="#cb23-358" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-359"><a href="#cb23-359" aria-hidden="true" tabindex="-1"></a>Let's simulate a two-compartment IV bolus in **both** <span class="in">`rxode2`</span> and <span class="in">`mrgsolve`</span> to compare their syntax and output:</span>
-<span id="cb23-360"><a href="#cb23-360" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-363"><a href="#cb23-363" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-364"><a href="#cb23-364" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-engine-comparison</span></span>
-<span id="cb23-365"><a href="#cb23-365" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Two-compartment IV bolus simulated with rxode2 (solid teal) and mrgsolve (dashed coral). Both engines produce identical results, confirming model equivalence."</span></span>
-<span id="cb23-366"><a href="#cb23-366" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 8</span></span>
-<span id="cb23-367"><a href="#cb23-367" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
-<span id="cb23-368"><a href="#cb23-368" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
-<span id="cb23-369"><a href="#cb23-369" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-370"><a href="#cb23-370" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rxode2)</span>
-<span id="cb23-371"><a href="#cb23-371" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mrgsolve)</span>
-<span id="cb23-372"><a href="#cb23-372" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb23-373"><a href="#cb23-373" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb23-374"><a href="#cb23-374" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-375"><a href="#cb23-375" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Simulated patient parameters ----</span></span>
-<span id="cb23-376"><a href="#cb23-376" aria-hidden="true" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb23-377"><a href="#cb23-377" aria-hidden="true" tabindex="-1"></a>  <span class="at">CL  =</span> <span class="dv">5</span>,     <span class="co"># L/h</span></span>
-<span id="cb23-378"><a href="#cb23-378" aria-hidden="true" tabindex="-1"></a>  <span class="at">Vc  =</span> <span class="dv">50</span>,    <span class="co"># L (central)</span></span>
-<span id="cb23-379"><a href="#cb23-379" aria-hidden="true" tabindex="-1"></a>  <span class="at">Q   =</span> <span class="dv">4</span>,     <span class="co"># L/h (inter-compartmental)</span></span>
-<span id="cb23-380"><a href="#cb23-380" aria-hidden="true" tabindex="-1"></a>  <span class="at">Vp  =</span> <span class="dv">30</span>     <span class="co"># L (peripheral)</span></span>
-<span id="cb23-381"><a href="#cb23-381" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-382"><a href="#cb23-382" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-383"><a href="#cb23-383" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- rxode2 model ----</span></span>
-<span id="cb23-384"><a href="#cb23-384" aria-hidden="true" tabindex="-1"></a>rx_model <span class="ot">&lt;-</span> <span class="fu">rxode2</span>({</span>
-<span id="cb23-385"><a href="#cb23-385" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A1) <span class="ot">&lt;-</span> <span class="sc">-</span> (CL<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">-</span> (Q<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">+</span> (Q<span class="sc">/</span>Vp) <span class="sc">*</span> A2</span>
-<span id="cb23-386"><a href="#cb23-386" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A2) <span class="ot">&lt;-</span>   (Q<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">-</span> (Q<span class="sc">/</span>Vp) <span class="sc">*</span> A2</span>
-<span id="cb23-387"><a href="#cb23-387" aria-hidden="true" tabindex="-1"></a>  Cp <span class="ot">&lt;-</span> A1 <span class="sc">/</span> Vc</span>
-<span id="cb23-388"><a href="#cb23-388" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb23-389"><a href="#cb23-389" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-390"><a href="#cb23-390" aria-hidden="true" tabindex="-1"></a>rx_sim <span class="ot">&lt;-</span> rx_model <span class="sc">|&gt;</span></span>
-<span id="cb23-391"><a href="#cb23-391" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rxSolve</span>(</span>
-<span id="cb23-392"><a href="#cb23-392" aria-hidden="true" tabindex="-1"></a>    <span class="at">params  =</span> params,</span>
-<span id="cb23-393"><a href="#cb23-393" aria-hidden="true" tabindex="-1"></a>    <span class="at">events  =</span> <span class="fu">et</span>(<span class="at">time =</span> <span class="dv">0</span>, <span class="at">amt =</span> <span class="dv">500</span>, <span class="at">cmt =</span> <span class="dv">1</span>),</span>
-<span id="cb23-394"><a href="#cb23-394" aria-hidden="true" tabindex="-1"></a>    <span class="at">times   =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">48</span>, <span class="at">by =</span> <span class="fl">0.5</span>)</span>
-<span id="cb23-395"><a href="#cb23-395" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb23-396"><a href="#cb23-396" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
-<span id="cb23-397"><a href="#cb23-397" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">engine =</span> <span class="st">"rxode2"</span>)</span>
-<span id="cb23-398"><a href="#cb23-398" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-399"><a href="#cb23-399" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- mrgsolve model ----</span></span>
-<span id="cb23-400"><a href="#cb23-400" aria-hidden="true" tabindex="-1"></a>mrg_code <span class="ot">&lt;-</span> <span class="st">"</span></span>
-<span id="cb23-401"><a href="#cb23-401" aria-hidden="true" tabindex="-1"></a><span class="st">$PARAM CL = 5, Vc = 50, Q = 4, Vp = 30</span></span>
-<span id="cb23-402"><a href="#cb23-402" aria-hidden="true" tabindex="-1"></a><span class="st">$CMT A1 A2</span></span>
-<span id="cb23-403"><a href="#cb23-403" aria-hidden="true" tabindex="-1"></a><span class="st">$ODE</span></span>
-<span id="cb23-404"><a href="#cb23-404" aria-hidden="true" tabindex="-1"></a><span class="st">dxdt_A1 = - (CL/Vc) * A1 - (Q/Vc) * A1 + (Q/Vp) * A2;</span></span>
-<span id="cb23-405"><a href="#cb23-405" aria-hidden="true" tabindex="-1"></a><span class="st">dxdt_A2 =   (Q/Vc) * A1 - (Q/Vp) * A2;</span></span>
-<span id="cb23-406"><a href="#cb23-406" aria-hidden="true" tabindex="-1"></a><span class="st">$TABLE</span></span>
-<span id="cb23-407"><a href="#cb23-407" aria-hidden="true" tabindex="-1"></a><span class="st">double Cp = A1 / Vc;</span></span>
-<span id="cb23-408"><a href="#cb23-408" aria-hidden="true" tabindex="-1"></a><span class="st">$CAPTURE Cp</span></span>
-<span id="cb23-409"><a href="#cb23-409" aria-hidden="true" tabindex="-1"></a><span class="st">"</span></span>
-<span id="cb23-410"><a href="#cb23-410" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-411"><a href="#cb23-411" aria-hidden="true" tabindex="-1"></a>mrg_model <span class="ot">&lt;-</span> <span class="fu">mcode</span>(<span class="st">"twocmt"</span>, mrg_code)</span>
-<span id="cb23-412"><a href="#cb23-412" aria-hidden="true" tabindex="-1"></a>mrg_sim <span class="ot">&lt;-</span> mrg_model <span class="sc">|&gt;</span></span>
-<span id="cb23-413"><a href="#cb23-413" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ev</span>(<span class="at">amt =</span> <span class="dv">500</span>, <span class="at">cmt =</span> <span class="dv">1</span>, <span class="at">time =</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
-<span id="cb23-414"><a href="#cb23-414" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mrgsim</span>(<span class="at">end =</span> <span class="dv">48</span>, <span class="at">delta =</span> <span class="fl">0.5</span>) <span class="sc">|&gt;</span></span>
-<span id="cb23-415"><a href="#cb23-415" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
-<span id="cb23-416"><a href="#cb23-416" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">engine =</span> <span class="st">"mrgsolve"</span>)</span>
-<span id="cb23-417"><a href="#cb23-417" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-418"><a href="#cb23-418" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Combine &amp; Plot ----</span></span>
-<span id="cb23-419"><a href="#cb23-419" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(rx_sim, mrg_sim) <span class="sc">|&gt;</span></span>
-<span id="cb23-420"><a href="#cb23-420" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> Cp, <span class="at">color =</span> engine, <span class="at">linetype =</span> engine)) <span class="sc">+</span></span>
-<span id="cb23-421"><a href="#cb23-421" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.0</span>) <span class="sc">+</span></span>
-<span id="cb23-422"><a href="#cb23-422" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"rxode2"</span> <span class="ot">=</span> <span class="st">"#00A8B0"</span>, <span class="st">"mrgsolve"</span> <span class="ot">=</span> <span class="st">"#E0533D"</span>)) <span class="sc">+</span></span>
-<span id="cb23-423"><a href="#cb23-423" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_linetype_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"rxode2"</span> <span class="ot">=</span> <span class="st">"solid"</span>, <span class="st">"mrgsolve"</span> <span class="ot">=</span> <span class="st">"dashed"</span>)) <span class="sc">+</span></span>
-<span id="cb23-424"><a href="#cb23-424" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
-<span id="cb23-425"><a href="#cb23-425" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb23-426"><a href="#cb23-426" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"rxode2 vs mrgsolve: 2-Compartment IV Bolus"</span>,</span>
-<span id="cb23-427"><a href="#cb23-427" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Both engines converge to identical solutions"</span>,</span>
-<span id="cb23-428"><a href="#cb23-428" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Time (h)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>,</span>
-<span id="cb23-429"><a href="#cb23-429" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"Engine"</span>, <span class="at">linetype =</span> <span class="st">"Engine"</span></span>
-<span id="cb23-430"><a href="#cb23-430" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb23-431"><a href="#cb23-431" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span>
-<span id="cb23-432"><a href="#cb23-432" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-433"><a href="#cb23-433" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-434"><a href="#cb23-434" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Feature <span class="pp">|</span> <span class="in">`rxode2`</span> <span class="pp">|</span> <span class="in">`mrgsolve`</span> <span class="pp">|</span></span>
-<span id="cb23-435"><a href="#cb23-435" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb23-436"><a href="#cb23-436" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Syntax** <span class="pp">|</span> R-like ODE in <span class="in">`rxode2({...})`</span> <span class="pp">|</span> C++ code block <span class="in">`$ODE ...`</span> <span class="pp">|</span></span>
-<span id="cb23-437"><a href="#cb23-437" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Compilation** <span class="pp">|</span> C (via Rcpp) <span class="pp">|</span> C++ (via Rcpp) <span class="pp">|</span></span>
-<span id="cb23-438"><a href="#cb23-438" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Dosing** <span class="pp">|</span> <span class="in">`et()`</span> event table <span class="pp">|</span> <span class="in">`ev()`</span> event object <span class="pp">|</span></span>
-<span id="cb23-439"><a href="#cb23-439" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Population sim** <span class="pp">|</span> <span class="in">`rxSolve()`</span> with parameter vectors <span class="pp">|</span> <span class="in">`idata_set`</span> with individual parameters <span class="pp">|</span></span>
-<span id="cb23-440"><a href="#cb23-440" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Strengths** <span class="pp">|</span> Seamless nlmixr2 integration <span class="pp">|</span> Fastest for large-scale trial simulations <span class="pp">|</span></span>
-<span id="cb23-441"><a href="#cb23-441" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-442"><a href="#cb23-442" aria-hidden="true" tabindex="-1"></a><span class="fu">### `linpk`: Closed-Form PK Without ODEs</span></span>
-<span id="cb23-443"><a href="#cb23-443" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-444"><a href="#cb23-444" aria-hidden="true" tabindex="-1"></a>For linear PK systems, you often don't need an ODE solver at all. <span class="in">`linpk`</span> computes PK profiles analytically from primary parameters, making it ideal for rapid exploration.</span>
-<span id="cb23-445"><a href="#cb23-445" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-448"><a href="#cb23-448" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-449"><a href="#cb23-449" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-linpk-demo</span></span>
-<span id="cb23-450"><a href="#cb23-450" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Multi-dose oral profile generated with linpk using closed-form equations. No ODE solver required."</span></span>
-<span id="cb23-451"><a href="#cb23-451" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 7</span></span>
-<span id="cb23-452"><a href="#cb23-452" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4.5</span></span>
-<span id="cb23-453"><a href="#cb23-453" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
-<span id="cb23-454"><a href="#cb23-454" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-455"><a href="#cb23-455" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(linpk)</span>
-<span id="cb23-456"><a href="#cb23-456" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-457"><a href="#cb23-457" aria-hidden="true" tabindex="-1"></a><span class="co"># Single oral dose, 1-compartment</span></span>
-<span id="cb23-458"><a href="#cb23-458" aria-hidden="true" tabindex="-1"></a>pk1 <span class="ot">&lt;-</span> <span class="fu">pkprofile</span>(</span>
-<span id="cb23-459"><a href="#cb23-459" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">72</span>, <span class="at">by =</span> <span class="fl">0.25</span>),</span>
-<span id="cb23-460"><a href="#cb23-460" aria-hidden="true" tabindex="-1"></a>  <span class="at">dose =</span> <span class="fu">list</span>(<span class="at">oral =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> <span class="dv">0</span>, <span class="at">amount =</span> <span class="dv">100</span>)),</span>
-<span id="cb23-461"><a href="#cb23-461" aria-hidden="true" tabindex="-1"></a>  <span class="at">cl   =</span> <span class="dv">5</span>, <span class="at">vc =</span> <span class="dv">80</span>, <span class="at">ka =</span> <span class="fl">0.8</span></span>
-<span id="cb23-462"><a href="#cb23-462" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-463"><a href="#cb23-463" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-464"><a href="#cb23-464" aria-hidden="true" tabindex="-1"></a><span class="fu">as.data.frame</span>(pk1) <span class="sc">|&gt;</span></span>
-<span id="cb23-465"><a href="#cb23-465" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> conc)) <span class="sc">+</span></span>
-<span id="cb23-466"><a href="#cb23-466" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">fill =</span> <span class="st">"#00A8B0"</span>, <span class="at">alpha =</span> <span class="fl">0.15</span>) <span class="sc">+</span></span>
-<span id="cb23-467"><a href="#cb23-467" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#00A8B0"</span>, <span class="at">linewidth =</span> <span class="fl">1.0</span>) <span class="sc">+</span></span>
-<span id="cb23-468"><a href="#cb23-468" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb23-469"><a href="#cb23-469" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"linpk: Closed-Form 1-CMT Oral Profile"</span>,</span>
-<span id="cb23-470"><a href="#cb23-470" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"No differential equation solver needed"</span>,</span>
-<span id="cb23-471"><a href="#cb23-471" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Time (h)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span></span>
-<span id="cb23-472"><a href="#cb23-472" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb23-473"><a href="#cb23-473" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span>
-<span id="cb23-474"><a href="#cb23-474" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-475"><a href="#cb23-475" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-476"><a href="#cb23-476" aria-hidden="true" tabindex="-1"></a><span class="fu">### `nlme`: Linear Mixed-Effects for PK Summary Statistics</span></span>
-<span id="cb23-477"><a href="#cb23-477" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-478"><a href="#cb23-478" aria-hidden="true" tabindex="-1"></a>Before diving into full population PK (Chapter 12), <span class="in">`nlme`</span> provides a gentle introduction to mixed-effects modeling applied to PK endpoints like $C_{max}$ and AUC:</span>
-<span id="cb23-479"><a href="#cb23-479" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-482"><a href="#cb23-482" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb23-483"><a href="#cb23-483" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
-<span id="cb23-484"><a href="#cb23-484" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nlme)</span>
-<span id="cb23-485"><a href="#cb23-485" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-486"><a href="#cb23-486" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate peak concentrations from 3 dose groups</span></span>
-<span id="cb23-487"><a href="#cb23-487" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">456</span>)</span>
-<span id="cb23-488"><a href="#cb23-488" aria-hidden="true" tabindex="-1"></a>pk_summary <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb23-489"><a href="#cb23-489" aria-hidden="true" tabindex="-1"></a>  <span class="at">subject =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">each =</span> <span class="dv">2</span>),</span>
-<span id="cb23-490"><a href="#cb23-490" aria-hidden="true" tabindex="-1"></a>  <span class="at">period  =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="dv">30</span>),</span>
-<span id="cb23-491"><a href="#cb23-491" aria-hidden="true" tabindex="-1"></a>  <span class="at">dose    =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">200</span>), <span class="at">each =</span> <span class="dv">20</span>),</span>
-<span id="cb23-492"><a href="#cb23-492" aria-hidden="true" tabindex="-1"></a>  <span class="at">cmax    =</span> <span class="cn">NA</span></span>
-<span id="cb23-493"><a href="#cb23-493" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-494"><a href="#cb23-494" aria-hidden="true" tabindex="-1"></a>pk_summary<span class="sc">$</span>cmax <span class="ot">&lt;-</span> <span class="fu">with</span>(pk_summary,</span>
-<span id="cb23-495"><a href="#cb23-495" aria-hidden="true" tabindex="-1"></a>  <span class="fl">2.5</span> <span class="sc">*</span> dose<span class="sc">^</span><span class="fl">0.85</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="dv">0</span>, <span class="fl">0.2</span>)) <span class="sc">+</span></span>
-<span id="cb23-496"><a href="#cb23-496" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="dv">0</span>, <span class="fl">0.5</span>)</span>
-<span id="cb23-497"><a href="#cb23-497" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-498"><a href="#cb23-498" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-499"><a href="#cb23-499" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lme</span>(<span class="fu">log</span>(cmax) <span class="sc">~</span> <span class="fu">log</span>(dose), <span class="at">random =</span> <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> subject,</span>
-<span id="cb23-500"><a href="#cb23-500" aria-hidden="true" tabindex="-1"></a>           <span class="at">data =</span> pk_summary)</span>
-<span id="cb23-501"><a href="#cb23-501" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit)</span>
-<span id="cb23-502"><a href="#cb23-502" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb23-503"><a href="#cb23-503" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-504"><a href="#cb23-504" aria-hidden="true" tabindex="-1"></a>The power model $\text{C}_{max} \propto \text{dose}^{\beta}$ estimates $\beta \approx 0.85$, confirming near-linear dose proportionality — a common regulatory question. We'll revisit <span class="in">`nlme`</span> for full PK curve fitting in Chapter 12.</span>
-<span id="cb23-505"><a href="#cb23-505" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-506"><a href="#cb23-506" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb23-507"><a href="#cb23-507" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-508"><a href="#cb23-508" aria-hidden="true" tabindex="-1"></a>::: {.exercise-box}</span>
-<span id="cb23-509"><a href="#cb23-509" aria-hidden="true" tabindex="-1"></a><span class="fu">### Exercises</span></span>
-<span id="cb23-510"><a href="#cb23-510" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-511"><a href="#cb23-511" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Create a simulated PK dataset with 10 subjects, 8 time points, and 2 dose groups. Plot individual and mean profiles.</span>
-<span id="cb23-512"><a href="#cb23-512" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Import a CSV file of your choice and reshape it from wide to long format.</span>
-<span id="cb23-513"><a href="#cb23-513" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Create a semi-log plot with proper axis labels and provide a caption about what the linear terminal phase indicates.</span>
-<span id="cb23-514"><a href="#cb23-514" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Write a reusable R function that calculates $k_e$ from two concentration-time points.</span>
-<span id="cb23-515"><a href="#cb23-515" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Set up a project directory structure following the recommended layout.</span>
-<span id="cb23-516"><a href="#cb23-516" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb23-517"><a href="#cb23-517" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-518"><a href="#cb23-518" aria-hidden="true" tabindex="-1"></a>::: {.mistakes-box}</span>
-<span id="cb23-519"><a href="#cb23-519" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Mistakes</span></span>
-<span id="cb23-520"><a href="#cb23-520" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-521"><a href="#cb23-521" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Using absolute file paths** — scripts break when shared or moved</span>
-<span id="cb23-522"><a href="#cb23-522" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Not checking for BLOQ (Below Limit of Quantification) values** — they need special handling</span>
-<span id="cb23-523"><a href="#cb23-523" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Plotting concentration on linear scale** — always check the semi-log view</span>
-<span id="cb23-524"><a href="#cb23-524" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Forgetting to convert time units** (hours → minutes, days → hours)</span>
-<span id="cb23-525"><a href="#cb23-525" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Overwriting raw data** — always keep original files unchanged</span>
-<span id="cb23-526"><a href="#cb23-526" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb23-527"><a href="#cb23-527" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-528"><a href="#cb23-528" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
-<span id="cb23-529"><a href="#cb23-529" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Takeaway</span></span>
-<span id="cb23-530"><a href="#cb23-530" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-531"><a href="#cb23-531" aria-hidden="true" tabindex="-1"></a>A well-organized R environment with proper project structure, version control, and reproducible scripts is the foundation of reliable PK/PD analysis. Master data import, cleaning, and visualization in R before moving to modeling.</span>
-<span id="cb23-532"><a href="#cb23-532" aria-hidden="true" tabindex="-1"></a>:::</span>
+<div class="sourceCode" id="cb24" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># R Fundamentals and Workflow for PK/PD</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">## Learning Objectives</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>By the end of this chapter you will be able to:</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Set up a complete R environment for PK/PD analysis</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Understand R data structures through a pharmacometric lens</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Master the "Tidyverse" workflow for data cleaning and transformation</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Handle common PK/PD data hurdles (BLQ values, units, and pivoting)</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build sophisticated, faceted <span class="in">`ggplot2`</span> visualizations</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Organize reproducible PK/PD analysis projects</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a><span class="fu">## Setting Up Your R Environment</span></span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a><span class="fu">### Installing R and RStudio</span></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Download R from <span class="co">[</span><span class="ot">cran.r-project.org</span><span class="co">](https://cran.r-project.org)</span></span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Download RStudio (or VS Code with the R extension).</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**The PK/PD Ecosystem:** Unlike other fields, PK/PD in R relies on a specific set of high-performance packages.</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(</span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a>  <span class="st">"tidyverse"</span>,  <span class="co"># Data manipulation &amp; plotting (dplyr, ggplot2, tidyr)</span></span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a>  <span class="st">"PKNCA"</span>,      <span class="co"># Industrial-strength Noncompartmental Analysis</span></span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>  <span class="st">"rxode2"</span>,     <span class="co"># Fast ODE simulation</span></span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>  <span class="st">"nlmixr2"</span>,    <span class="co"># Nonlinear Mixed Effects Modeling</span></span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mrgsolve"</span>,   <span class="co"># Simulation for clinical trial design</span></span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>  <span class="st">"patchwork"</span>,  <span class="co"># Combining multiple plots</span></span>
+<span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a>  <span class="st">"janitor"</span>,    <span class="co"># Cleaning messy column names</span></span>
+<span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a>  <span class="st">"here"</span>        <span class="co"># Robust file paths</span></span>
+<span id="cb24-37"><a href="#cb24-37" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb24-38"><a href="#cb24-38" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-39"><a href="#cb24-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-40"><a href="#cb24-40" aria-hidden="true" tabindex="-1"></a><span class="fu">### Recommended Project Structure</span></span>
+<span id="cb24-41"><a href="#cb24-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-42"><a href="#cb24-42" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-43"><a href="#cb24-43" aria-hidden="true" tabindex="-1"></a><span class="in">PKPD_Project/</span></span>
+<span id="cb24-44"><a href="#cb24-44" aria-hidden="true" tabindex="-1"></a><span class="in">├── data/            # Raw and processed data files</span></span>
+<span id="cb24-45"><a href="#cb24-45" aria-hidden="true" tabindex="-1"></a><span class="in">├── R/               # Custom R functions</span></span>
+<span id="cb24-46"><a href="#cb24-46" aria-hidden="true" tabindex="-1"></a><span class="in">├── scripts/         # Analysis scripts</span></span>
+<span id="cb24-47"><a href="#cb24-47" aria-hidden="true" tabindex="-1"></a><span class="in">├── output/          # Generated tables and figures</span></span>
+<span id="cb24-48"><a href="#cb24-48" aria-hidden="true" tabindex="-1"></a><span class="in">├── reports/         # Quarto/R Markdown reports</span></span>
+<span id="cb24-49"><a href="#cb24-49" aria-hidden="true" tabindex="-1"></a><span class="in">├── renv/            # Package version management (optional)</span></span>
+<span id="cb24-50"><a href="#cb24-50" aria-hidden="true" tabindex="-1"></a><span class="in">└── PKPD_Project.Rproj</span></span>
+<span id="cb24-51"><a href="#cb24-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-52"><a href="#cb24-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-53"><a href="#cb24-53" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb24-54"><a href="#cb24-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-55"><a href="#cb24-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## Importing PK/PD Data</span></span>
+<span id="cb24-56"><a href="#cb24-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-57"><a href="#cb24-57" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Data Formats in PK/PD</span></span>
+<span id="cb24-58"><a href="#cb24-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-59"><a href="#cb24-59" aria-hidden="true" tabindex="-1"></a>PK data typically has a "long" structure with columns for subject ID, time, concentration, and dose information.</span>
+<span id="cb24-60"><a href="#cb24-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-63"><a href="#cb24-63" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-64"><a href="#cb24-64" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb24-65"><a href="#cb24-65" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb24-66"><a href="#cb24-66" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb24-67"><a href="#cb24-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-68"><a href="#cb24-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate a typical PK dataset</span></span>
+<span id="cb24-69"><a href="#cb24-69" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb24-70"><a href="#cb24-70" aria-hidden="true" tabindex="-1"></a>n_subjects <span class="ot">&lt;-</span> <span class="dv">6</span></span>
+<span id="cb24-71"><a href="#cb24-71" aria-hidden="true" tabindex="-1"></a>times <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>)</span>
+<span id="cb24-72"><a href="#cb24-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-73"><a href="#cb24-73" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(</span>
+<span id="cb24-74"><a href="#cb24-74" aria-hidden="true" tabindex="-1"></a>  <span class="at">ID =</span> <span class="dv">1</span><span class="sc">:</span>n_subjects,</span>
+<span id="cb24-75"><a href="#cb24-75" aria-hidden="true" tabindex="-1"></a>  <span class="at">TIME =</span> times</span>
+<span id="cb24-76"><a href="#cb24-76" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-77"><a href="#cb24-77" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb24-78"><a href="#cb24-78" aria-hidden="true" tabindex="-1"></a>    <span class="at">DOSE =</span> <span class="dv">100</span>,</span>
+<span id="cb24-79"><a href="#cb24-79" aria-hidden="true" tabindex="-1"></a>    <span class="at">CONC =</span> (DOSE <span class="sc">/</span> <span class="dv">10</span>) <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.3</span> <span class="sc">*</span> TIME) <span class="sc">*</span> <span class="fu">rlnorm</span>(<span class="fu">n</span>(), <span class="at">meanlog =</span> <span class="dv">0</span>, <span class="at">sdlog =</span> <span class="fl">0.2</span>),</span>
+<span id="cb24-80"><a href="#cb24-80" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> ID</span>
+<span id="cb24-81"><a href="#cb24-81" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-82"><a href="#cb24-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-83"><a href="#cb24-83" aria-hidden="true" tabindex="-1"></a><span class="co"># View the first few rows</span></span>
+<span id="cb24-84"><a href="#cb24-84" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(pk_data, <span class="dv">12</span>)</span>
+<span id="cb24-85"><a href="#cb24-85" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-86"><a href="#cb24-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-87"><a href="#cb24-87" aria-hidden="true" tabindex="-1"></a><span class="fu">### Importing from Files</span></span>
+<span id="cb24-88"><a href="#cb24-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-91"><a href="#cb24-91" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-92"><a href="#cb24-92" aria-hidden="true" tabindex="-1"></a><span class="co"># Import CSV</span></span>
+<span id="cb24-93"><a href="#cb24-93" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/pk_concentrations.csv"</span>)</span>
+<span id="cb24-94"><a href="#cb24-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-95"><a href="#cb24-95" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Excel</span></span>
+<span id="cb24-96"><a href="#cb24-96" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb24-97"><a href="#cb24-97" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/pk_data.xlsx"</span>, <span class="at">sheet =</span> <span class="st">"Concentrations"</span>)</span>
+<span id="cb24-98"><a href="#cb24-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-99"><a href="#cb24-99" aria-hidden="true" tabindex="-1"></a><span class="co"># Import NONMEM-style data</span></span>
+<span id="cb24-100"><a href="#cb24-100" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> <span class="fu">read_table</span>(<span class="st">"data/pk_data.txt"</span>)</span>
+<span id="cb24-101"><a href="#cb24-101" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-102"><a href="#cb24-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-103"><a href="#cb24-103" aria-hidden="true" tabindex="-1"></a><span class="fu">### Data Cleaning and Reshaping</span></span>
+<span id="cb24-104"><a href="#cb24-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-107"><a href="#cb24-107" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-108"><a href="#cb24-108" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for missing values</span></span>
+<span id="cb24-109"><a href="#cb24-109" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">is.na</span>(pk_data))</span>
+<span id="cb24-110"><a href="#cb24-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-111"><a href="#cb24-111" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert columns to correct types</span></span>
+<span id="cb24-112"><a href="#cb24-112" aria-hidden="true" tabindex="-1"></a>pk_data <span class="ot">&lt;-</span> pk_data <span class="sc">%&gt;%</span></span>
+<span id="cb24-113"><a href="#cb24-113" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb24-114"><a href="#cb24-114" aria-hidden="true" tabindex="-1"></a>    <span class="at">ID   =</span> <span class="fu">as.factor</span>(ID),</span>
+<span id="cb24-115"><a href="#cb24-115" aria-hidden="true" tabindex="-1"></a>    <span class="at">TIME =</span> <span class="fu">as.numeric</span>(TIME),</span>
+<span id="cb24-116"><a href="#cb24-116" aria-hidden="true" tabindex="-1"></a>    <span class="at">CONC =</span> <span class="fu">as.numeric</span>(CONC)</span>
+<span id="cb24-117"><a href="#cb24-117" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-118"><a href="#cb24-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-119"><a href="#cb24-119" aria-hidden="true" tabindex="-1"></a><span class="co"># Reshape wide → long (if needed)</span></span>
+<span id="cb24-120"><a href="#cb24-120" aria-hidden="true" tabindex="-1"></a>pk_wide <span class="ot">&lt;-</span> pk_data <span class="sc">%&gt;%</span></span>
+<span id="cb24-121"><a href="#cb24-121" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> TIME, <span class="at">values_from =</span> CONC,</span>
+<span id="cb24-122"><a href="#cb24-122" aria-hidden="true" tabindex="-1"></a>                     <span class="at">names_prefix =</span> <span class="st">"T_"</span>)</span>
+<span id="cb24-123"><a href="#cb24-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-124"><a href="#cb24-124" aria-hidden="true" tabindex="-1"></a><span class="co"># Reshape long → wide</span></span>
+<span id="cb24-125"><a href="#cb24-125" aria-hidden="true" tabindex="-1"></a>pk_long <span class="ot">&lt;-</span> pk_wide <span class="sc">%&gt;%</span></span>
+<span id="cb24-126"><a href="#cb24-126" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"T_"</span>),</span>
+<span id="cb24-127"><a href="#cb24-127" aria-hidden="true" tabindex="-1"></a>                      <span class="at">names_to =</span> <span class="st">"TIME"</span>,</span>
+<span id="cb24-128"><a href="#cb24-128" aria-hidden="true" tabindex="-1"></a>                      <span class="at">values_to =</span> <span class="st">"CONC"</span>,</span>
+<span id="cb24-129"><a href="#cb24-129" aria-hidden="true" tabindex="-1"></a>                      <span class="at">names_prefix =</span> <span class="st">"T_"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-130"><a href="#cb24-130" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">TIME =</span> <span class="fu">as.numeric</span>(TIME))</span>
+<span id="cb24-131"><a href="#cb24-131" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-132"><a href="#cb24-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-133"><a href="#cb24-133" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb24-134"><a href="#cb24-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-135"><a href="#cb24-135" aria-hidden="true" tabindex="-1"></a><span class="fu">## Plotting Concentration-Time Profiles</span></span>
+<span id="cb24-136"><a href="#cb24-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-137"><a href="#cb24-137" aria-hidden="true" tabindex="-1"></a><span class="fu">### Individual Profiles</span></span>
+<span id="cb24-138"><a href="#cb24-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-141"><a href="#cb24-141" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-142"><a href="#cb24-142" aria-hidden="true" tabindex="-1"></a><span class="co"># Individual concentration-time plots</span></span>
+<span id="cb24-143"><a href="#cb24-143" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pk_data, <span class="fu">aes</span>(TIME, CONC, <span class="at">group =</span> ID, <span class="at">color =</span> ID)) <span class="sc">+</span></span>
+<span id="cb24-144"><a href="#cb24-144" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb24-145"><a href="#cb24-145" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb24-146"><a href="#cb24-146" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Individual Concentration-Time Profiles"</span>,</span>
+<span id="cb24-147"><a href="#cb24-147" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"IV Bolus, 100 mg dose"</span>,</span>
+<span id="cb24-148"><a href="#cb24-148" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>,</span>
+<span id="cb24-149"><a href="#cb24-149" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Subject"</span>) <span class="sc">+</span></span>
+<span id="cb24-150"><a href="#cb24-150" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb24-151"><a href="#cb24-151" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-152"><a href="#cb24-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-153"><a href="#cb24-153" aria-hidden="true" tabindex="-1"></a><span class="fu">### Mean ± SD Profile</span></span>
+<span id="cb24-154"><a href="#cb24-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-157"><a href="#cb24-157" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-158"><a href="#cb24-158" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary statistics and mean ± SD plot</span></span>
+<span id="cb24-159"><a href="#cb24-159" aria-hidden="true" tabindex="-1"></a>pk_summary <span class="ot">&lt;-</span> pk_data <span class="sc">%&gt;%</span></span>
+<span id="cb24-160"><a href="#cb24-160" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb24-161"><a href="#cb24-161" aria-hidden="true" tabindex="-1"></a>    <span class="at">Mean =</span> <span class="fu">mean</span>(CONC),</span>
+<span id="cb24-162"><a href="#cb24-162" aria-hidden="true" tabindex="-1"></a>    <span class="at">SD   =</span> <span class="fu">sd</span>(CONC),</span>
+<span id="cb24-163"><a href="#cb24-163" aria-hidden="true" tabindex="-1"></a>    <span class="at">N    =</span> <span class="fu">n</span>(),</span>
+<span id="cb24-164"><a href="#cb24-164" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> TIME</span>
+<span id="cb24-165"><a href="#cb24-165" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-166"><a href="#cb24-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-167"><a href="#cb24-167" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pk_summary, <span class="fu">aes</span>(TIME, Mean)) <span class="sc">+</span></span>
+<span id="cb24-168"><a href="#cb24-168" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> Mean <span class="sc">-</span> SD, <span class="at">ymax =</span> Mean <span class="sc">+</span> SD),</span>
+<span id="cb24-169"><a href="#cb24-169" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill =</span> <span class="st">"#0B6E6B"</span>, <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb24-170"><a href="#cb24-170" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"#0B6E6B"</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb24-171"><a href="#cb24-171" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#0B6E6B"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb24-172"><a href="#cb24-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Mean Concentration-Time Profile (± SD)"</span>,</span>
+<span id="cb24-173"><a href="#cb24-173" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>) <span class="sc">+</span></span>
+<span id="cb24-174"><a href="#cb24-174" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb24-175"><a href="#cb24-175" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-176"><a href="#cb24-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-177"><a href="#cb24-177" aria-hidden="true" tabindex="-1"></a><span class="fu">### Semi-Log Plot (Standard PK View)</span></span>
+<span id="cb24-178"><a href="#cb24-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-181"><a href="#cb24-181" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-182"><a href="#cb24-182" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pk_data, <span class="fu">aes</span>(TIME, CONC, <span class="at">group =</span> ID, <span class="at">color =</span> ID)) <span class="sc">+</span></span>
+<span id="cb24-183"><a href="#cb24-183" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb24-184"><a href="#cb24-184" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb24-185"><a href="#cb24-185" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb24-186"><a href="#cb24-186" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Semi-Log Concentration-Time Profiles"</span>,</span>
+<span id="cb24-187"><a href="#cb24-187" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L, log scale)"</span>,</span>
+<span id="cb24-188"><a href="#cb24-188" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Subject"</span>) <span class="sc">+</span></span>
+<span id="cb24-189"><a href="#cb24-189" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb24-190"><a href="#cb24-190" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-191"><a href="#cb24-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-192"><a href="#cb24-192" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb24-193"><a href="#cb24-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-194"><a href="#cb24-194" aria-hidden="true" tabindex="-1"></a><span class="fu">## Plotting Dose-Response Data</span></span>
+<span id="cb24-195"><a href="#cb24-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-198"><a href="#cb24-198" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-199"><a href="#cb24-199" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate dose-response data</span></span>
+<span id="cb24-200"><a href="#cb24-200" aria-hidden="true" tabindex="-1"></a>doses <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.3</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">10</span>, <span class="dv">30</span>, <span class="dv">100</span>, <span class="dv">300</span>)</span>
+<span id="cb24-201"><a href="#cb24-201" aria-hidden="true" tabindex="-1"></a>n_per_dose <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb24-202"><a href="#cb24-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-203"><a href="#cb24-203" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">456</span>)</span>
+<span id="cb24-204"><a href="#cb24-204" aria-hidden="true" tabindex="-1"></a>dr_data <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">DOSE =</span> doses, <span class="at">REP =</span> <span class="dv">1</span><span class="sc">:</span>n_per_dose) <span class="sc">%&gt;%</span></span>
+<span id="cb24-205"><a href="#cb24-205" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb24-206"><a href="#cb24-206" aria-hidden="true" tabindex="-1"></a>    <span class="at">Emax =</span> <span class="dv">100</span>,</span>
+<span id="cb24-207"><a href="#cb24-207" aria-hidden="true" tabindex="-1"></a>    <span class="at">EC50 =</span> <span class="dv">10</span>,</span>
+<span id="cb24-208"><a href="#cb24-208" aria-hidden="true" tabindex="-1"></a>    <span class="at">EFFECT =</span> (Emax <span class="sc">*</span> DOSE) <span class="sc">/</span> (EC50 <span class="sc">+</span> DOSE) <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="dv">0</span>, <span class="dv">5</span>)</span>
+<span id="cb24-209"><a href="#cb24-209" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-210"><a href="#cb24-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-211"><a href="#cb24-211" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dr_data, <span class="fu">aes</span>(DOSE, EFFECT)) <span class="sc">+</span></span>
+<span id="cb24-212"><a href="#cb24-212" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"#C44536"</span>, <span class="at">alpha =</span> <span class="fl">0.6</span>, <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb24-213"><a href="#cb24-213" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb24-214"><a href="#cb24-214" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Dose-Response Data"</span>,</span>
+<span id="cb24-215"><a href="#cb24-215" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Dose (mg, log scale)"</span>, <span class="at">y =</span> <span class="st">"Effect (% of maximum)"</span>) <span class="sc">+</span></span>
+<span id="cb24-216"><a href="#cb24-216" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb24-217"><a href="#cb24-217" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-218"><a href="#cb24-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-219"><a href="#cb24-219" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb24-220"><a href="#cb24-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-221"><a href="#cb24-221" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reproducible Scripts and Version Control</span></span>
+<span id="cb24-222"><a href="#cb24-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-223"><a href="#cb24-223" aria-hidden="true" tabindex="-1"></a><span class="fu">### Best Practices for PK/PD Scripts</span></span>
+<span id="cb24-224"><a href="#cb24-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-225"><a href="#cb24-225" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Start every script with a header** describing purpose, author, and date</span>
+<span id="cb24-226"><a href="#cb24-226" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Load all packages at the top**</span>
+<span id="cb24-227"><a href="#cb24-227" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Use relative paths** (not absolute paths like <span class="in">`C:/Users/...`</span>)</span>
+<span id="cb24-228"><a href="#cb24-228" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Comment your code** — explain *why*, not *what*</span>
+<span id="cb24-229"><a href="#cb24-229" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Separate data import, analysis, and visualization**</span>
+<span id="cb24-230"><a href="#cb24-230" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>**Use version control** (Git) for all scripts</span>
+<span id="cb24-231"><a href="#cb24-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-234"><a href="#cb24-234" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-235"><a href="#cb24-235" aria-hidden="true" tabindex="-1"></a><span class="co"># Example script header</span></span>
+<span id="cb24-236"><a href="#cb24-236" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================</span></span>
+<span id="cb24-237"><a href="#cb24-237" aria-hidden="true" tabindex="-1"></a><span class="co"># Script: 01_nca_analysis.R</span></span>
+<span id="cb24-238"><a href="#cb24-238" aria-hidden="true" tabindex="-1"></a><span class="co"># Purpose: Noncompartmental analysis of Study PK-2024-001</span></span>
+<span id="cb24-239"><a href="#cb24-239" aria-hidden="true" tabindex="-1"></a><span class="co"># Author:  Your Name</span></span>
+<span id="cb24-240"><a href="#cb24-240" aria-hidden="true" tabindex="-1"></a><span class="co"># Date:    2024-06-01</span></span>
+<span id="cb24-241"><a href="#cb24-241" aria-hidden="true" tabindex="-1"></a><span class="co"># Packages: PKNCA, dplyr, ggplot2</span></span>
+<span id="cb24-242"><a href="#cb24-242" aria-hidden="true" tabindex="-1"></a><span class="co"># Input:   data/raw/study001_conc.csv</span></span>
+<span id="cb24-243"><a href="#cb24-243" aria-hidden="true" tabindex="-1"></a><span class="co"># Output:  output/nca_parameters.csv, output/figures/conc_time.pdf</span></span>
+<span id="cb24-244"><a href="#cb24-244" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================</span></span>
+<span id="cb24-245"><a href="#cb24-245" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-246"><a href="#cb24-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-247"><a href="#cb24-247" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb24-248"><a href="#cb24-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-249"><a href="#cb24-249" aria-hidden="true" tabindex="-1"></a><span class="fu">## Creating a Reproducible PK/PD Workflow</span></span>
+<span id="cb24-250"><a href="#cb24-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-253"><a href="#cb24-253" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-254"><a href="#cb24-254" aria-hidden="true" tabindex="-1"></a><span class="co"># A minimal reproducible PK analysis workflow</span></span>
+<span id="cb24-255"><a href="#cb24-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-256"><a href="#cb24-256" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Load libraries</span></span>
+<span id="cb24-257"><a href="#cb24-257" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PKNCA)</span>
+<span id="cb24-258"><a href="#cb24-258" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb24-259"><a href="#cb24-259" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb24-260"><a href="#cb24-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-261"><a href="#cb24-261" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Import data</span></span>
+<span id="cb24-262"><a href="#cb24-262" aria-hidden="true" tabindex="-1"></a><span class="co"># pk_data &lt;- read_csv("data/pk_data.csv")</span></span>
+<span id="cb24-263"><a href="#cb24-263" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-264"><a href="#cb24-264" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Set up NCA intervals</span></span>
+<span id="cb24-265"><a href="#cb24-265" aria-hidden="true" tabindex="-1"></a><span class="co"># my_intervals &lt;- data.frame(start = 0, end = 24, ..., cmax = TRUE, ...)</span></span>
+<span id="cb24-266"><a href="#cb24-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-267"><a href="#cb24-267" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Calculate NCA parameters</span></span>
+<span id="cb24-268"><a href="#cb24-268" aria-hidden="true" tabindex="-1"></a><span class="co"># nca_results &lt;- pk.nca(my_data, my_intervals)</span></span>
+<span id="cb24-269"><a href="#cb24-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-270"><a href="#cb24-270" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Summarize and export</span></span>
+<span id="cb24-271"><a href="#cb24-271" aria-hidden="true" tabindex="-1"></a><span class="co"># nca_summary &lt;- summary(nca_results)</span></span>
+<span id="cb24-272"><a href="#cb24-272" aria-hidden="true" tabindex="-1"></a><span class="co"># write_csv(nca_summary, "output/nca_results.csv")</span></span>
+<span id="cb24-273"><a href="#cb24-273" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-274"><a href="#cb24-274" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. Visualize</span></span>
+<span id="cb24-275"><a href="#cb24-275" aria-hidden="true" tabindex="-1"></a><span class="co"># plot(nca_results)</span></span>
+<span id="cb24-276"><a href="#cb24-276" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-277"><a href="#cb24-277" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-278"><a href="#cb24-278" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb24-279"><a href="#cb24-279" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-280"><a href="#cb24-280" aria-hidden="true" tabindex="-1"></a><span class="fu">## Handling Missing Data in PK/PD</span></span>
+<span id="cb24-281"><a href="#cb24-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-282"><a href="#cb24-282" aria-hidden="true" tabindex="-1"></a>Missing concentration values are common in clinical PK studies. The appropriate handling strategy depends on **why** the data are missing.</span>
+<span id="cb24-283"><a href="#cb24-283" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-284"><a href="#cb24-284" aria-hidden="true" tabindex="-1"></a><span class="fu">### The MCAR/MAR/MNAR Framework</span></span>
+<span id="cb24-285"><a href="#cb24-285" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-286"><a href="#cb24-286" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Mechanism <span class="pp">|</span> Definition <span class="pp">|</span> Test/Clue <span class="pp">|</span> Action <span class="pp">|</span></span>
+<span id="cb24-287"><a href="#cb24-287" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
+<span id="cb24-288"><a href="#cb24-288" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **MCAR** (Missing Completely at Random) <span class="pp">|</span> Missingness unrelated to any variable <span class="pp">|</span> No pattern in missing vs observed <span class="pp">|</span> Mean/median imputation OK <span class="pp">|</span></span>
+<span id="cb24-289"><a href="#cb24-289" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **MAR** (Missing at Random) <span class="pp">|</span> Missingness explained by observed covariates <span class="pp">|</span> Pattern linked to recorded variables (e.g., more missing at later times) <span class="pp">|</span> Regression imputation, multiple imputation (<span class="in">`mice`</span>), or MLE-based modeling <span class="pp">|</span></span>
+<span id="cb24-290"><a href="#cb24-290" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **MNAR** (Missing Not at Random) | Missingness depends on the unobserved value itself (e.g., samples below LLOQ) | Plausible mechanism: high CL patients drop out, BLQ samples | Selection/pattern-mixture models + sensitivity analysis; **no method is unbiased** <span class="pp">|</span></span>
+<span id="cb24-291"><a href="#cb24-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-294"><a href="#cb24-294" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-295"><a href="#cb24-295" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: Identify and handle missing data patterns</span></span>
+<span id="cb24-296"><a href="#cb24-296" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb24-297"><a href="#cb24-297" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-298"><a href="#cb24-298" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate PK data with different missingness types</span></span>
+<span id="cb24-299"><a href="#cb24-299" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb24-300"><a href="#cb24-300" aria-hidden="true" tabindex="-1"></a>pk_missing <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb24-301"><a href="#cb24-301" aria-hidden="true" tabindex="-1"></a>  <span class="at">ID =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="at">each =</span> <span class="dv">8</span>),</span>
+<span id="cb24-302"><a href="#cb24-302" aria-hidden="true" tabindex="-1"></a>  <span class="at">TIME =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>), <span class="dv">10</span>),</span>
+<span id="cb24-303"><a href="#cb24-303" aria-hidden="true" tabindex="-1"></a>  <span class="at">CONC =</span> <span class="dv">25</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.2</span> <span class="sc">*</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>), <span class="dv">10</span>)) <span class="sc">*</span> </span>
+<span id="cb24-304"><a href="#cb24-304" aria-hidden="true" tabindex="-1"></a>          <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">80</span>, <span class="dv">0</span>, <span class="fl">0.12</span>))</span>
+<span id="cb24-305"><a href="#cb24-305" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-306"><a href="#cb24-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-307"><a href="#cb24-307" aria-hidden="true" tabindex="-1"></a><span class="co"># Introduce MCAR: random 10% missing</span></span>
+<span id="cb24-308"><a href="#cb24-308" aria-hidden="true" tabindex="-1"></a>mcar_idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">80</span>, <span class="dv">8</span>)</span>
+<span id="cb24-309"><a href="#cb24-309" aria-hidden="true" tabindex="-1"></a>pk_missing<span class="sc">$</span>CONC_MCAR <span class="ot">&lt;-</span> pk_missing<span class="sc">$</span>CONC</span>
+<span id="cb24-310"><a href="#cb24-310" aria-hidden="true" tabindex="-1"></a>pk_missing<span class="sc">$</span>CONC_MCAR[mcar_idx] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb24-311"><a href="#cb24-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-312"><a href="#cb24-312" aria-hidden="true" tabindex="-1"></a><span class="co"># Introduce MAR: more missing at later time points</span></span>
+<span id="cb24-313"><a href="#cb24-313" aria-hidden="true" tabindex="-1"></a>mar_prob <span class="ot">&lt;-</span> <span class="fl">0.1</span> <span class="sc">*</span> pk_missing<span class="sc">$</span>TIME <span class="sc">/</span> <span class="dv">24</span></span>
+<span id="cb24-314"><a href="#cb24-314" aria-hidden="true" tabindex="-1"></a>mar_idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">runif</span>(<span class="dv">80</span>) <span class="sc">&lt;</span> mar_prob)</span>
+<span id="cb24-315"><a href="#cb24-315" aria-hidden="true" tabindex="-1"></a>pk_missing<span class="sc">$</span>CONC_MAR <span class="ot">&lt;-</span> pk_missing<span class="sc">$</span>CONC</span>
+<span id="cb24-316"><a href="#cb24-316" aria-hidden="true" tabindex="-1"></a>pk_missing<span class="sc">$</span>CONC_MAR[mar_idx] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb24-317"><a href="#cb24-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-318"><a href="#cb24-318" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize missingness</span></span>
+<span id="cb24-319"><a href="#cb24-319" aria-hidden="true" tabindex="-1"></a>missing_summary <span class="ot">&lt;-</span> pk_missing <span class="sc">%&gt;%</span></span>
+<span id="cb24-320"><a href="#cb24-320" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb24-321"><a href="#cb24-321" aria-hidden="true" tabindex="-1"></a>    <span class="at">MCAR_missing =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(CONC_MCAR)),</span>
+<span id="cb24-322"><a href="#cb24-322" aria-hidden="true" tabindex="-1"></a>    <span class="at">MAR_missing  =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(CONC_MAR)),</span>
+<span id="cb24-323"><a href="#cb24-323" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> TIME</span>
+<span id="cb24-324"><a href="#cb24-324" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-325"><a href="#cb24-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-326"><a href="#cb24-326" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Missing by time point:</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb24-327"><a href="#cb24-327" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(missing_summary)</span>
+<span id="cb24-328"><a href="#cb24-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-329"><a href="#cb24-329" aria-hidden="true" tabindex="-1"></a><span class="co"># Simple imputation: last observation carried forward (LOCF)</span></span>
+<span id="cb24-330"><a href="#cb24-330" aria-hidden="true" tabindex="-1"></a>pk_missing <span class="ot">&lt;-</span> pk_missing <span class="sc">%&gt;%</span></span>
+<span id="cb24-331"><a href="#cb24-331" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ID) <span class="sc">%&gt;%</span></span>
+<span id="cb24-332"><a href="#cb24-332" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">fill</span>(CONC_MCAR, CONC_MAR, <span class="at">.direction =</span> <span class="st">"down"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-333"><a href="#cb24-333" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb24-334"><a href="#cb24-334" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-335"><a href="#cb24-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-336"><a href="#cb24-336" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
+<span id="cb24-337"><a href="#cb24-337" aria-hidden="true" tabindex="-1"></a><span class="fu">### BLQ (Below Limit of Quantification) Handling</span></span>
+<span id="cb24-338"><a href="#cb24-338" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-339"><a href="#cb24-339" aria-hidden="true" tabindex="-1"></a>BLQ values are a special case of **MNAR** — the value is missing *because* it's low. Common approaches:</span>
+<span id="cb24-340"><a href="#cb24-340" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-341"><a href="#cb24-341" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**LLOQ/2 substitution** — set BLQ = LLOQ/2 (simple, common in NCA)</span>
+<span id="cb24-342"><a href="#cb24-342" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**M3 method** — likelihood-based approach that treats BLQ as left-censored observations</span>
+<span id="cb24-343"><a href="#cb24-343" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Imputation** — multiple imputation with left-censoring constraint</span>
+<span id="cb24-344"><a href="#cb24-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-345"><a href="#cb24-345" aria-hidden="true" tabindex="-1"></a>For NCA, LLOQ/2 is standard. For population PK, likelihood-based methods (M3) are preferred as they correctly propagate uncertainty.</span>
+<span id="cb24-346"><a href="#cb24-346" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb24-347"><a href="#cb24-347" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-348"><a href="#cb24-348" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb24-349"><a href="#cb24-349" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-350"><a href="#cb24-350" aria-hidden="true" tabindex="-1"></a><span class="fu">## Beyond `rxode2`: Comparing Simulation Engines</span></span>
+<span id="cb24-351"><a href="#cb24-351" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-352"><a href="#cb24-352" aria-hidden="true" tabindex="-1"></a>While <span class="in">`rxode2`</span> is our workhorse for ODE-based PK modeling, R offers several complementary simulation frameworks. This section introduces <span class="in">`mrgsolve`</span>, <span class="in">`linpk`</span>, and <span class="in">`nlme`</span> — each filling a distinct niche in the PK/PD toolkit.</span>
+<span id="cb24-353"><a href="#cb24-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-354"><a href="#cb24-354" aria-hidden="true" tabindex="-1"></a><span class="fu">### `mrgsolve`: C++ Simulation for Clinical Trial Design</span></span>
+<span id="cb24-355"><a href="#cb24-355" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-356"><a href="#cb24-356" aria-hidden="true" tabindex="-1"></a><span class="in">`mrgsolve`</span> compiles ODE models to C++ for blazing-fast simulation. It excels at large-scale clinical trial simulations with complex dosing regimens.</span>
+<span id="cb24-357"><a href="#cb24-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-358"><a href="#cb24-358" aria-hidden="true" tabindex="-1"></a>Let's simulate a two-compartment IV bolus in **both** <span class="in">`rxode2`</span> and <span class="in">`mrgsolve`</span> to compare their syntax and output:</span>
+<span id="cb24-359"><a href="#cb24-359" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-362"><a href="#cb24-362" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-363"><a href="#cb24-363" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-engine-comparison</span></span>
+<span id="cb24-364"><a href="#cb24-364" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Two-compartment IV bolus simulated with rxode2 (solid teal) and mrgsolve (dashed coral). Both engines produce identical results, confirming model equivalence."</span></span>
+<span id="cb24-365"><a href="#cb24-365" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 8</span></span>
+<span id="cb24-366"><a href="#cb24-366" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
+<span id="cb24-367"><a href="#cb24-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-368"><a href="#cb24-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-369"><a href="#cb24-369" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rxode2)</span>
+<span id="cb24-370"><a href="#cb24-370" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mrgsolve)</span>
+<span id="cb24-371"><a href="#cb24-371" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb24-372"><a href="#cb24-372" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb24-373"><a href="#cb24-373" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-374"><a href="#cb24-374" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Simulated patient parameters ----</span></span>
+<span id="cb24-375"><a href="#cb24-375" aria-hidden="true" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">CL =</span> <span class="dv">5</span>, <span class="at">Vc =</span> <span class="dv">50</span>, <span class="at">Q =</span> <span class="dv">4</span>, <span class="at">Vp =</span> <span class="dv">30</span>)  <span class="co"># named numeric vector</span></span>
+<span id="cb24-376"><a href="#cb24-376" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-377"><a href="#cb24-377" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- rxode2 model ----</span></span>
+<span id="cb24-378"><a href="#cb24-378" aria-hidden="true" tabindex="-1"></a>rx_model <span class="ot">&lt;-</span> <span class="fu">rxode2</span>({</span>
+<span id="cb24-379"><a href="#cb24-379" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A1) <span class="ot">&lt;-</span> <span class="sc">-</span> (CL<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">-</span> (Q<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">+</span> (Q<span class="sc">/</span>Vp) <span class="sc">*</span> A2</span>
+<span id="cb24-380"><a href="#cb24-380" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A2) <span class="ot">&lt;-</span>   (Q<span class="sc">/</span>Vc) <span class="sc">*</span> A1 <span class="sc">-</span> (Q<span class="sc">/</span>Vp) <span class="sc">*</span> A2</span>
+<span id="cb24-381"><a href="#cb24-381" aria-hidden="true" tabindex="-1"></a>  Cp <span class="ot">&lt;-</span> A1 <span class="sc">/</span> Vc</span>
+<span id="cb24-382"><a href="#cb24-382" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb24-383"><a href="#cb24-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-384"><a href="#cb24-384" aria-hidden="true" tabindex="-1"></a>rx_sim <span class="ot">&lt;-</span> rx_model <span class="sc">|&gt;</span></span>
+<span id="cb24-385"><a href="#cb24-385" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rxSolve</span>(</span>
+<span id="cb24-386"><a href="#cb24-386" aria-hidden="true" tabindex="-1"></a>    <span class="at">params  =</span> params,</span>
+<span id="cb24-387"><a href="#cb24-387" aria-hidden="true" tabindex="-1"></a>    <span class="at">events  =</span> <span class="fu">et</span>(<span class="at">time =</span> <span class="dv">0</span>, <span class="at">amt =</span> <span class="dv">500</span>, <span class="at">cmt =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span> <span class="fu">et</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">48</span>, <span class="at">by =</span> <span class="fl">0.5</span>))</span>
+<span id="cb24-388"><a href="#cb24-388" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb24-389"><a href="#cb24-389" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
+<span id="cb24-390"><a href="#cb24-390" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">engine =</span> <span class="st">"rxode2"</span>)</span>
+<span id="cb24-391"><a href="#cb24-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-392"><a href="#cb24-392" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- mrgsolve model ----</span></span>
+<span id="cb24-393"><a href="#cb24-393" aria-hidden="true" tabindex="-1"></a>mrg_code <span class="ot">&lt;-</span> <span class="st">"</span></span>
+<span id="cb24-394"><a href="#cb24-394" aria-hidden="true" tabindex="-1"></a><span class="st">$PARAM CL = 5, Vc = 50, Q = 4, Vp = 30</span></span>
+<span id="cb24-395"><a href="#cb24-395" aria-hidden="true" tabindex="-1"></a><span class="st">$CMT A1 A2</span></span>
+<span id="cb24-396"><a href="#cb24-396" aria-hidden="true" tabindex="-1"></a><span class="st">$ODE</span></span>
+<span id="cb24-397"><a href="#cb24-397" aria-hidden="true" tabindex="-1"></a><span class="st">dxdt_A1 = - (CL/Vc) * A1 - (Q/Vc) * A1 + (Q/Vp) * A2;</span></span>
+<span id="cb24-398"><a href="#cb24-398" aria-hidden="true" tabindex="-1"></a><span class="st">dxdt_A2 =   (Q/Vc) * A1 - (Q/Vp) * A2;</span></span>
+<span id="cb24-399"><a href="#cb24-399" aria-hidden="true" tabindex="-1"></a><span class="st">$TABLE</span></span>
+<span id="cb24-400"><a href="#cb24-400" aria-hidden="true" tabindex="-1"></a><span class="st">double Cp = A1 / Vc;</span></span>
+<span id="cb24-401"><a href="#cb24-401" aria-hidden="true" tabindex="-1"></a><span class="st">$CAPTURE Cp</span></span>
+<span id="cb24-402"><a href="#cb24-402" aria-hidden="true" tabindex="-1"></a><span class="st">"</span></span>
+<span id="cb24-403"><a href="#cb24-403" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-404"><a href="#cb24-404" aria-hidden="true" tabindex="-1"></a>mrg_model <span class="ot">&lt;-</span> <span class="fu">mcode</span>(<span class="st">"twocmt"</span>, mrg_code)</span>
+<span id="cb24-405"><a href="#cb24-405" aria-hidden="true" tabindex="-1"></a>mrg_sim <span class="ot">&lt;-</span> mrg_model <span class="sc">|&gt;</span></span>
+<span id="cb24-406"><a href="#cb24-406" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ev</span>(<span class="at">amt =</span> <span class="dv">500</span>, <span class="at">cmt =</span> <span class="dv">1</span>, <span class="at">time =</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb24-407"><a href="#cb24-407" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mrgsim</span>(<span class="at">end =</span> <span class="dv">48</span>, <span class="at">delta =</span> <span class="fl">0.5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb24-408"><a href="#cb24-408" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
+<span id="cb24-409"><a href="#cb24-409" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">engine =</span> <span class="st">"mrgsolve"</span>)</span>
+<span id="cb24-410"><a href="#cb24-410" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-411"><a href="#cb24-411" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Combine &amp; Plot ----</span></span>
+<span id="cb24-412"><a href="#cb24-412" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(rx_sim, mrg_sim) <span class="sc">|&gt;</span></span>
+<span id="cb24-413"><a href="#cb24-413" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> Cp, <span class="at">color =</span> engine, <span class="at">linetype =</span> engine)) <span class="sc">+</span></span>
+<span id="cb24-414"><a href="#cb24-414" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.0</span>) <span class="sc">+</span></span>
+<span id="cb24-415"><a href="#cb24-415" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"rxode2"</span> <span class="ot">=</span> <span class="st">"#00A8B0"</span>, <span class="st">"mrgsolve"</span> <span class="ot">=</span> <span class="st">"#E0533D"</span>)) <span class="sc">+</span></span>
+<span id="cb24-416"><a href="#cb24-416" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_linetype_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"rxode2"</span> <span class="ot">=</span> <span class="st">"solid"</span>, <span class="st">"mrgsolve"</span> <span class="ot">=</span> <span class="st">"dashed"</span>)) <span class="sc">+</span></span>
+<span id="cb24-417"><a href="#cb24-417" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb24-418"><a href="#cb24-418" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb24-419"><a href="#cb24-419" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"rxode2 vs mrgsolve: 2-Compartment IV Bolus"</span>,</span>
+<span id="cb24-420"><a href="#cb24-420" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Both engines converge to identical solutions"</span>,</span>
+<span id="cb24-421"><a href="#cb24-421" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Time (h)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>,</span>
+<span id="cb24-422"><a href="#cb24-422" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"Engine"</span>, <span class="at">linetype =</span> <span class="st">"Engine"</span></span>
+<span id="cb24-423"><a href="#cb24-423" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb24-424"><a href="#cb24-424" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span>
+<span id="cb24-425"><a href="#cb24-425" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-426"><a href="#cb24-426" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-427"><a href="#cb24-427" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Feature <span class="pp">|</span> <span class="in">`rxode2`</span> <span class="pp">|</span> <span class="in">`mrgsolve`</span> <span class="pp">|</span></span>
+<span id="cb24-428"><a href="#cb24-428" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb24-429"><a href="#cb24-429" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Syntax** <span class="pp">|</span> R-like ODE in <span class="in">`rxode2({...})`</span> <span class="pp">|</span> C++ code block <span class="in">`$ODE ...`</span> <span class="pp">|</span></span>
+<span id="cb24-430"><a href="#cb24-430" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Compilation** <span class="pp">|</span> C (via Rcpp) <span class="pp">|</span> C++ (via Rcpp) <span class="pp">|</span></span>
+<span id="cb24-431"><a href="#cb24-431" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Dosing** <span class="pp">|</span> <span class="in">`et()`</span> event table <span class="pp">|</span> <span class="in">`ev()`</span> event object <span class="pp">|</span></span>
+<span id="cb24-432"><a href="#cb24-432" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Population sim** <span class="pp">|</span> <span class="in">`rxSolve()`</span> with parameter vectors <span class="pp">|</span> <span class="in">`idata_set`</span> with individual parameters <span class="pp">|</span></span>
+<span id="cb24-433"><a href="#cb24-433" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Strengths** <span class="pp">|</span> Seamless nlmixr2 integration <span class="pp">|</span> Fastest for large-scale trial simulations <span class="pp">|</span></span>
+<span id="cb24-434"><a href="#cb24-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-435"><a href="#cb24-435" aria-hidden="true" tabindex="-1"></a><span class="fu">### `linpk`: Closed-Form PK Without ODEs</span></span>
+<span id="cb24-436"><a href="#cb24-436" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-437"><a href="#cb24-437" aria-hidden="true" tabindex="-1"></a>For linear PK systems, you often don't need an ODE solver at all. <span class="in">`linpk`</span> computes PK profiles analytically from primary parameters, making it ideal for rapid exploration.</span>
+<span id="cb24-438"><a href="#cb24-438" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-441"><a href="#cb24-441" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-442"><a href="#cb24-442" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-linpk-demo</span></span>
+<span id="cb24-443"><a href="#cb24-443" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Multi-dose oral profile generated with linpk using closed-form equations. No ODE solver required."</span></span>
+<span id="cb24-444"><a href="#cb24-444" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 7</span></span>
+<span id="cb24-445"><a href="#cb24-445" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4.5</span></span>
+<span id="cb24-446"><a href="#cb24-446" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-447"><a href="#cb24-447" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-448"><a href="#cb24-448" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(linpk)</span>
+<span id="cb24-449"><a href="#cb24-449" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-450"><a href="#cb24-450" aria-hidden="true" tabindex="-1"></a><span class="co"># Single oral dose, 1-compartment</span></span>
+<span id="cb24-451"><a href="#cb24-451" aria-hidden="true" tabindex="-1"></a>pk1 <span class="ot">&lt;-</span> <span class="fu">pkprofile</span>(</span>
+<span id="cb24-452"><a href="#cb24-452" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">72</span>, <span class="at">by =</span> <span class="fl">0.25</span>),</span>
+<span id="cb24-453"><a href="#cb24-453" aria-hidden="true" tabindex="-1"></a>  <span class="at">dose =</span> <span class="fu">list</span>(<span class="at">oral =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> <span class="dv">0</span>, <span class="at">amount =</span> <span class="dv">100</span>)),</span>
+<span id="cb24-454"><a href="#cb24-454" aria-hidden="true" tabindex="-1"></a>  <span class="at">cl   =</span> <span class="dv">5</span>, <span class="at">vc =</span> <span class="dv">80</span>, <span class="at">ka =</span> <span class="fl">0.8</span></span>
+<span id="cb24-455"><a href="#cb24-455" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-456"><a href="#cb24-456" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-457"><a href="#cb24-457" aria-hidden="true" tabindex="-1"></a><span class="fu">as.data.frame</span>(pk1) <span class="sc">|&gt;</span></span>
+<span id="cb24-458"><a href="#cb24-458" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> conc)) <span class="sc">+</span></span>
+<span id="cb24-459"><a href="#cb24-459" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">fill =</span> <span class="st">"#00A8B0"</span>, <span class="at">alpha =</span> <span class="fl">0.15</span>) <span class="sc">+</span></span>
+<span id="cb24-460"><a href="#cb24-460" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#00A8B0"</span>, <span class="at">linewidth =</span> <span class="fl">1.0</span>) <span class="sc">+</span></span>
+<span id="cb24-461"><a href="#cb24-461" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb24-462"><a href="#cb24-462" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"linpk: Closed-Form 1-CMT Oral Profile"</span>,</span>
+<span id="cb24-463"><a href="#cb24-463" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"No differential equation solver needed"</span>,</span>
+<span id="cb24-464"><a href="#cb24-464" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Time (h)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span></span>
+<span id="cb24-465"><a href="#cb24-465" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb24-466"><a href="#cb24-466" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span>
+<span id="cb24-467"><a href="#cb24-467" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-468"><a href="#cb24-468" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-469"><a href="#cb24-469" aria-hidden="true" tabindex="-1"></a><span class="fu">### `nlme`: Linear Mixed-Effects for PK Summary Statistics</span></span>
+<span id="cb24-470"><a href="#cb24-470" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-471"><a href="#cb24-471" aria-hidden="true" tabindex="-1"></a>Before diving into full population PK (Chapter 12), <span class="in">`nlme`</span> provides a gentle introduction to mixed-effects modeling applied to PK endpoints like $C_{max}$ and AUC:</span>
+<span id="cb24-472"><a href="#cb24-472" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-475"><a href="#cb24-475" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb24-476"><a href="#cb24-476" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nlme)</span>
+<span id="cb24-477"><a href="#cb24-477" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-478"><a href="#cb24-478" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate peak concentrations from 3 dose groups</span></span>
+<span id="cb24-479"><a href="#cb24-479" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">456</span>)</span>
+<span id="cb24-480"><a href="#cb24-480" aria-hidden="true" tabindex="-1"></a>pk_summary <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb24-481"><a href="#cb24-481" aria-hidden="true" tabindex="-1"></a>  <span class="at">subject =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">each =</span> <span class="dv">2</span>),</span>
+<span id="cb24-482"><a href="#cb24-482" aria-hidden="true" tabindex="-1"></a>  <span class="at">period  =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="dv">30</span>),</span>
+<span id="cb24-483"><a href="#cb24-483" aria-hidden="true" tabindex="-1"></a>  <span class="at">dose    =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">200</span>), <span class="at">each =</span> <span class="dv">20</span>),</span>
+<span id="cb24-484"><a href="#cb24-484" aria-hidden="true" tabindex="-1"></a>  <span class="at">cmax    =</span> <span class="cn">NA</span></span>
+<span id="cb24-485"><a href="#cb24-485" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-486"><a href="#cb24-486" aria-hidden="true" tabindex="-1"></a>pk_summary<span class="sc">$</span>cmax <span class="ot">&lt;-</span> <span class="fu">with</span>(pk_summary,</span>
+<span id="cb24-487"><a href="#cb24-487" aria-hidden="true" tabindex="-1"></a>  <span class="fl">2.5</span> <span class="sc">*</span> dose<span class="sc">^</span><span class="fl">0.85</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="fu">nrow</span>(pk_summary), <span class="dv">0</span>, <span class="fl">0.2</span>)) <span class="sc">+</span></span>
+<span id="cb24-488"><a href="#cb24-488" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(<span class="fu">nrow</span>(pk_summary), <span class="dv">0</span>, <span class="fl">0.5</span>)</span>
+<span id="cb24-489"><a href="#cb24-489" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-490"><a href="#cb24-490" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-491"><a href="#cb24-491" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lme</span>(<span class="fu">log</span>(cmax) <span class="sc">~</span> <span class="fu">log</span>(dose), <span class="at">random =</span> <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> subject,</span>
+<span id="cb24-492"><a href="#cb24-492" aria-hidden="true" tabindex="-1"></a>           <span class="at">data =</span> pk_summary)</span>
+<span id="cb24-493"><a href="#cb24-493" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit)</span>
+<span id="cb24-494"><a href="#cb24-494" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb24-495"><a href="#cb24-495" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-496"><a href="#cb24-496" aria-hidden="true" tabindex="-1"></a>The power model $\text{C}_{max} \propto \text{dose}^{\beta}$ estimates $\beta \approx 0.85$, confirming near-linear dose proportionality — a common regulatory question. We'll revisit <span class="in">`nlme`</span> for full PK curve fitting in Chapter 12.</span>
+<span id="cb24-497"><a href="#cb24-497" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-498"><a href="#cb24-498" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb24-499"><a href="#cb24-499" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-500"><a href="#cb24-500" aria-hidden="true" tabindex="-1"></a>::: {.exercise-box}</span>
+<span id="cb24-501"><a href="#cb24-501" aria-hidden="true" tabindex="-1"></a><span class="fu">### Exercises</span></span>
+<span id="cb24-502"><a href="#cb24-502" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-503"><a href="#cb24-503" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Create a simulated PK dataset with 10 subjects, 8 time points, and 2 dose groups. Plot individual and mean profiles.</span>
+<span id="cb24-504"><a href="#cb24-504" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Import a CSV file of your choice and reshape it from wide to long format.</span>
+<span id="cb24-505"><a href="#cb24-505" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Create a semi-log plot with proper axis labels and provide a caption about what the linear terminal phase indicates.</span>
+<span id="cb24-506"><a href="#cb24-506" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Write a reusable R function that calculates $k_e$ from two concentration-time points.</span>
+<span id="cb24-507"><a href="#cb24-507" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Set up a project directory structure following the recommended layout.</span>
+<span id="cb24-508"><a href="#cb24-508" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb24-509"><a href="#cb24-509" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-510"><a href="#cb24-510" aria-hidden="true" tabindex="-1"></a>::: {.mistakes-box}</span>
+<span id="cb24-511"><a href="#cb24-511" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Mistakes</span></span>
+<span id="cb24-512"><a href="#cb24-512" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-513"><a href="#cb24-513" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Using absolute file paths** — scripts break when shared or moved</span>
+<span id="cb24-514"><a href="#cb24-514" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Not checking for BLOQ (Below Limit of Quantification) values** — they need special handling</span>
+<span id="cb24-515"><a href="#cb24-515" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Plotting concentration on linear scale** — always check the semi-log view</span>
+<span id="cb24-516"><a href="#cb24-516" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Forgetting to convert time units** (hours → minutes, days → hours)</span>
+<span id="cb24-517"><a href="#cb24-517" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Overwriting raw data** — always keep original files unchanged</span>
+<span id="cb24-518"><a href="#cb24-518" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb24-519"><a href="#cb24-519" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-520"><a href="#cb24-520" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
+<span id="cb24-521"><a href="#cb24-521" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Takeaway</span></span>
+<span id="cb24-522"><a href="#cb24-522" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-523"><a href="#cb24-523" aria-hidden="true" tabindex="-1"></a>A well-organized R environment with proper project structure, version control, and reproducible scripts is the foundation of reliable PK/PD analysis. Master data import, cleaning, and visualization in R before moving to modeling.</span>
+<span id="cb24-524"><a href="#cb24-524" aria-hidden="true" tabindex="-1"></a>:::</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
