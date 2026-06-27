@@ -7,7 +7,7 @@ book:
   subtitle: "21 Hands-On Chapters — From Fundamentals to Advanced Modeling and Real-World Applications"
   author: "Lucas VHH TRAN"
   date: today
-  cover-image: cover.png
+  cover-image: cover1.png
   cover-image-alt: "Book cover for Master Pharmacokinetics and Pharmacodynamics (PKPD) with R"
   site-url: https://vanhungtran.github.io/PDPKwithR/
   repo-url: https://github.com/vanhungtran/PDPKwithR
