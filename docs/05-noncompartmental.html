@@ -436,18 +436,6 @@ window.Quarto = {
  <span class="menu-text">Practice Datasets and Exercises with Solutions</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./appendix-g-bioequivalence.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Bioequivalence Analysis in R</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./appendix-h-phase1-escalation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Phase I Dose-Escalation Designs in R</span></a>
-  </div>
-</li>
       </ul>
   </li>
     </ul>
@@ -480,11 +468,6 @@ window.Quarto = {
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises"><span class="header-section-number">5.9.3</span> Exercises</a></li>
   <li><a href="#common-mistakes" id="toc-common-mistakes" class="nav-link" data-scroll-target="#common-mistakes"><span class="header-section-number">5.9.4</span> Common Mistakes</a></li>
   <li><a href="#key-takeaway" id="toc-key-takeaway" class="nav-link" data-scroll-target="#key-takeaway"><span class="header-section-number">5.9.5</span> Key Takeaway</a></li>
-  </ul></li>
-  <li><a href="#comparing-nca-packages-pknca-vs-noncompart-vs-qpnca" id="toc-comparing-nca-packages-pknca-vs-noncompart-vs-qpnca" class="nav-link" data-scroll-target="#comparing-nca-packages-pknca-vs-noncompart-vs-qpnca"><span class="header-section-number">5.10</span> Comparing NCA Packages: PKNCA vs NonCompart vs qpNCA</a>
-  <ul class="collapse">
-  <li><a href="#simulated-multi-dose-dataset" id="toc-simulated-multi-dose-dataset" class="nav-link" data-scroll-target="#simulated-multi-dose-dataset"><span class="header-section-number">5.10.1</span> Simulated Multi-Dose Dataset</a></li>
-  <li><a href="#package-comparison-summary" id="toc-package-comparison-summary" class="nav-link" data-scroll-target="#package-comparison-summary"><span class="header-section-number">5.10.2</span> Package Comparison Summary</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/vanhungtran/PDPKwithR/edit/main/05-noncompartmental.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/vanhungtran/PDPKwithR/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -961,144 +944,10 @@ Caption: aucint.last, cmax, aucinf.obs, cl.obs, vz.obs: geometric mean and geome
 <h3 data-number="5.9.5" class="anchored" data-anchor-id="key-takeaway"><span class="header-section-number">5.9.5</span> Key Takeaway</h3>
 <p>NCA is the workhorse of early-phase PK analysis. Master the trapezoidal rule, terminal slope estimation, and the calculation of <span class="math inline">CL</span>, <span class="math inline">V_d</span>, and <span class="math inline">t_{1/2}</span>. Always validate your terminal phase selection with semi-log plots and check that extrapolated AUC is ≤20% of total.</p>
 </section>
-</section>
-<section id="comparing-nca-packages-pknca-vs-noncompart-vs-qpnca" class="level2" data-number="5.10">
-<h2 data-number="5.10" class="anchored" data-anchor-id="comparing-nca-packages-pknca-vs-noncompart-vs-qpnca"><span class="header-section-number">5.10</span> Comparing NCA Packages: PKNCA vs NonCompart vs qpNCA</h2>
-<p>While <code>PKNCA</code> is our primary NCA tool, R offers several alternatives with different strengths. This section compares three packages on a simulated multi-dose oral dataset — a common Phase I scenario.</p>
-<section id="simulated-multi-dose-dataset" class="level3" data-number="5.10.1">
-<h3 data-number="5.10.1" class="anchored" data-anchor-id="simulated-multi-dose-dataset"><span class="header-section-number">5.10.1</span> Simulated Multi-Dose Dataset</h3>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PKNCA)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(NonCompart)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(qpNCA)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate multi-dose PK: 10 subjects, 14 time points, 5 oral doses</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">789</span>)</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>subjects <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>times <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>, <span class="fl">24.5</span>, <span class="dv">25</span>, <span class="dv">26</span>, <span class="dv">28</span>, <span class="dv">30</span>, <span class="dv">32</span>, <span class="dv">36</span>, <span class="dv">48</span>, <span class="dv">72</span>)</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>sim_nca_data <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">subject =</span> subjects, <span class="at">time =</span> times) <span class="sc">|&gt;</span></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(subject, time) <span class="sc">|&gt;</span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">dose_cycle =</span> <span class="fu">ifelse</span>(time <span class="sc">&lt;</span> <span class="dv">24</span>, <span class="st">"Day 1 (first dose)"</span>, <span class="st">"Day 5 (steady-state)"</span>),</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1-cmt oral model: CL=4, V=60, ka=1.2</span></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">conc =</span> (<span class="dv">100</span> <span class="sc">/</span> <span class="dv">60</span>) <span class="sc">*</span> (<span class="fl">1.2</span> <span class="sc">/</span> (<span class="fl">1.2</span> <span class="sc">-</span> <span class="dv">4</span><span class="sc">/</span><span class="dv">60</span>)) <span class="sc">*</span></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>      (<span class="fu">exp</span>(<span class="sc">-</span>(<span class="dv">4</span><span class="sc">/</span><span class="dv">60</span>) <span class="sc">*</span> time) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fl">1.2</span> <span class="sc">*</span> time)) <span class="sc">+</span></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="dv">0</span>, <span class="fl">0.3</span>),</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">conc =</span> <span class="fu">ifelse</span>(conc <span class="sc">&lt;</span> <span class="fl">0.05</span>, <span class="fl">0.05</span>, conc)  <span class="co"># simulate BLOQ floor</span></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- PKNCA ----</span></span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>conc_obj_pknca <span class="ot">&lt;-</span> <span class="fu">PKNCAconc</span>(sim_nca_data, conc <span class="sc">~</span> time <span class="sc">|</span> subject)</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>dose_obj_pknca <span class="ot">&lt;-</span> <span class="fu">PKNCAdose</span>(<span class="fu">data.frame</span>(<span class="at">subject =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="at">time =</span> <span class="dv">0</span>, <span class="at">dose =</span> <span class="dv">100</span>),</span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>                             dose <span class="sc">~</span> time <span class="sc">|</span> subject)</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>intervals_pknca <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">start =</span> <span class="dv">0</span>, <span class="at">end =</span> <span class="dv">72</span>,</span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>                               <span class="at">auclast =</span> <span class="cn">TRUE</span>, <span class="at">aucinf.obs =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>                               <span class="at">cmax =</span> <span class="cn">TRUE</span>, <span class="at">tmax =</span> <span class="cn">TRUE</span>, <span class="at">half.life =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>nca_pknca <span class="ot">&lt;-</span> <span class="fu">pk.nca</span>(intervals_pknca, conc_obj_pknca, dose_obj_pknca)</span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- NonCompart ----</span></span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>nca_nc <span class="ot">&lt;-</span> <span class="fu">tblNCA</span>(sim_nca_data, <span class="at">key =</span> <span class="st">"subject"</span>, <span class="at">colTime =</span> <span class="st">"time"</span>,</span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>                 <span class="at">colConc =</span> <span class="st">"conc"</span>, <span class="at">dose =</span> <span class="dv">100</span>, <span class="at">adm =</span> <span class="st">"Extravascular"</span>,</span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dur =</span> <span class="dv">0</span>, <span class="at">doseUnit =</span> <span class="st">"mg"</span>, <span class="at">timeUnit =</span> <span class="st">"h"</span>,</span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>                 <span class="at">concUnit =</span> <span class="st">"mg/L"</span>, <span class="at">down =</span> <span class="st">"Linear"</span>)</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- qpNCA ----</span></span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>nca_qp <span class="ot">&lt;-</span> <span class="fu">qpNCA</span>(sim_nca_data, <span class="at">dose =</span> <span class="dv">100</span>)</span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Visual comparison of terminal slopes ----</span></span>
-<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>terminal_points <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">subject =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">3</span>),</span>
-<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>  <span class="at">package =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"PKNCA"</span>, <span class="st">"NonCompart"</span>, <span class="st">"qpNCA"</span>), <span class="at">each =</span> <span class="dv">10</span>),</span>
-<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>  <span class="at">tlast     =</span> <span class="fu">c</span>(</span>
-<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rep</span>(<span class="dv">48</span>, <span class="dv">10</span>),                               <span class="co"># PKNCA: user-selected</span></span>
-<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>    <span class="fu">attr</span>(nca_nc, <span class="st">"UsedPoints"</span>)<span class="sc">$</span>tlast[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>],     <span class="co"># NonCompart: auto</span></span>
-<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rep</span>(<span class="dv">48</span>, <span class="dv">10</span>)                                 <span class="co"># qpNCA: default</span></span>
-<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(sim_nca_data, <span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> conc, <span class="at">group =</span> subject)) <span class="sc">+</span></span>
-<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">alpha =</span> <span class="fl">0.3</span>, <span class="at">color =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
-<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">data =</span> terminal_points,</span>
-<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">xintercept =</span> tlast, <span class="at">color =</span> package),</span>
-<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>             <span class="at">linewidth =</span> <span class="fl">1.0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
-<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"PKNCA"</span> <span class="ot">=</span> <span class="st">"#00A8B0"</span>,</span>
-<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"NonCompart"</span> <span class="ot">=</span> <span class="st">"#E0533D"</span>,</span>
-<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"qpNCA"</span> <span class="ot">=</span> <span class="st">"#6C63B5"</span>)) <span class="sc">+</span></span>
-<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Terminal Phase Selection: 3 NCA Packages"</span>,</span>
-<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Dashed lines show tlast (start of terminal phase) per package"</span>,</span>
-<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (h)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>, <span class="at">color =</span> <span class="st">"Package"</span>) <span class="sc">+</span></span>
-<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-</section>
-<section id="package-comparison-summary" class="level3" data-number="5.10.2">
-<h3 data-number="5.10.2" class="anchored" data-anchor-id="package-comparison-summary"><span class="header-section-number">5.10.2</span> Package Comparison Summary</h3>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Feature</th>
-<th>PKNCA</th>
-<th>NonCompart</th>
-<th>qpNCA</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>Slope selection</strong></td>
-<td>Manual (user-control)</td>
-<td>Auto (best R²)</td>
-<td>Auto (default)</td>
-</tr>
-<tr class="even">
-<td><strong>AUC method</strong></td>
-<td>Linear-up/log-down</td>
-<td>Linear trapezoidal</td>
-<td>Linear/log options</td>
-</tr>
-<tr class="odd">
-<td><strong>CDISC support</strong></td>
-<td>Via <code>PKNCA.options</code></td>
-<td>Native SDTM terms</td>
-<td>Minimal</td>
-</tr>
-<tr class="even">
-<td><strong>Steady-state</strong></td>
-<td>Via interval specification</td>
-<td>Not directly</td>
-<td>Built-in</td>
-</tr>
-<tr class="odd">
-<td><strong>Reporting</strong></td>
-<td><code>summary()</code> data frame</td>
-<td>PDF/RTF via <code>ncar</code></td>
-<td>Basic summary</td>
-</tr>
-<tr class="even">
-<td><strong>Best for</strong></td>
-<td>Regulatory submissions</td>
-<td>Exploratory analysis</td>
-<td>High-throughput screening</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Recommendation</strong>: Use PKNCA for regulatory work (full audit trail, CDISC alignment), NonCompart for quick exploration with automatic slope detection, and qpNCA for batch processing many profiles.</p>
 
 
 <!-- -->
 
-</section>
 </section>
 
 </main> <!-- /main -->
@@ -1571,6 +1420,320 @@ Caption: aucint.last, cmax, aucinf.obs, cl.obs, vz.obs: geometric mean and geome
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<<<<<<< Updated upstream
+<div class="sourceCode" id="cb13" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Descriptive PK and Noncompartmental Analysis</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">## Learning Objectives</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>By the end of this chapter you will be able to:</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Structure PK data for noncompartmental analysis</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compute AUC using the trapezoidal rule</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Estimate $C_{max}$, $T_{max}$, terminal half-life, and other NCA parameters</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Calculate clearance, volume of distribution, and bioavailability</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Apply NCA to both IV and extravascular data</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Understand the strengths and limitations of NCA</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="fu">## What Is Noncompartmental Analysis?</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>**Noncompartmental analysis (NCA)** estimates PK parameters directly from concentration-time data without assuming a specific compartmental model. It relies on:</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**The trapezoidal rule** for AUC computation</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Log-linear regression** of the terminal phase for $k_e$ and $t_{1/2}$</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Moment analysis** for mean residence time (MRT)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>NCA is the most commonly used method in early-phase clinical trials and bioequivalence studies because it makes minimal assumptions.</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Structure for NCA</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>A proper PK dataset for NCA requires:</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PKNCA)</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: Single subject, single dose, IV bolus</span></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>pk_iv <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>  <span class="at">TIME =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>),</span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">CONC =</span> <span class="fu">c</span>(<span class="fl">12.3</span>, <span class="fl">9.8</span>, <span class="fl">8.1</span>, <span class="fl">6.4</span>, <span class="fl">5.7</span>, <span class="fl">4.9</span>, <span class="fl">3.8</span>, <span class="fl">3.0</span>, <span class="fl">1.9</span>, <span class="fl">1.2</span>, <span class="fl">0.5</span>, <span class="fl">0.1</span>)</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Required: TIME and CONC columns</span></span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional but recommended: ID (subject), DOSE, ROUTE, and grouping variables</span></span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pk_iv, <span class="fu">aes</span>(TIME, CONC)) <span class="sc">+</span></span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="st">"#0B6E6B"</span>) <span class="sc">+</span></span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#0B6E6B"</span>) <span class="sc">+</span></span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Concentration-Time Profile for NCA"</span>,</span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>) <span class="sc">+</span></span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a><span class="fu">## Computing AUC: The Trapezoidal Rule</span></span>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a><span class="fu">### Linear Trapezoidal Rule</span></span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>The area under the curve between two time points is approximated as a trapezoid:</span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>$$AUC_{t_1 \to t_2} = \frac{(C_1 + C_2)}{2} \cdot (t_2 - t_1)$$</span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>Total AUC from 0 to last time point:</span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a>$$AUC_{0 \to t_{last}} = \sum_{i=1}^{n-1} \frac{(C_i + C_{i+1})}{2} \cdot (t_{i+1} - t_i)$$</span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a><span class="co"># Manual AUC calculation using the trapezoidal rule</span></span>
+<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a>calc_auc_linear <span class="ot">&lt;-</span> <span class="cf">function</span>(time, conc) {</span>
+<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">length</span>(time)</span>
+<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a>  auc <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>(n <span class="sc">-</span> <span class="dv">1</span>)) {</span>
+<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a>    auc <span class="ot">&lt;-</span> auc <span class="sc">+</span> (conc[i] <span class="sc">+</span> conc[i <span class="sc">+</span> <span class="dv">1</span>]) <span class="sc">/</span> <span class="dv">2</span> <span class="sc">*</span> (time[i <span class="sc">+</span> <span class="dv">1</span>] <span class="sc">-</span> time[i])</span>
+<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(auc)</span>
+<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-83"><a href="#cb13-83" aria-hidden="true" tabindex="-1"></a>AUC_last <span class="ot">&lt;-</span> <span class="fu">calc_auc_linear</span>(pk_iv<span class="sc">$</span>TIME, pk_iv<span class="sc">$</span>CONC)</span>
+<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"AUC(0 to last):"</span>, <span class="fu">round</span>(AUC_last, <span class="dv">3</span>), <span class="st">"mg·h/L</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-87"><a href="#cb13-87" aria-hidden="true" tabindex="-1"></a><span class="fu">### Extrapolation to Infinity</span></span>
+<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a>$$AUC_{0 \to \infty} = AUC_{0 \to t_{last}} + \frac{C_{last}}{k_e}$$</span>
+<span id="cb13-90"><a href="#cb13-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-91"><a href="#cb13-91" aria-hidden="true" tabindex="-1"></a>where $k_e$ is the terminal elimination rate constant.</span>
+<span id="cb13-92"><a href="#cb13-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-93"><a href="#cb13-93" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb13-94"><a href="#cb13-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-95"><a href="#cb13-95" aria-hidden="true" tabindex="-1"></a><span class="fu">## Estimating the Terminal Elimination Rate</span></span>
+<span id="cb13-96"><a href="#cb13-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-97"><a href="#cb13-97" aria-hidden="true" tabindex="-1"></a><span class="fu">### Log-Linear Regression</span></span>
+<span id="cb13-98"><a href="#cb13-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-99"><a href="#cb13-99" aria-hidden="true" tabindex="-1"></a>The terminal phase is identified by selecting the last 3–5 points on the log-linear plot that form a straight line.</span>
+<span id="cb13-100"><a href="#cb13-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-103"><a href="#cb13-103" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-104"><a href="#cb13-104" aria-hidden="true" tabindex="-1"></a><span class="co"># Identify terminal phase and compute k_e</span></span>
+<span id="cb13-105"><a href="#cb13-105" aria-hidden="true" tabindex="-1"></a>pk_iv <span class="ot">&lt;-</span> pk_iv <span class="sc">%&gt;%</span></span>
+<span id="cb13-106"><a href="#cb13-106" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_conc =</span> <span class="fu">log</span>(CONC))</span>
+<span id="cb13-107"><a href="#cb13-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-108"><a href="#cb13-108" aria-hidden="true" tabindex="-1"></a><span class="co"># Use last 4 points for terminal slope</span></span>
+<span id="cb13-109"><a href="#cb13-109" aria-hidden="true" tabindex="-1"></a>terminal_idx <span class="ot">&lt;-</span> (<span class="fu">nrow</span>(pk_iv) <span class="sc">-</span> <span class="dv">3</span>)<span class="sc">:</span><span class="fu">nrow</span>(pk_iv)</span>
+<span id="cb13-110"><a href="#cb13-110" aria-hidden="true" tabindex="-1"></a>terminal_data <span class="ot">&lt;-</span> pk_iv[terminal_idx, ]</span>
+<span id="cb13-111"><a href="#cb13-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-112"><a href="#cb13-112" aria-hidden="true" tabindex="-1"></a><span class="co"># Linear regression on log-transformed concentrations</span></span>
+<span id="cb13-113"><a href="#cb13-113" aria-hidden="true" tabindex="-1"></a>lm_terminal <span class="ot">&lt;-</span> <span class="fu">lm</span>(log_conc <span class="sc">~</span> TIME, <span class="at">data =</span> terminal_data)</span>
+<span id="cb13-114"><a href="#cb13-114" aria-hidden="true" tabindex="-1"></a>k_e <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fu">coef</span>(lm_terminal)[<span class="dv">2</span>]</span>
+<span id="cb13-115"><a href="#cb13-115" aria-hidden="true" tabindex="-1"></a>t_half <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="dv">2</span>) <span class="sc">/</span> k_e</span>
+<span id="cb13-116"><a href="#cb13-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-117"><a href="#cb13-117" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Elimination rate constant (ke):"</span>, <span class="fu">round</span>(k_e, <span class="dv">4</span>), <span class="st">"1/h</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb13-118"><a href="#cb13-118" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Half-life (t1/2):"</span>, <span class="fu">round</span>(t_half, <span class="dv">2</span>), <span class="st">"hours</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb13-119"><a href="#cb13-119" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-120"><a href="#cb13-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-123"><a href="#cb13-123" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-124"><a href="#cb13-124" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize terminal slope estimation</span></span>
+<span id="cb13-125"><a href="#cb13-125" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pk_iv, <span class="fu">aes</span>(TIME, CONC)) <span class="sc">+</span></span>
+<span id="cb13-126"><a href="#cb13-126" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb13-127"><a href="#cb13-127" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb13-128"><a href="#cb13-128" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb13-129"><a href="#cb13-129" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Highlight terminal phase points</span></span>
+<span id="cb13-130"><a href="#cb13-130" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> terminal_data, <span class="fu">aes</span>(TIME, CONC),</span>
+<span id="cb13-131"><a href="#cb13-131" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">"#C44536"</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb13-132"><a href="#cb13-132" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Terminal Phase Identification"</span>,</span>
+<span id="cb13-133"><a href="#cb13-133" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="fu">paste0</span>(<span class="st">"Red points used for ke estimation: ke = "</span>, <span class="fu">round</span>(k_e, <span class="dv">3</span>), <span class="st">" 1/h"</span>),</span>
+<span id="cb13-134"><a href="#cb13-134" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L, log scale)"</span>) <span class="sc">+</span></span>
+<span id="cb13-135"><a href="#cb13-135" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb13-136"><a href="#cb13-136" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-137"><a href="#cb13-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-138"><a href="#cb13-138" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb13-139"><a href="#cb13-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-140"><a href="#cb13-140" aria-hidden="true" tabindex="-1"></a><span class="fu">## Computing Key NCA Parameters</span></span>
+<span id="cb13-141"><a href="#cb13-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-142"><a href="#cb13-142" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Parameter <span class="pp">|</span> Formula <span class="pp">|</span> Interpretation <span class="pp">|</span></span>
+<span id="cb13-143"><a href="#cb13-143" aria-hidden="true" tabindex="-1"></a><span class="pp">|-----------|---------|---------------|</span></span>
+<span id="cb13-144"><a href="#cb13-144" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $C_{max}$ <span class="pp">|</span> Maximum observed concentration <span class="pp">|</span> Peak exposure <span class="pp">|</span></span>
+<span id="cb13-145"><a href="#cb13-145" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $T_{max}$ <span class="pp">|</span> Time of $C_{max}$ <span class="pp">|</span> Absorption rate indicator <span class="pp">|</span></span>
+<span id="cb13-146"><a href="#cb13-146" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $AUC_{0 \to \infty}$ <span class="pp">|</span> $AUC_{last} + C_{last}/k_e$ <span class="pp">|</span> Total drug exposure <span class="pp">|</span></span>
+<span id="cb13-147"><a href="#cb13-147" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $t_{1/2}$ <span class="pp">|</span> $\ln(2)/k_e$ <span class="pp">|</span> Elimination half-life <span class="pp">|</span></span>
+<span id="cb13-148"><a href="#cb13-148" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $CL$ (IV) <span class="pp">|</span> $Dose / AUC_{0 \to \infty}$ <span class="pp">|</span> Volume cleared per unit time <span class="pp">|</span></span>
+<span id="cb13-149"><a href="#cb13-149" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $V_d$ (IV) <span class="pp">|</span> $Dose / (k_e \cdot AUC_{0 \to \infty})$ <span class="pp">|</span> Apparent distribution volume <span class="pp">|</span></span>
+<span id="cb13-150"><a href="#cb13-150" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $MRT$ <span class="pp">|</span> $AUMC / AUC$ <span class="pp">|</span> Mean residence time <span class="pp">|</span></span>
+<span id="cb13-151"><a href="#cb13-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-154"><a href="#cb13-154" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-155"><a href="#cb13-155" aria-hidden="true" tabindex="-1"></a><span class="co"># Complete NCA function</span></span>
+<span id="cb13-156"><a href="#cb13-156" aria-hidden="true" tabindex="-1"></a>calculate_nca <span class="ot">&lt;-</span> <span class="cf">function</span>(time, conc, dose, <span class="at">route =</span> <span class="st">"IV"</span>) {</span>
+<span id="cb13-157"><a href="#cb13-157" aria-hidden="true" tabindex="-1"></a>  <span class="co"># AUC to last</span></span>
+<span id="cb13-158"><a href="#cb13-158" aria-hidden="true" tabindex="-1"></a>  auc_last <span class="ot">&lt;-</span> <span class="fu">calc_auc_linear</span>(time, conc)</span>
+<span id="cb13-159"><a href="#cb13-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-160"><a href="#cb13-160" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Terminal slope (last 4 points)</span></span>
+<span id="cb13-161"><a href="#cb13-161" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">length</span>(time)</span>
+<span id="cb13-162"><a href="#cb13-162" aria-hidden="true" tabindex="-1"></a>  terminal_idx <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">1</span>, n <span class="sc">-</span> <span class="dv">3</span>)<span class="sc">:</span>n</span>
+<span id="cb13-163"><a href="#cb13-163" aria-hidden="true" tabindex="-1"></a>  lm_term <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(conc[terminal_idx]) <span class="sc">~</span> time[terminal_idx])</span>
+<span id="cb13-164"><a href="#cb13-164" aria-hidden="true" tabindex="-1"></a>  ke <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fu">coef</span>(lm_term)[<span class="dv">2</span>]</span>
+<span id="cb13-165"><a href="#cb13-165" aria-hidden="true" tabindex="-1"></a>  t_half <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="dv">2</span>) <span class="sc">/</span> ke</span>
+<span id="cb13-166"><a href="#cb13-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-167"><a href="#cb13-167" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Extrapolated AUC</span></span>
+<span id="cb13-168"><a href="#cb13-168" aria-hidden="true" tabindex="-1"></a>  auc_inf <span class="ot">&lt;-</span> auc_last <span class="sc">+</span> conc[n] <span class="sc">/</span> ke</span>
+<span id="cb13-169"><a href="#cb13-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-170"><a href="#cb13-170" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Cmax, Tmax</span></span>
+<span id="cb13-171"><a href="#cb13-171" aria-hidden="true" tabindex="-1"></a>  cmax <span class="ot">&lt;-</span> <span class="fu">max</span>(conc)</span>
+<span id="cb13-172"><a href="#cb13-172" aria-hidden="true" tabindex="-1"></a>  tmax <span class="ot">&lt;-</span> time[<span class="fu">which.max</span>(conc)]</span>
+<span id="cb13-173"><a href="#cb13-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-174"><a href="#cb13-174" aria-hidden="true" tabindex="-1"></a>  <span class="co"># CL, Vd</span></span>
+<span id="cb13-175"><a href="#cb13-175" aria-hidden="true" tabindex="-1"></a>  CL <span class="ot">&lt;-</span> dose <span class="sc">/</span> auc_inf</span>
+<span id="cb13-176"><a href="#cb13-176" aria-hidden="true" tabindex="-1"></a>  Vd <span class="ot">&lt;-</span> CL <span class="sc">/</span> ke</span>
+<span id="cb13-177"><a href="#cb13-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-178"><a href="#cb13-178" aria-hidden="true" tabindex="-1"></a>  <span class="co"># AUMC and MRT</span></span>
+<span id="cb13-179"><a href="#cb13-179" aria-hidden="true" tabindex="-1"></a>  auc_moment <span class="ot">&lt;-</span> <span class="cf">function</span>(time, conc) {</span>
+<span id="cb13-180"><a href="#cb13-180" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(<span class="fu">diff</span>(time) <span class="sc">*</span> (time[<span class="sc">-</span><span class="dv">1</span>] <span class="sc">*</span> conc[<span class="sc">-</span><span class="dv">1</span>] <span class="sc">+</span> time[<span class="sc">-</span><span class="fu">length</span>(time)] <span class="sc">*</span> conc[<span class="sc">-</span><span class="fu">length</span>(time)]) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb13-181"><a href="#cb13-181" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-182"><a href="#cb13-182" aria-hidden="true" tabindex="-1"></a>  aumc_last <span class="ot">&lt;-</span> <span class="fu">auc_moment</span>(time, conc)</span>
+<span id="cb13-183"><a href="#cb13-183" aria-hidden="true" tabindex="-1"></a>  aumc_inf <span class="ot">&lt;-</span> aumc_last <span class="sc">+</span> time[n] <span class="sc">*</span> conc[n] <span class="sc">/</span> ke <span class="sc">+</span> conc[n] <span class="sc">/</span> (ke<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb13-184"><a href="#cb13-184" aria-hidden="true" tabindex="-1"></a>  MRT <span class="ot">&lt;-</span> aumc_inf <span class="sc">/</span> auc_inf</span>
+<span id="cb13-185"><a href="#cb13-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-186"><a href="#cb13-186" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb13-187"><a href="#cb13-187" aria-hidden="true" tabindex="-1"></a>    <span class="at">Parameter =</span> <span class="fu">c</span>(<span class="st">"Cmax (mg/L)"</span>, <span class="st">"Tmax (h)"</span>, <span class="st">"AUC_last (mg·h/L)"</span>,</span>
+<span id="cb13-188"><a href="#cb13-188" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"AUC_inf (mg·h/L)"</span>, <span class="st">"ke (1/h)"</span>, <span class="st">"t_half (h)"</span>,</span>
+<span id="cb13-189"><a href="#cb13-189" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"CL (L/h)"</span>, <span class="st">"Vd (L)"</span>, <span class="st">"MRT (h)"</span>),</span>
+<span id="cb13-190"><a href="#cb13-190" aria-hidden="true" tabindex="-1"></a>    <span class="at">Value =</span> <span class="fu">round</span>(<span class="fu">c</span>(cmax, tmax, auc_last, auc_inf, ke, t_half, CL, Vd, MRT), <span class="dv">3</span>)</span>
+<span id="cb13-191"><a href="#cb13-191" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-192"><a href="#cb13-192" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-193"><a href="#cb13-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-194"><a href="#cb13-194" aria-hidden="true" tabindex="-1"></a>nca_results <span class="ot">&lt;-</span> <span class="fu">calculate_nca</span>(pk_iv<span class="sc">$</span>TIME, pk_iv<span class="sc">$</span>CONC, <span class="at">dose =</span> <span class="dv">100</span>)</span>
+<span id="cb13-195"><a href="#cb13-195" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(nca_results, <span class="at">caption =</span> <span class="st">"NCA Parameters for IV Bolus"</span>)</span>
+<span id="cb13-196"><a href="#cb13-196" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-197"><a href="#cb13-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-198"><a href="#cb13-198" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb13-199"><a href="#cb13-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-200"><a href="#cb13-200" aria-hidden="true" tabindex="-1"></a><span class="fu">## Extravascular Dosing</span></span>
+<span id="cb13-201"><a href="#cb13-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-202"><a href="#cb13-202" aria-hidden="true" tabindex="-1"></a>For oral or other extravascular administration, we also need:</span>
+<span id="cb13-203"><a href="#cb13-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-204"><a href="#cb13-204" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Bioavailability ($F$)**: Fraction of dose reaching systemic circulation</span>
+<span id="cb13-205"><a href="#cb13-205" aria-hidden="true" tabindex="-1"></a>  $$F = \frac{AUC_{oral} \cdot D_{IV}}{AUC_{IV} \cdot D_{oral}}$$</span>
+<span id="cb13-206"><a href="#cb13-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-207"><a href="#cb13-207" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Absorption rate constant ($k_a$)**: Estimated from the absorption phase</span>
+<span id="cb13-208"><a href="#cb13-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-211"><a href="#cb13-211" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-212"><a href="#cb13-212" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate oral PK data</span></span>
+<span id="cb13-213"><a href="#cb13-213" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb13-214"><a href="#cb13-214" aria-hidden="true" tabindex="-1"></a>time_oral <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">24</span>, <span class="at">by =</span> <span class="fl">0.25</span>)</span>
+<span id="cb13-215"><a href="#cb13-215" aria-hidden="true" tabindex="-1"></a>ka <span class="ot">&lt;-</span> <span class="fl">1.0</span>    <span class="co"># absorption rate constant</span></span>
+<span id="cb13-216"><a href="#cb13-216" aria-hidden="true" tabindex="-1"></a>ke <span class="ot">&lt;-</span> <span class="fl">0.3</span>    <span class="co"># elimination rate constant</span></span>
+<span id="cb13-217"><a href="#cb13-217" aria-hidden="true" tabindex="-1"></a>F  <span class="ot">&lt;-</span> <span class="fl">0.8</span>    <span class="co"># bioavailability</span></span>
+<span id="cb13-218"><a href="#cb13-218" aria-hidden="true" tabindex="-1"></a>D  <span class="ot">&lt;-</span> <span class="dv">100</span>    <span class="co"># dose (mg)</span></span>
+<span id="cb13-219"><a href="#cb13-219" aria-hidden="true" tabindex="-1"></a>V  <span class="ot">&lt;-</span> <span class="dv">10</span>     <span class="co"># volume (L)</span></span>
+<span id="cb13-220"><a href="#cb13-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-221"><a href="#cb13-221" aria-hidden="true" tabindex="-1"></a>conc_oral <span class="ot">&lt;-</span> (F <span class="sc">*</span> D <span class="sc">*</span> ka) <span class="sc">/</span> (V <span class="sc">*</span> (ka <span class="sc">-</span> ke)) <span class="sc">*</span> (<span class="fu">exp</span>(<span class="sc">-</span>ke <span class="sc">*</span> time_oral) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka <span class="sc">*</span> time_oral))</span>
+<span id="cb13-222"><a href="#cb13-222" aria-hidden="true" tabindex="-1"></a><span class="co"># Add some noise</span></span>
+<span id="cb13-223"><a href="#cb13-223" aria-hidden="true" tabindex="-1"></a>conc_oral <span class="ot">&lt;-</span> conc_oral <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(conc_oral), <span class="dv">0</span>, <span class="fl">0.05</span>)</span>
+<span id="cb13-224"><a href="#cb13-224" aria-hidden="true" tabindex="-1"></a>conc_oral[conc_oral <span class="sc">&lt;</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb13-225"><a href="#cb13-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-226"><a href="#cb13-226" aria-hidden="true" tabindex="-1"></a>pk_oral <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">TIME =</span> time_oral, <span class="at">CONC =</span> conc_oral)</span>
+<span id="cb13-227"><a href="#cb13-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-228"><a href="#cb13-228" aria-hidden="true" tabindex="-1"></a><span class="co"># Sample sparse time points for a realistic dataset</span></span>
+<span id="cb13-229"><a href="#cb13-229" aria-hidden="true" tabindex="-1"></a>sample_times <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>)</span>
+<span id="cb13-230"><a href="#cb13-230" aria-hidden="true" tabindex="-1"></a>pk_oral_sparse <span class="ot">&lt;-</span> pk_oral[pk_oral<span class="sc">$</span>TIME <span class="sc">%in%</span> sample_times, ]</span>
+<span id="cb13-231"><a href="#cb13-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-232"><a href="#cb13-232" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(pk_oral, <span class="fu">aes</span>(TIME, CONC)) <span class="sc">+</span></span>
+<span id="cb13-233"><a href="#cb13-233" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#0B6E6B"</span>, <span class="at">alpha =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
+<span id="cb13-234"><a href="#cb13-234" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> pk_oral_sparse, <span class="at">size =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="st">"#C44536"</span>) <span class="sc">+</span></span>
+<span id="cb13-235"><a href="#cb13-235" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> pk_oral_sparse, <span class="at">color =</span> <span class="st">"#C44536"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb13-236"><a href="#cb13-236" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Oral Dosing: Concentration-Time Profile"</span>,</span>
+<span id="cb13-237"><a href="#cb13-237" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Red points = typical sparse sampling schedule"</span>,</span>
+<span id="cb13-238"><a href="#cb13-238" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>) <span class="sc">+</span></span>
+<span id="cb13-239"><a href="#cb13-239" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb13-240"><a href="#cb13-240" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-241"><a href="#cb13-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-242"><a href="#cb13-242" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb13-243"><a href="#cb13-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-244"><a href="#cb13-244" aria-hidden="true" tabindex="-1"></a><span class="fu">## NCA Using the PKNCA Package</span></span>
+<span id="cb13-245"><a href="#cb13-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-248"><a href="#cb13-248" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-249"><a href="#cb13-249" aria-hidden="true" tabindex="-1"></a><span class="co"># PKNCA workflow (standard approach)</span></span>
+<span id="cb13-250"><a href="#cb13-250" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PKNCA)</span>
+<span id="cb13-251"><a href="#cb13-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-252"><a href="#cb13-252" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare data</span></span>
+<span id="cb13-253"><a href="#cb13-253" aria-hidden="true" tabindex="-1"></a>pk_oral_sparse <span class="ot">&lt;-</span> pk_oral_sparse <span class="sc">%&gt;%</span></span>
+<span id="cb13-254"><a href="#cb13-254" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Subject =</span> <span class="dv">1</span>)</span>
+<span id="cb13-255"><a href="#cb13-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-256"><a href="#cb13-256" aria-hidden="true" tabindex="-1"></a><span class="co"># One row per dose (single dose at time 0)</span></span>
+<span id="cb13-257"><a href="#cb13-257" aria-hidden="true" tabindex="-1"></a>dose_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-258"><a href="#cb13-258" aria-hidden="true" tabindex="-1"></a>  <span class="at">Subject   =</span> <span class="dv">1</span>,</span>
+<span id="cb13-259"><a href="#cb13-259" aria-hidden="true" tabindex="-1"></a>  <span class="at">Dose      =</span> <span class="dv">100</span>,</span>
+<span id="cb13-260"><a href="#cb13-260" aria-hidden="true" tabindex="-1"></a>  <span class="at">Dose_Time =</span> <span class="dv">0</span></span>
+<span id="cb13-261"><a href="#cb13-261" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-262"><a href="#cb13-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-263"><a href="#cb13-263" aria-hidden="true" tabindex="-1"></a><span class="co"># Set up intervals for NCA</span></span>
+<span id="cb13-264"><a href="#cb13-264" aria-hidden="true" tabindex="-1"></a>my_intervals <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-265"><a href="#cb13-265" aria-hidden="true" tabindex="-1"></a>  <span class="at">start =</span> <span class="dv">0</span>, <span class="at">end =</span> <span class="dv">24</span>,</span>
+<span id="cb13-266"><a href="#cb13-266" aria-hidden="true" tabindex="-1"></a>  <span class="at">cmax =</span> <span class="cn">TRUE</span>, <span class="at">tmax =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-267"><a href="#cb13-267" aria-hidden="true" tabindex="-1"></a>  <span class="at">aucint.last =</span> <span class="cn">TRUE</span>, <span class="at">aucinf.obs =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-268"><a href="#cb13-268" aria-hidden="true" tabindex="-1"></a>  <span class="at">half.life =</span> <span class="cn">TRUE</span>, <span class="at">cl.obs =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-269"><a href="#cb13-269" aria-hidden="true" tabindex="-1"></a>  <span class="at">vz.obs =</span> <span class="cn">TRUE</span></span>
+<span id="cb13-270"><a href="#cb13-270" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-271"><a href="#cb13-271" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-272"><a href="#cb13-272" aria-hidden="true" tabindex="-1"></a><span class="co"># Create PKNCAconc and PKNCAdose objects</span></span>
+<span id="cb13-273"><a href="#cb13-273" aria-hidden="true" tabindex="-1"></a>conc_obj <span class="ot">&lt;-</span> <span class="fu">PKNCAconc</span>(pk_oral_sparse, CONC <span class="sc">~</span> TIME <span class="sc">|</span> Subject)</span>
+<span id="cb13-274"><a href="#cb13-274" aria-hidden="true" tabindex="-1"></a>dose_obj <span class="ot">&lt;-</span> <span class="fu">PKNCAdose</span>(dose_data, Dose <span class="sc">~</span> Dose_Time <span class="sc">|</span> Subject)</span>
+<span id="cb13-275"><a href="#cb13-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-276"><a href="#cb13-276" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine and compute</span></span>
+<span id="cb13-277"><a href="#cb13-277" aria-hidden="true" tabindex="-1"></a>data_obj <span class="ot">&lt;-</span> <span class="fu">PKNCAdata</span>(conc_obj, dose_obj, <span class="at">intervals =</span> my_intervals)</span>
+<span id="cb13-278"><a href="#cb13-278" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">pk.nca</span>(data_obj)</span>
+<span id="cb13-279"><a href="#cb13-279" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-280"><a href="#cb13-280" aria-hidden="true" tabindex="-1"></a><span class="co"># View results</span></span>
+<span id="cb13-281"><a href="#cb13-281" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(results)</span>
+<span id="cb13-282"><a href="#cb13-282" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-283"><a href="#cb13-283" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-284"><a href="#cb13-284" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb13-285"><a href="#cb13-285" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-286"><a href="#cb13-286" aria-hidden="true" tabindex="-1"></a><span class="fu">## Strengths and Limitations of NCA</span></span>
+<span id="cb13-287"><a href="#cb13-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-288"><a href="#cb13-288" aria-hidden="true" tabindex="-1"></a>::: {.theory-box}</span>
+<span id="cb13-289"><a href="#cb13-289" aria-hidden="true" tabindex="-1"></a><span class="fu">### Strengths</span></span>
+<span id="cb13-290"><a href="#cb13-290" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Minimal assumptions about the underlying model</span>
+<span id="cb13-291"><a href="#cb13-291" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Standardized, widely accepted in regulatory submissions</span>
+<span id="cb13-292"><a href="#cb13-292" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Simple to compute and interpret</span>
+<span id="cb13-293"><a href="#cb13-293" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Robust across diverse drugs and dosing routes</span>
+<span id="cb13-294"><a href="#cb13-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-295"><a href="#cb13-295" aria-hidden="true" tabindex="-1"></a><span class="fu">### Limitations</span></span>
+<span id="cb13-296"><a href="#cb13-296" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Cannot predict concentrations at untested times or doses</span>
+<span id="cb13-297"><a href="#cb13-297" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Sensitive to sampling schedule (miss the peak → biased $C_{max}$)</span>
+<span id="cb13-298"><a href="#cb13-298" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Terminal phase identification can be subjective</span>
+<span id="cb13-299"><a href="#cb13-299" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>No mechanistic insight into drug behavior</span>
+<span id="cb13-300"><a href="#cb13-300" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Limited for sparse data or complex dosing regimens</span>
+<span id="cb13-301"><a href="#cb13-301" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb13-302"><a href="#cb13-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-303"><a href="#cb13-303" aria-hidden="true" tabindex="-1"></a>::: {.exercise-box}</span>
+<span id="cb13-304"><a href="#cb13-304" aria-hidden="true" tabindex="-1"></a><span class="fu">### Exercises</span></span>
+<span id="cb13-305"><a href="#cb13-305" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-306"><a href="#cb13-306" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Calculate the AUC using both linear and log-linear trapezoidal rules. When would you prefer one over the other?</span>
+<span id="cb13-307"><a href="#cb13-307" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>A drug has $C_{last}$ = 2.5 mg/L at 12 h, and the terminal slope gives $k_e$ = 0.15 1/h. What is $AUC_{0 \to \infty}$ if $AUC_{0 \to 12}$ = 85 mg·h/L?</span>
+<span id="cb13-308"><a href="#cb13-308" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Compute the relative bioavailability of an oral formulation ($AUC$ = 120 mg·h/L, dose = 50 mg) compared to IV ($AUC$ = 200 mg·h/L, dose = 25 mg).</span>
+<span id="cb13-309"><a href="#cb13-309" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>How does the choice of terminal phase points affect $t_{1/2}$ and $AUC_{0 \to \infty}$? Demonstrate with the dataset.</span>
+<span id="cb13-310"><a href="#cb13-310" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb13-311"><a href="#cb13-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-312"><a href="#cb13-312" aria-hidden="true" tabindex="-1"></a>::: {.mistakes-box}</span>
+<span id="cb13-313"><a href="#cb13-313" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Mistakes</span></span>
+<span id="cb13-314"><a href="#cb13-314" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-315"><a href="#cb13-315" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Using too few points for terminal slope** — need at least 3 points after $C_{max}$</span>
+<span id="cb13-316"><a href="#cb13-316" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Including distribution-phase points in the terminal slope** — inflates $k_e$ and underestimates half-life</span>
+<span id="cb13-317"><a href="#cb13-317" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Extrapolating &gt;20% of total AUC** — if $AUC_{extrap}$ &gt; 20% of $AUC_{inf}$, half-life is unreliable</span>
+<span id="cb13-318"><a href="#cb13-318" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Using linear scale to identify terminal phase** — always use semi-log plot</span>
+<span id="cb13-319"><a href="#cb13-319" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Forgetting to account for BLOQ values** — they should be handled consistently</span>
+<span id="cb13-320"><a href="#cb13-320" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb13-321"><a href="#cb13-321" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-322"><a href="#cb13-322" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
+<span id="cb13-323"><a href="#cb13-323" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Takeaway</span></span>
+<span id="cb13-324"><a href="#cb13-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-325"><a href="#cb13-325" aria-hidden="true" tabindex="-1"></a>NCA is the workhorse of early-phase PK analysis. Master the trapezoidal rule, terminal slope estimation, and the calculation of $CL$, $V_d$, and $t_{1/2}$. Always validate your terminal phase selection with semi-log plots and check that extrapolated AUC is ≤20% of total.</span>
+<span id="cb13-326"><a href="#cb13-326" aria-hidden="true" tabindex="-1"></a>:::</span>
+=======
 <div class="sourceCode" id="cb14" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Descriptive PK and Noncompartmental Analysis</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">## Learning Objectives</span></span>
@@ -1892,7 +2055,7 @@ Caption: aucint.last, cmax, aucinf.obs, cl.obs, vz.obs: geometric mean and geome
 <span id="cb14-333"><a href="#cb14-333" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-336"><a href="#cb14-336" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb14-337"><a href="#cb14-337" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-nca-comparison</span></span>
-<span id="cb14-338"><a href="#cb14-338" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Semi-log concentration-time profiles for 10 subjects after 5 daily oral doses. Colored lines highlight the terminal phase selections by PKNCA (teal), NonCompart (coral), and qpNCA (purple)."</span></span>
+<span id="cb14-338"><a href="#cb14-338" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Semi-log concentration-time profiles for 10 subjects after 5 daily oral doses."</span></span>
 <span id="cb14-339"><a href="#cb14-339" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 8</span></span>
 <span id="cb14-340"><a href="#cb14-340" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
 <span id="cb14-341"><a href="#cb14-341" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
@@ -1976,6 +2139,7 @@ Caption: aucint.last, cmax, aucinf.obs, cl.obs, vz.obs: geometric mean and geome
 <span id="cb14-419"><a href="#cb14-419" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Best for** <span class="pp">|</span> Regulatory submissions <span class="pp">|</span> Exploratory analysis <span class="pp">|</span> High-throughput screening <span class="pp">|</span></span>
 <span id="cb14-420"><a href="#cb14-420" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-421"><a href="#cb14-421" aria-hidden="true" tabindex="-1"></a>**Recommendation**: Use PKNCA for regulatory work (full audit trail, CDISC alignment), NonCompart for quick exploration with automatic slope detection, and qpNCA for batch processing many profiles.</span>
+>>>>>>> Stashed changes
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
