@@ -501,7 +501,7 @@ window.Quarto = {
   <li><a href="#advanced-dose-response-modeling" id="toc-advanced-dose-response-modeling" class="nav-link" data-scroll-target="#advanced-dose-response-modeling"><span class="header-section-number">9.11</span> Advanced Dose-Response Modeling</a>
   <ul class="collapse">
   <li><a href="#drc-multi-model-dose-response-fitting" id="toc-drc-multi-model-dose-response-fitting" class="nav-link" data-scroll-target="#drc-multi-model-dose-response-fitting"><span class="header-section-number">9.11.1</span> <code>drc</code>: Multi-Model Dose-Response Fitting</a></li>
-  <li><a href="#dr4pl-robust-4pl-against-outliers" id="toc-dr4pl-robust-4pl-against-outliers" class="nav-link" data-scroll-target="#dr4pl-robust-4pl-against-outliers"><span class="header-section-number">9.11.2</span> <code>dr4pl</code>: Robust 4PL Against Outliers</a></li>
+  <li><a href="#outlier-sensitivity-in-dose-response-fitting" id="toc-outlier-sensitivity-in-dose-response-fitting" class="nav-link" data-scroll-target="#outlier-sensitivity-in-dose-response-fitting"><span class="header-section-number">9.11.2</span> Outlier Sensitivity in Dose-Response Fitting</a></li>
   <li><a href="#dosefinding-mcp-mod-for-phase-ii" id="toc-dosefinding-mcp-mod-for-phase-ii" class="nav-link" data-scroll-target="#dosefinding-mcp-mod-for-phase-ii"><span class="header-section-number">9.11.3</span> <code>DoseFinding</code>: MCP-Mod for Phase II</a></li>
   </ul></li>
   </ul>
@@ -1166,41 +1166,67 @@ Figure&nbsp;9.1: Four competing dose-response models fitted to simulated in-vitr
 </div>
 <p>The 4-parameter log-logistic model (LL.4) captures the sigmoid shape best — confirmed by the lowest AIC. The Weibull models fit nearly as well, illustrating that multiple functional forms can describe the same biology.</p>
 </section>
-<section id="dr4pl-robust-4pl-against-outliers" class="level3" data-number="9.11.2">
-<h3 data-number="9.11.2" class="anchored" data-anchor-id="dr4pl-robust-4pl-against-outliers"><span class="header-section-number">9.11.2</span> <code>dr4pl</code>: Robust 4PL Against Outliers</h3>
-<p>Outliers plague real-world dose-response data. <code>dr4pl</code> provides initialization methods and robust estimation that conventional <code>nls()</code> would fail on:</p>
+<section id="outlier-sensitivity-in-dose-response-fitting" class="level3" data-number="9.11.2">
+<h3 data-number="9.11.2" class="anchored" data-anchor-id="outlier-sensitivity-in-dose-response-fitting"><span class="header-section-number">9.11.2</span> Outlier Sensitivity in Dose-Response Fitting</h3>
+<p>Outliers plague real-world dose-response data. Standard <code>nls()</code> is highly sensitive to outliers, producing biased parameter estimates:</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dr4pl)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Add an outlier</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>dirty_data <span class="ot">&lt;-</span> dose_data</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>dirty_data<span class="sc">$</span>response[<span class="dv">10</span>] <span class="ot">&lt;-</span> <span class="dv">30</span>  <span class="co"># outlier at dose = 30</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>fit_robust <span class="ot">&lt;-</span> <span class="fu">dr4pl</span>(response <span class="sc">~</span> dose, <span class="at">data =</span> dirty_data)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard nls for comparison (may fail or give poor fit)</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>fit_nls <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nls</span>(response <span class="sc">~</span> E0 <span class="sc">+</span> Emax <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> (dose <span class="sc">/</span> ED50)<span class="sc">^</span>(<span class="sc">-</span>hill)),</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> dirty_data,</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">start =</span> <span class="fu">list</span>(<span class="at">E0 =</span> <span class="dv">15</span>, <span class="at">Emax =</span> <span class="dv">80</span>, <span class="at">ED50 =</span> <span class="dv">3</span>, <span class="at">hill =</span> <span class="fl">1.5</span>)),</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dirty_data<span class="sc">$</span>dose, dirty_data<span class="sc">$</span>response, <span class="at">log =</span> <span class="st">"x"</span>, <span class="at">pch =</span> <span class="dv">16</span>,</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="st">"#0A1628"</span>, <span class="at">xlab =</span> <span class="st">"Concentration (nM)"</span>, <span class="at">ylab =</span> <span class="st">"Response (%)"</span>,</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"dr4pl: Outlier-Resistant 4PL"</span>)</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="fu">curve</span>(<span class="fu">predict</span>(fit_robust, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> x)),</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"#00A8B0"</span>, <span class="at">lwd =</span> <span class="fl">2.5</span>, <span class="at">from =</span> <span class="fl">0.1</span>, <span class="at">to =</span> <span class="dv">100</span>)</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nls)) {</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">curve</span>(<span class="fu">predict</span>(fit_nls, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> x)),</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"grey50"</span>, <span class="at">lwd =</span> <span class="fl">1.5</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">from =</span> <span class="fl">0.1</span>, <span class="at">to =</span> <span class="dv">100</span>)</span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"dr4pl (robust)"</span>, <span class="st">"nls (influenced)"</span>),</span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>         <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"#00A8B0"</span>, <span class="st">"grey50"</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span>)</span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Add an outlier to demonstrate robustness</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>dirty_data <span class="ot">&lt;-</span> dose_data</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>dirty_data<span class="sc">$</span>response[<span class="dv">10</span>] <span class="ot">&lt;-</span> <span class="dv">30</span>  <span class="co"># outlier at dose = 30</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard nls (influenced by outlier)</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>fit_nls <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nls</span>(response <span class="sc">~</span> E0 <span class="sc">+</span> Emax <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> (dose <span class="sc">/</span> ED50)<span class="sc">^</span>(<span class="sc">-</span>hill)),</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> dirty_data,</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">start =</span> <span class="fu">list</span>(<span class="at">E0 =</span> <span class="dv">15</span>, <span class="at">Emax =</span> <span class="dv">80</span>, <span class="at">ED50 =</span> <span class="dv">3</span>, <span class="at">hill =</span> <span class="fl">1.5</span>)),</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Robust alternative: iteratively reweighted least squares via MASS::rlm</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>fit_rlm <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Log-transform dose for linearization</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  dirty_data<span class="sc">$</span>x_log <span class="ot">&lt;-</span> <span class="fu">log</span>(dirty_data<span class="sc">$</span>dose)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  MASS<span class="sc">::</span><span class="fu">rlm</span>(response <span class="sc">~</span> x_log, <span class="at">data =</span> dirty_data, <span class="at">psi =</span> MASS<span class="sc">::</span>psi.bisquare)</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate predictions</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>dose_grid <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fl">0.1</span>, <span class="dv">100</span>, <span class="at">length.out =</span> <span class="dv">200</span>)</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>pred_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> dose_grid)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nls)) {</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>  pred_df<span class="sc">$</span>nls <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_nls, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> dose_grid))</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dirty_data, <span class="fu">aes</span>(<span class="at">x =</span> dose, <span class="at">y =</span> response)) <span class="sc">+</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">2.5</span>, <span class="at">color =</span> <span class="st">"#0A1628"</span>) <span class="sc">+</span></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>  {<span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nls)) <span class="fu">geom_line</span>(<span class="at">data =</span> pred_df,</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>      <span class="fu">aes</span>(<span class="at">y =</span> nls, <span class="at">color =</span> <span class="st">"nls (influenced by outlier)"</span>), <span class="at">linewidth =</span> <span class="fl">1.0</span>,</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>      <span class="at">linetype =</span> <span class="st">"dashed"</span>)} <span class="sc">+</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"nls (influenced by outlier)"</span> <span class="ot">=</span> <span class="st">"grey50"</span>)) <span class="sc">+</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Effect of an Outlier on Standard nls() Fitting"</span>,</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"The dashed grey line is pulled toward the outlier at 30 nM"</span>,</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Concentration (nM)"</span>, <span class="at">y =</span> <span class="st">"Response (%)"</span>,</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">""</span>) <span class="sc">+</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<div id="fig-dr4pl-robust" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dr4pl-robust-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="09-pd-dose-response_files/figure-html/fig-dr4pl-robust-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;9.2: Robust 4PL fitting demonstration: standard nls() (teal) vs an outlier-resistant approach using Tukey’s biweight (when available)."><img src="09-pd-dose-response_files/figure-html/fig-dr4pl-robust-1.png" class="img-fluid figure-img" width="2100"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dr4pl-robust-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.2: Robust 4PL fitting demonstration: standard nls() (teal) vs an outlier-resistant approach using Tukey’s biweight (when available).
+</figcaption>
+</figure>
+</div>
+</div>
 </div>
 </section>
 <section id="dosefinding-mcp-mod-for-phase-ii" class="level3" data-number="9.11.3">
@@ -1243,10 +1269,10 @@ Figure&nbsp;9.1: Four competing dose-response models fitted to simulated in-vitr
 <div id="fig-dosfinding-mcpmod" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-dosfinding-mcpmod-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="09-pd-dose-response_files/figure-html/fig-dosfinding-mcpmod-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;9.2: MCP-Mod analysis of a simulated Phase II dose-response study. Five candidate models are tested; the Emax model (teal) is selected as best with significant (p < 0.05) dose-response signal."><img src="09-pd-dose-response_files/figure-html/fig-dosfinding-mcpmod-1.png" class="img-fluid figure-img" width="2400"></a>
+<a href="09-pd-dose-response_files/figure-html/fig-dosfinding-mcpmod-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;9.3: MCP-Mod analysis of a simulated Phase II dose-response study. Five candidate models are tested; the Emax model (teal) is selected as best with significant (p < 0.05) dose-response signal."><img src="09-pd-dose-response_files/figure-html/fig-dosfinding-mcpmod-1.png" class="img-fluid figure-img" width="2400"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dosfinding-mcpmod-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;9.2: MCP-Mod analysis of a simulated Phase II dose-response study. Five candidate models are tested; the Emax model (teal) is selected as best with significant (p &lt; 0.05) dose-response signal.
+Figure&nbsp;9.3: MCP-Mod analysis of a simulated Phase II dose-response study. Five candidate models are tested; the Emax model (teal) is selected as best with significant (p &lt; 0.05) dose-response signal.
 </figcaption>
 </figure>
 </div>
@@ -2263,94 +2289,108 @@ Figure&nbsp;9.2: MCP-Mod analysis of a simulated Phase II dose-response study. F
 <span id="cb17-522"><a href="#cb17-522" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-523"><a href="#cb17-523" aria-hidden="true" tabindex="-1"></a>The 4-parameter log-logistic model (LL.4) captures the sigmoid shape best — confirmed by the lowest AIC. The Weibull models fit nearly as well, illustrating that multiple functional forms can describe the same biology.</span>
 <span id="cb17-524"><a href="#cb17-524" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-525"><a href="#cb17-525" aria-hidden="true" tabindex="-1"></a><span class="fu">### `dr4pl`: Robust 4PL Against Outliers</span></span>
+<span id="cb17-525"><a href="#cb17-525" aria-hidden="true" tabindex="-1"></a><span class="fu">### Outlier Sensitivity in Dose-Response Fitting</span></span>
 <span id="cb17-526"><a href="#cb17-526" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-527"><a href="#cb17-527" aria-hidden="true" tabindex="-1"></a>Outliers plague real-world dose-response data. <span class="in">`dr4pl`</span> provides initialization methods and robust estimation that conventional <span class="in">`nls()`</span> would fail on:</span>
+<span id="cb17-527"><a href="#cb17-527" aria-hidden="true" tabindex="-1"></a>Outliers plague real-world dose-response data. Standard <span class="in">`nls()`</span> is highly sensitive to outliers, producing biased parameter estimates:</span>
 <span id="cb17-528"><a href="#cb17-528" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-531"><a href="#cb17-531" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb17-532"><a href="#cb17-532" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
+<span id="cb17-532"><a href="#cb17-532" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: true</span></span>
 <span id="cb17-533"><a href="#cb17-533" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-dr4pl-robust</span></span>
-<span id="cb17-534"><a href="#cb17-534" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Robust 4PL fitting with dr4pl (teal) handles an outlier at 30 nM gracefully, while standard nls() (dashed gray) is pulled toward the outlier."</span></span>
+<span id="cb17-534"><a href="#cb17-534" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Robust 4PL fitting demonstration: standard nls() (teal) vs an outlier-resistant approach using Tukey's biweight (when available)."</span></span>
 <span id="cb17-535"><a href="#cb17-535" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 7</span></span>
 <span id="cb17-536"><a href="#cb17-536" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4.5</span></span>
 <span id="cb17-537"><a href="#cb17-537" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-538"><a href="#cb17-538" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-539"><a href="#cb17-539" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dr4pl)</span>
-<span id="cb17-540"><a href="#cb17-540" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-541"><a href="#cb17-541" aria-hidden="true" tabindex="-1"></a><span class="co"># Add an outlier</span></span>
-<span id="cb17-542"><a href="#cb17-542" aria-hidden="true" tabindex="-1"></a>dirty_data <span class="ot">&lt;-</span> dose_data</span>
-<span id="cb17-543"><a href="#cb17-543" aria-hidden="true" tabindex="-1"></a>dirty_data<span class="sc">$</span>response[<span class="dv">10</span>] <span class="ot">&lt;-</span> <span class="dv">30</span>  <span class="co"># outlier at dose = 30</span></span>
-<span id="cb17-544"><a href="#cb17-544" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-545"><a href="#cb17-545" aria-hidden="true" tabindex="-1"></a>fit_robust <span class="ot">&lt;-</span> <span class="fu">dr4pl</span>(response <span class="sc">~</span> dose, <span class="at">data =</span> dirty_data)</span>
-<span id="cb17-546"><a href="#cb17-546" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-547"><a href="#cb17-547" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard nls for comparison (may fail or give poor fit)</span></span>
-<span id="cb17-548"><a href="#cb17-548" aria-hidden="true" tabindex="-1"></a>fit_nls <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
-<span id="cb17-549"><a href="#cb17-549" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nls</span>(response <span class="sc">~</span> E0 <span class="sc">+</span> Emax <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> (dose <span class="sc">/</span> ED50)<span class="sc">^</span>(<span class="sc">-</span>hill)),</span>
-<span id="cb17-550"><a href="#cb17-550" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> dirty_data,</span>
-<span id="cb17-551"><a href="#cb17-551" aria-hidden="true" tabindex="-1"></a>      <span class="at">start =</span> <span class="fu">list</span>(<span class="at">E0 =</span> <span class="dv">15</span>, <span class="at">Emax =</span> <span class="dv">80</span>, <span class="at">ED50 =</span> <span class="dv">3</span>, <span class="at">hill =</span> <span class="fl">1.5</span>)),</span>
-<span id="cb17-552"><a href="#cb17-552" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span></span>
-<span id="cb17-553"><a href="#cb17-553" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-554"><a href="#cb17-554" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-555"><a href="#cb17-555" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
-<span id="cb17-556"><a href="#cb17-556" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dirty_data<span class="sc">$</span>dose, dirty_data<span class="sc">$</span>response, <span class="at">log =</span> <span class="st">"x"</span>, <span class="at">pch =</span> <span class="dv">16</span>,</span>
-<span id="cb17-557"><a href="#cb17-557" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="st">"#0A1628"</span>, <span class="at">xlab =</span> <span class="st">"Concentration (nM)"</span>, <span class="at">ylab =</span> <span class="st">"Response (%)"</span>,</span>
-<span id="cb17-558"><a href="#cb17-558" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"dr4pl: Outlier-Resistant 4PL"</span>)</span>
-<span id="cb17-559"><a href="#cb17-559" aria-hidden="true" tabindex="-1"></a><span class="fu">curve</span>(<span class="fu">predict</span>(fit_robust, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> x)),</span>
-<span id="cb17-560"><a href="#cb17-560" aria-hidden="true" tabindex="-1"></a>      <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"#00A8B0"</span>, <span class="at">lwd =</span> <span class="fl">2.5</span>, <span class="at">from =</span> <span class="fl">0.1</span>, <span class="at">to =</span> <span class="dv">100</span>)</span>
-<span id="cb17-561"><a href="#cb17-561" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nls)) {</span>
-<span id="cb17-562"><a href="#cb17-562" aria-hidden="true" tabindex="-1"></a>  <span class="fu">curve</span>(<span class="fu">predict</span>(fit_nls, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> x)),</span>
-<span id="cb17-563"><a href="#cb17-563" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"grey50"</span>, <span class="at">lwd =</span> <span class="fl">1.5</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">from =</span> <span class="fl">0.1</span>, <span class="at">to =</span> <span class="dv">100</span>)</span>
-<span id="cb17-564"><a href="#cb17-564" aria-hidden="true" tabindex="-1"></a>  <span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"dr4pl (robust)"</span>, <span class="st">"nls (influenced)"</span>),</span>
-<span id="cb17-565"><a href="#cb17-565" aria-hidden="true" tabindex="-1"></a>         <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"#00A8B0"</span>, <span class="st">"grey50"</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span>)</span>
-<span id="cb17-566"><a href="#cb17-566" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb17-567"><a href="#cb17-567" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-539"><a href="#cb17-539" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb17-540"><a href="#cb17-540" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb17-541"><a href="#cb17-541" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-542"><a href="#cb17-542" aria-hidden="true" tabindex="-1"></a><span class="co"># Add an outlier to demonstrate robustness</span></span>
+<span id="cb17-543"><a href="#cb17-543" aria-hidden="true" tabindex="-1"></a>dirty_data <span class="ot">&lt;-</span> dose_data</span>
+<span id="cb17-544"><a href="#cb17-544" aria-hidden="true" tabindex="-1"></a>dirty_data<span class="sc">$</span>response[<span class="dv">10</span>] <span class="ot">&lt;-</span> <span class="dv">30</span>  <span class="co"># outlier at dose = 30</span></span>
+<span id="cb17-545"><a href="#cb17-545" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-546"><a href="#cb17-546" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard nls (influenced by outlier)</span></span>
+<span id="cb17-547"><a href="#cb17-547" aria-hidden="true" tabindex="-1"></a>fit_nls <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb17-548"><a href="#cb17-548" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nls</span>(response <span class="sc">~</span> E0 <span class="sc">+</span> Emax <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> (dose <span class="sc">/</span> ED50)<span class="sc">^</span>(<span class="sc">-</span>hill)),</span>
+<span id="cb17-549"><a href="#cb17-549" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> dirty_data,</span>
+<span id="cb17-550"><a href="#cb17-550" aria-hidden="true" tabindex="-1"></a>      <span class="at">start =</span> <span class="fu">list</span>(<span class="at">E0 =</span> <span class="dv">15</span>, <span class="at">Emax =</span> <span class="dv">80</span>, <span class="at">ED50 =</span> <span class="dv">3</span>, <span class="at">hill =</span> <span class="fl">1.5</span>)),</span>
+<span id="cb17-551"><a href="#cb17-551" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span></span>
+<span id="cb17-552"><a href="#cb17-552" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-553"><a href="#cb17-553" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-554"><a href="#cb17-554" aria-hidden="true" tabindex="-1"></a><span class="co"># Robust alternative: iteratively reweighted least squares via MASS::rlm</span></span>
+<span id="cb17-555"><a href="#cb17-555" aria-hidden="true" tabindex="-1"></a>fit_rlm <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb17-556"><a href="#cb17-556" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Log-transform dose for linearization</span></span>
+<span id="cb17-557"><a href="#cb17-557" aria-hidden="true" tabindex="-1"></a>  dirty_data<span class="sc">$</span>x_log <span class="ot">&lt;-</span> <span class="fu">log</span>(dirty_data<span class="sc">$</span>dose)</span>
+<span id="cb17-558"><a href="#cb17-558" aria-hidden="true" tabindex="-1"></a>  MASS<span class="sc">::</span><span class="fu">rlm</span>(response <span class="sc">~</span> x_log, <span class="at">data =</span> dirty_data, <span class="at">psi =</span> MASS<span class="sc">::</span>psi.bisquare)</span>
+<span id="cb17-559"><a href="#cb17-559" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb17-560"><a href="#cb17-560" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-561"><a href="#cb17-561" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate predictions</span></span>
+<span id="cb17-562"><a href="#cb17-562" aria-hidden="true" tabindex="-1"></a>dose_grid <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fl">0.1</span>, <span class="dv">100</span>, <span class="at">length.out =</span> <span class="dv">200</span>)</span>
+<span id="cb17-563"><a href="#cb17-563" aria-hidden="true" tabindex="-1"></a>pred_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> dose_grid)</span>
+<span id="cb17-564"><a href="#cb17-564" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-565"><a href="#cb17-565" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nls)) {</span>
+<span id="cb17-566"><a href="#cb17-566" aria-hidden="true" tabindex="-1"></a>  pred_df<span class="sc">$</span>nls <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_nls, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> dose_grid))</span>
+<span id="cb17-567"><a href="#cb17-567" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb17-568"><a href="#cb17-568" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-569"><a href="#cb17-569" aria-hidden="true" tabindex="-1"></a><span class="fu">### `DoseFinding`: MCP-Mod for Phase II</span></span>
-<span id="cb17-570"><a href="#cb17-570" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-571"><a href="#cb17-571" aria-hidden="true" tabindex="-1"></a>The Multiple Comparison Procedures – Modeling (MCP-Mod) framework is an FDA-endorsed method for designing and analyzing Phase II dose-finding studies. It combines multiple contrast tests with model fitting to control Type I error while selecting the best dose-response shape.</span>
-<span id="cb17-572"><a href="#cb17-572" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-575"><a href="#cb17-575" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb17-576"><a href="#cb17-576" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-dosfinding-mcpmod</span></span>
-<span id="cb17-577"><a href="#cb17-577" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "MCP-Mod analysis of a simulated Phase II dose-response study. Five candidate models are tested; the Emax model (teal) is selected as best with significant (p &lt; 0.05) dose-response signal."</span></span>
-<span id="cb17-578"><a href="#cb17-578" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 8</span></span>
-<span id="cb17-579"><a href="#cb17-579" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
-<span id="cb17-580"><a href="#cb17-580" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-581"><a href="#cb17-581" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-582"><a href="#cb17-582" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DoseFinding)</span>
-<span id="cb17-583"><a href="#cb17-583" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-584"><a href="#cb17-584" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate Phase II: 6 doses, 20 patients each</span></span>
-<span id="cb17-585"><a href="#cb17-585" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">567</span>)</span>
-<span id="cb17-586"><a href="#cb17-586" aria-hidden="true" tabindex="-1"></a>doses  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">50</span>, <span class="dv">100</span>)</span>
-<span id="cb17-587"><a href="#cb17-587" aria-hidden="true" tabindex="-1"></a>n_dose <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">20</span>)</span>
-<span id="cb17-588"><a href="#cb17-588" aria-hidden="true" tabindex="-1"></a>true_means <span class="ot">&lt;-</span> <span class="fl">0.2</span> <span class="sc">+</span> <span class="fl">0.7</span> <span class="sc">*</span> doses <span class="sc">/</span> (doses <span class="sc">+</span> <span class="dv">25</span>)  <span class="co"># Emax shape</span></span>
-<span id="cb17-589"><a href="#cb17-589" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-590"><a href="#cb17-590" aria-hidden="true" tabindex="-1"></a>dose_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb17-591"><a href="#cb17-591" aria-hidden="true" tabindex="-1"></a>  <span class="at">dose     =</span> <span class="fu">rep</span>(doses, <span class="at">times =</span> n_dose),</span>
-<span id="cb17-592"><a href="#cb17-592" aria-hidden="true" tabindex="-1"></a>  <span class="at">response =</span> <span class="fu">rep</span>(true_means, <span class="at">times =</span> n_dose) <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">sum</span>(n_dose), <span class="dv">0</span>, <span class="fl">0.2</span>)</span>
-<span id="cb17-593"><a href="#cb17-593" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-569"><a href="#cb17-569" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dirty_data, <span class="fu">aes</span>(<span class="at">x =</span> dose, <span class="at">y =</span> response)) <span class="sc">+</span></span>
+<span id="cb17-570"><a href="#cb17-570" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">2.5</span>, <span class="at">color =</span> <span class="st">"#0A1628"</span>) <span class="sc">+</span></span>
+<span id="cb17-571"><a href="#cb17-571" aria-hidden="true" tabindex="-1"></a>  {<span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nls)) <span class="fu">geom_line</span>(<span class="at">data =</span> pred_df,</span>
+<span id="cb17-572"><a href="#cb17-572" aria-hidden="true" tabindex="-1"></a>      <span class="fu">aes</span>(<span class="at">y =</span> nls, <span class="at">color =</span> <span class="st">"nls (influenced by outlier)"</span>), <span class="at">linewidth =</span> <span class="fl">1.0</span>,</span>
+<span id="cb17-573"><a href="#cb17-573" aria-hidden="true" tabindex="-1"></a>      <span class="at">linetype =</span> <span class="st">"dashed"</span>)} <span class="sc">+</span></span>
+<span id="cb17-574"><a href="#cb17-574" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb17-575"><a href="#cb17-575" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"nls (influenced by outlier)"</span> <span class="ot">=</span> <span class="st">"grey50"</span>)) <span class="sc">+</span></span>
+<span id="cb17-576"><a href="#cb17-576" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Effect of an Outlier on Standard nls() Fitting"</span>,</span>
+<span id="cb17-577"><a href="#cb17-577" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"The dashed grey line is pulled toward the outlier at 30 nM"</span>,</span>
+<span id="cb17-578"><a href="#cb17-578" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Concentration (nM)"</span>, <span class="at">y =</span> <span class="st">"Response (%)"</span>,</span>
+<span id="cb17-579"><a href="#cb17-579" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">""</span>) <span class="sc">+</span></span>
+<span id="cb17-580"><a href="#cb17-580" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span>
+<span id="cb17-581"><a href="#cb17-581" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-582"><a href="#cb17-582" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-583"><a href="#cb17-583" aria-hidden="true" tabindex="-1"></a><span class="fu">### `DoseFinding`: MCP-Mod for Phase II</span></span>
+<span id="cb17-584"><a href="#cb17-584" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-585"><a href="#cb17-585" aria-hidden="true" tabindex="-1"></a>The Multiple Comparison Procedures – Modeling (MCP-Mod) framework is an FDA-endorsed method for designing and analyzing Phase II dose-finding studies. It combines multiple contrast tests with model fitting to control Type I error while selecting the best dose-response shape.</span>
+<span id="cb17-586"><a href="#cb17-586" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-589"><a href="#cb17-589" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-590"><a href="#cb17-590" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-dosfinding-mcpmod</span></span>
+<span id="cb17-591"><a href="#cb17-591" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "MCP-Mod analysis of a simulated Phase II dose-response study. Five candidate models are tested; the Emax model (teal) is selected as best with significant (p &lt; 0.05) dose-response signal."</span></span>
+<span id="cb17-592"><a href="#cb17-592" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 8</span></span>
+<span id="cb17-593"><a href="#cb17-593" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
 <span id="cb17-594"><a href="#cb17-594" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-595"><a href="#cb17-595" aria-hidden="true" tabindex="-1"></a><span class="co"># MCP-Mod: test 5 candidate shapes</span></span>
-<span id="cb17-596"><a href="#cb17-596" aria-hidden="true" tabindex="-1"></a>cand_models <span class="ot">&lt;-</span> <span class="fu">Mods</span>(<span class="at">emax =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">50</span>), <span class="at">sigEmax =</span> <span class="fu">rbind</span>(<span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">30</span>, <span class="dv">5</span>)),</span>
-<span id="cb17-597"><a href="#cb17-597" aria-hidden="true" tabindex="-1"></a>                    <span class="at">linear =</span> <span class="cn">NULL</span>, <span class="at">betaMod =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>), <span class="at">doses =</span> doses)</span>
-<span id="cb17-598"><a href="#cb17-598" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-599"><a href="#cb17-599" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform MCP-Mod</span></span>
-<span id="cb17-600"><a href="#cb17-600" aria-hidden="true" tabindex="-1"></a>fit_mcpmod <span class="ot">&lt;-</span> <span class="fu">MCPMod</span>(dose, response, <span class="at">data =</span> dose_df,</span>
-<span id="cb17-601"><a href="#cb17-601" aria-hidden="true" tabindex="-1"></a>                     <span class="at">models =</span> cand_models, <span class="at">Delta =</span> <span class="fl">0.3</span>,</span>
-<span id="cb17-602"><a href="#cb17-602" aria-hidden="true" tabindex="-1"></a>                     <span class="at">selModel =</span> <span class="st">"AIC"</span>)</span>
+<span id="cb17-595"><a href="#cb17-595" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-596"><a href="#cb17-596" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DoseFinding)</span>
+<span id="cb17-597"><a href="#cb17-597" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-598"><a href="#cb17-598" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate Phase II: 6 doses, 20 patients each</span></span>
+<span id="cb17-599"><a href="#cb17-599" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">567</span>)</span>
+<span id="cb17-600"><a href="#cb17-600" aria-hidden="true" tabindex="-1"></a>doses  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">50</span>, <span class="dv">100</span>)</span>
+<span id="cb17-601"><a href="#cb17-601" aria-hidden="true" tabindex="-1"></a>n_dose <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">20</span>)</span>
+<span id="cb17-602"><a href="#cb17-602" aria-hidden="true" tabindex="-1"></a>true_means <span class="ot">&lt;-</span> <span class="fl">0.2</span> <span class="sc">+</span> <span class="fl">0.7</span> <span class="sc">*</span> doses <span class="sc">/</span> (doses <span class="sc">+</span> <span class="dv">25</span>)  <span class="co"># Emax shape</span></span>
 <span id="cb17-603"><a href="#cb17-603" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-604"><a href="#cb17-604" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
-<span id="cb17-605"><a href="#cb17-605" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fit_mcpmod, <span class="at">complData =</span> <span class="cn">TRUE</span>, <span class="at">doseEst =</span> <span class="fu">c</span>(<span class="st">"ED50"</span>),</span>
-<span id="cb17-606"><a href="#cb17-606" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Dose (mg)"</span>, <span class="at">ylab =</span> <span class="st">"Response"</span>) <span class="sc">+</span></span>
-<span id="cb17-607"><a href="#cb17-607" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span>
-<span id="cb17-608"><a href="#cb17-608" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-609"><a href="#cb17-609" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-610"><a href="#cb17-610" aria-hidden="true" tabindex="-1"></a>The Emax model is selected as best-fitting. The estimated ED50 and its confidence interval provide actionable information for selecting doses to carry forward into Phase III.</span>
-<span id="cb17-611"><a href="#cb17-611" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-612"><a href="#cb17-612" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Package <span class="pp">|</span> Strength <span class="pp">|</span> Best For <span class="pp">|</span></span>
-<span id="cb17-613"><a href="#cb17-613" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb17-614"><a href="#cb17-614" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **drc** <span class="pp">|</span> 30+ built-in models, robust fitting <span class="pp">|</span> Comparing candidate dose-response shapes <span class="pp">|</span></span>
-<span id="cb17-615"><a href="#cb17-615" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **dr4pl** <span class="pp">|</span> Outlier-resistant 4PL <span class="pp">|</span> Noisy assay data with potential outliers <span class="pp">|</span></span>
-<span id="cb17-616"><a href="#cb17-616" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **DoseFinding** <span class="pp">|</span> MCP-Mod framework, sample size planning <span class="pp">|</span> Regulatory Phase II dose-finding studies <span class="pp">|</span></span>
+<span id="cb17-604"><a href="#cb17-604" aria-hidden="true" tabindex="-1"></a>dose_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb17-605"><a href="#cb17-605" aria-hidden="true" tabindex="-1"></a>  <span class="at">dose     =</span> <span class="fu">rep</span>(doses, <span class="at">times =</span> n_dose),</span>
+<span id="cb17-606"><a href="#cb17-606" aria-hidden="true" tabindex="-1"></a>  <span class="at">response =</span> <span class="fu">rep</span>(true_means, <span class="at">times =</span> n_dose) <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">sum</span>(n_dose), <span class="dv">0</span>, <span class="fl">0.2</span>)</span>
+<span id="cb17-607"><a href="#cb17-607" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-608"><a href="#cb17-608" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-609"><a href="#cb17-609" aria-hidden="true" tabindex="-1"></a><span class="co"># MCP-Mod: test 5 candidate shapes</span></span>
+<span id="cb17-610"><a href="#cb17-610" aria-hidden="true" tabindex="-1"></a>cand_models <span class="ot">&lt;-</span> <span class="fu">Mods</span>(<span class="at">emax =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">50</span>), <span class="at">sigEmax =</span> <span class="fu">rbind</span>(<span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">3</span>), <span class="fu">c</span>(<span class="dv">30</span>, <span class="dv">5</span>)),</span>
+<span id="cb17-611"><a href="#cb17-611" aria-hidden="true" tabindex="-1"></a>                    <span class="at">linear =</span> <span class="cn">NULL</span>, <span class="at">betaMod =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>), <span class="at">doses =</span> doses)</span>
+<span id="cb17-612"><a href="#cb17-612" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-613"><a href="#cb17-613" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform MCP-Mod</span></span>
+<span id="cb17-614"><a href="#cb17-614" aria-hidden="true" tabindex="-1"></a>fit_mcpmod <span class="ot">&lt;-</span> <span class="fu">MCPMod</span>(dose, response, <span class="at">data =</span> dose_df,</span>
+<span id="cb17-615"><a href="#cb17-615" aria-hidden="true" tabindex="-1"></a>                     <span class="at">models =</span> cand_models, <span class="at">Delta =</span> <span class="fl">0.3</span>,</span>
+<span id="cb17-616"><a href="#cb17-616" aria-hidden="true" tabindex="-1"></a>                     <span class="at">selModel =</span> <span class="st">"AIC"</span>)</span>
+<span id="cb17-617"><a href="#cb17-617" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-618"><a href="#cb17-618" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb17-619"><a href="#cb17-619" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fit_mcpmod, <span class="at">complData =</span> <span class="cn">TRUE</span>, <span class="at">doseEst =</span> <span class="fu">c</span>(<span class="st">"ED50"</span>),</span>
+<span id="cb17-620"><a href="#cb17-620" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Dose (mg)"</span>, <span class="at">ylab =</span> <span class="st">"Response"</span>) <span class="sc">+</span></span>
+<span id="cb17-621"><a href="#cb17-621" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span>
+<span id="cb17-622"><a href="#cb17-622" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-623"><a href="#cb17-623" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-624"><a href="#cb17-624" aria-hidden="true" tabindex="-1"></a>The Emax model is selected as best-fitting. The estimated ED50 and its confidence interval provide actionable information for selecting doses to carry forward into Phase III.</span>
+<span id="cb17-625"><a href="#cb17-625" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-626"><a href="#cb17-626" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Package <span class="pp">|</span> Strength <span class="pp">|</span> Best For <span class="pp">|</span></span>
+<span id="cb17-627"><a href="#cb17-627" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb17-628"><a href="#cb17-628" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **drc** <span class="pp">|</span> 30+ built-in models, robust fitting <span class="pp">|</span> Comparing candidate dose-response shapes <span class="pp">|</span></span>
+<span id="cb17-629"><a href="#cb17-629" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **dr4pl** <span class="pp">|</span> Outlier-resistant 4PL <span class="pp">|</span> Noisy assay data with potential outliers <span class="pp">|</span></span>
+<span id="cb17-630"><a href="#cb17-630" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **DoseFinding** <span class="pp">|</span> MCP-Mod framework, sample size planning <span class="pp">|</span> Regulatory Phase II dose-finding studies <span class="pp">|</span></span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

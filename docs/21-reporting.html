@@ -1008,13 +1008,16 @@ Figure&nbsp;21.1: Exploratory PK/PD plot using xgxr’s theme. The clean, minima
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pmxpartab)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># pmxpartab creates HTML tables with RSE%, shrinkage, and CI columns</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nlmixr)) {</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  partab <span class="ot">&lt;-</span> <span class="fu">pmxpartab</span>(fit_nlmixr)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># renders as a formatted HTML table in your report</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>has_pmxpartab <span class="ot">&lt;-</span> <span class="fu">requireNamespace</span>(<span class="st">"pmxpartab"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (has_pmxpartab) <span class="fu">library</span>(pmxpartab)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># pmxpartab creates HTML tables with RSE%, shrinkage, and CI columns</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (has_pmxpartab <span class="sc">&amp;&amp;</span> <span class="fu">exists</span>(<span class="st">"fit_nlmixr"</span>) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(fit_nlmixr)) {</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  partab <span class="ot">&lt;-</span> <span class="fu">pmxpartab</span>(fit_nlmixr)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># renders as a formatted HTML table in your report</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span>has_pmxpartab) {</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"pmxpartab not installed — install with install.packages('pmxpartab')"</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <table class="caption-top table">
@@ -1918,22 +1921,25 @@ Figure&nbsp;21.1: Exploratory PK/PD plot using xgxr’s theme. The clean, minima
 <span id="cb11-407"><a href="#cb11-407" aria-hidden="true" tabindex="-1"></a>Generate nicely formatted, publication-ready parameter estimate tables:</span>
 <span id="cb11-408"><a href="#cb11-408" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-411"><a href="#cb11-411" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb11-412"><a href="#cb11-412" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
+<span id="cb11-412"><a href="#cb11-412" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: true</span></span>
 <span id="cb11-413"><a href="#cb11-413" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-414"><a href="#cb11-414" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pmxpartab)</span>
-<span id="cb11-415"><a href="#cb11-415" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-416"><a href="#cb11-416" aria-hidden="true" tabindex="-1"></a><span class="co"># pmxpartab creates HTML tables with RSE%, shrinkage, and CI columns</span></span>
-<span id="cb11-417"><a href="#cb11-417" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nlmixr)) {</span>
-<span id="cb11-418"><a href="#cb11-418" aria-hidden="true" tabindex="-1"></a>  partab <span class="ot">&lt;-</span> <span class="fu">pmxpartab</span>(fit_nlmixr)</span>
-<span id="cb11-419"><a href="#cb11-419" aria-hidden="true" tabindex="-1"></a>  <span class="co"># renders as a formatted HTML table in your report</span></span>
-<span id="cb11-420"><a href="#cb11-420" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb11-421"><a href="#cb11-421" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb11-422"><a href="#cb11-422" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-423"><a href="#cb11-423" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Package <span class="pp">|</span> Output <span class="pp">|</span> Best For <span class="pp">|</span></span>
-<span id="cb11-424"><a href="#cb11-424" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb11-425"><a href="#cb11-425" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **xgxr** <span class="pp">|</span> ggplot2 themes + helpers <span class="pp">|</span> Exploratory analysis, working plots <span class="pp">|</span></span>
-<span id="cb11-426"><a href="#cb11-426" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **nlmixr2rpt** <span class="pp">|</span> Word + PowerPoint <span class="pp">|</span> Regulatory submissions, internal reports <span class="pp">|</span></span>
-<span id="cb11-427"><a href="#cb11-427" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **pmxpartab** <span class="pp">|</span> HTML tables <span class="pp">|</span> Model parameter summaries <span class="pp">|</span></span>
+<span id="cb11-414"><a href="#cb11-414" aria-hidden="true" tabindex="-1"></a>has_pmxpartab <span class="ot">&lt;-</span> <span class="fu">requireNamespace</span>(<span class="st">"pmxpartab"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-415"><a href="#cb11-415" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (has_pmxpartab) <span class="fu">library</span>(pmxpartab)</span>
+<span id="cb11-416"><a href="#cb11-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-417"><a href="#cb11-417" aria-hidden="true" tabindex="-1"></a><span class="co"># pmxpartab creates HTML tables with RSE%, shrinkage, and CI columns</span></span>
+<span id="cb11-418"><a href="#cb11-418" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (has_pmxpartab <span class="sc">&amp;&amp;</span> <span class="fu">exists</span>(<span class="st">"fit_nlmixr"</span>) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(fit_nlmixr)) {</span>
+<span id="cb11-419"><a href="#cb11-419" aria-hidden="true" tabindex="-1"></a>  partab <span class="ot">&lt;-</span> <span class="fu">pmxpartab</span>(fit_nlmixr)</span>
+<span id="cb11-420"><a href="#cb11-420" aria-hidden="true" tabindex="-1"></a>  <span class="co"># renders as a formatted HTML table in your report</span></span>
+<span id="cb11-421"><a href="#cb11-421" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span>has_pmxpartab) {</span>
+<span id="cb11-422"><a href="#cb11-422" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"pmxpartab not installed — install with install.packages('pmxpartab')"</span>)</span>
+<span id="cb11-423"><a href="#cb11-423" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-424"><a href="#cb11-424" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-425"><a href="#cb11-425" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-426"><a href="#cb11-426" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Package <span class="pp">|</span> Output <span class="pp">|</span> Best For <span class="pp">|</span></span>
+<span id="cb11-427"><a href="#cb11-427" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb11-428"><a href="#cb11-428" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **xgxr** <span class="pp">|</span> ggplot2 themes + helpers <span class="pp">|</span> Exploratory analysis, working plots <span class="pp">|</span></span>
+<span id="cb11-429"><a href="#cb11-429" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **nlmixr2rpt** <span class="pp">|</span> Word + PowerPoint <span class="pp">|</span> Regulatory submissions, internal reports <span class="pp">|</span></span>
+<span id="cb11-430"><a href="#cb11-430" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **pmxpartab** <span class="pp">|</span> HTML tables <span class="pp">|</span> Model parameter summaries <span class="pp">|</span></span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

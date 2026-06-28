@@ -948,36 +948,36 @@ Score (logrank) test = 8.68  on 1 df,   p=0.003</code></pre>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>doses_er <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>, <span class="dv">25</span>, <span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">200</span>), <span class="at">each =</span> <span class="dv">12</span>)</span>
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>n_er <span class="ot">&lt;-</span> <span class="fu">length</span>(doses_er)</span>
 <span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># True Emax: E0 = 5, Emax = 12, ED50 = 40</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>true_e0   <span class="ot">&lt;-</span> <span class="dv">5</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>true_emax <span class="ot">&lt;-</span> <span class="dv">12</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>true_ed50 <span class="ot">&lt;-</span> <span class="dv">40</span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>response_er <span class="ot">&lt;-</span> true_e0 <span class="sc">+</span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  true_emax <span class="sc">*</span> doses_er <span class="sc">/</span> (doses_er <span class="sc">+</span> true_ed50) <span class="sc">+</span></span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(n_er, <span class="dv">0</span>, <span class="dv">3</span>)</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>er_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> doses_er, <span class="at">response =</span> response_er)</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit Bayesian Emax with meta-analytic priors</span></span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>fit_cdr <span class="ot">&lt;-</span> <span class="fu">fitEmax</span>(</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  response <span class="sc">~</span> dose, <span class="at">data =</span> er_data,</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">modType =</span> <span class="st">"emax"</span>,</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">nSim    =</span> <span class="dv">2000</span></span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot posterior dose-response</span></span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fit_cdr, <span class="at">xlab =</span> <span class="st">"Dose (mg)"</span>, <span class="at">ylab =</span> <span class="st">"Response"</span>,</span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="st">"#00A8B0"</span>, <span class="at">pch =</span> <span class="dv">16</span>)</span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Posterior summary</span></span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>post_summary <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_cdr)</span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(post_summary)</span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Probability ED50 &lt; 50 mg (clinically relevant threshold)</span></span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="st">"ed50"</span> <span class="sc">%in%</span> <span class="fu">names</span>(post_summary)) {</span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"P(ED50 &lt; 50 mg) ="</span>,</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>      <span class="fu">round</span>(<span class="fu">mean</span>(fit_cdr<span class="sc">$</span>mcmc[, <span class="st">"ed50"</span>] <span class="sc">&lt;</span> <span class="dv">50</span>), <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>true_e0   <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>true_emax <span class="ot">&lt;-</span> <span class="dv">12</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>true_ed50 <span class="ot">&lt;-</span> <span class="dv">40</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>response_er <span class="ot">&lt;-</span> true_e0 <span class="sc">+</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  true_emax <span class="sc">*</span> doses_er <span class="sc">/</span> (doses_er <span class="sc">+</span> true_ed50) <span class="sc">+</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(n_er, <span class="dv">0</span>, <span class="dv">3</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>er_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> doses_er, <span class="at">response =</span> response_er)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit Bayesian Emax with meta-analytic priors</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>fit_cdr <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fitEmax</span>(response <span class="sc">~</span> dose, <span class="at">data =</span> er_data, <span class="at">modType =</span> <span class="st">"emax"</span>, <span class="at">nSim =</span> <span class="dv">2000</span>),</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"clinDR fitting failed: "</span>, e<span class="sc">$</span>message)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NULL</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_cdr)) {</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(fit_cdr, <span class="at">xlab =</span> <span class="st">"Dose (mg)"</span>, <span class="at">ylab =</span> <span class="st">"Response"</span>,</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>       <span class="at">col =</span> <span class="st">"#00A8B0"</span>, <span class="at">pch =</span> <span class="dv">16</span>)</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  post_summary <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_cdr)</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(post_summary)</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="st">"ed50"</span> <span class="sc">%in%</span> <span class="fu">names</span>(post_summary)) {</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"P(ED50 &lt; 50 mg) ="</span>,</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>        <span class="fu">round</span>(<span class="fu">mean</span>(fit_cdr<span class="sc">$</span>mcmc[, <span class="st">"ed50"</span>] <span class="sc">&lt;</span> <span class="dv">50</span>), <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Bayesian Emax model skipped — install clinDR and JAGS to run."</span>)</span>
 <span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
@@ -1753,7 +1753,7 @@ Score (logrank) test = 8.68  on 1 df,   p=0.003</code></pre>
 <span id="cb14-311"><a href="#cb14-311" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Bayesian Emax dose-response model with clinDR."</span></span>
 <span id="cb14-312"><a href="#cb14-312" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 8</span></span>
 <span id="cb14-313"><a href="#cb14-313" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
-<span id="cb14-314"><a href="#cb14-314" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
+<span id="cb14-314"><a href="#cb14-314" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: true</span></span>
 <span id="cb14-315"><a href="#cb14-315" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-316"><a href="#cb14-316" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-317"><a href="#cb14-317" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(clinDR)</span>
@@ -1763,36 +1763,36 @@ Score (logrank) test = 8.68  on 1 df,   p=0.003</code></pre>
 <span id="cb14-321"><a href="#cb14-321" aria-hidden="true" tabindex="-1"></a>doses_er <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>, <span class="dv">25</span>, <span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">200</span>), <span class="at">each =</span> <span class="dv">12</span>)</span>
 <span id="cb14-322"><a href="#cb14-322" aria-hidden="true" tabindex="-1"></a>n_er <span class="ot">&lt;-</span> <span class="fu">length</span>(doses_er)</span>
 <span id="cb14-323"><a href="#cb14-323" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-324"><a href="#cb14-324" aria-hidden="true" tabindex="-1"></a><span class="co"># True Emax: E0 = 5, Emax = 12, ED50 = 40</span></span>
-<span id="cb14-325"><a href="#cb14-325" aria-hidden="true" tabindex="-1"></a>true_e0   <span class="ot">&lt;-</span> <span class="dv">5</span></span>
-<span id="cb14-326"><a href="#cb14-326" aria-hidden="true" tabindex="-1"></a>true_emax <span class="ot">&lt;-</span> <span class="dv">12</span></span>
-<span id="cb14-327"><a href="#cb14-327" aria-hidden="true" tabindex="-1"></a>true_ed50 <span class="ot">&lt;-</span> <span class="dv">40</span></span>
-<span id="cb14-328"><a href="#cb14-328" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-329"><a href="#cb14-329" aria-hidden="true" tabindex="-1"></a>response_er <span class="ot">&lt;-</span> true_e0 <span class="sc">+</span></span>
-<span id="cb14-330"><a href="#cb14-330" aria-hidden="true" tabindex="-1"></a>  true_emax <span class="sc">*</span> doses_er <span class="sc">/</span> (doses_er <span class="sc">+</span> true_ed50) <span class="sc">+</span></span>
-<span id="cb14-331"><a href="#cb14-331" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(n_er, <span class="dv">0</span>, <span class="dv">3</span>)</span>
-<span id="cb14-332"><a href="#cb14-332" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-333"><a href="#cb14-333" aria-hidden="true" tabindex="-1"></a>er_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> doses_er, <span class="at">response =</span> response_er)</span>
-<span id="cb14-334"><a href="#cb14-334" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-335"><a href="#cb14-335" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit Bayesian Emax with meta-analytic priors</span></span>
-<span id="cb14-336"><a href="#cb14-336" aria-hidden="true" tabindex="-1"></a>fit_cdr <span class="ot">&lt;-</span> <span class="fu">fitEmax</span>(</span>
-<span id="cb14-337"><a href="#cb14-337" aria-hidden="true" tabindex="-1"></a>  response <span class="sc">~</span> dose, <span class="at">data =</span> er_data,</span>
-<span id="cb14-338"><a href="#cb14-338" aria-hidden="true" tabindex="-1"></a>  <span class="at">modType =</span> <span class="st">"emax"</span>,</span>
-<span id="cb14-339"><a href="#cb14-339" aria-hidden="true" tabindex="-1"></a>  <span class="at">nSim    =</span> <span class="dv">2000</span></span>
-<span id="cb14-340"><a href="#cb14-340" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-341"><a href="#cb14-341" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-342"><a href="#cb14-342" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot posterior dose-response</span></span>
-<span id="cb14-343"><a href="#cb14-343" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fit_cdr, <span class="at">xlab =</span> <span class="st">"Dose (mg)"</span>, <span class="at">ylab =</span> <span class="st">"Response"</span>,</span>
-<span id="cb14-344"><a href="#cb14-344" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="st">"#00A8B0"</span>, <span class="at">pch =</span> <span class="dv">16</span>)</span>
-<span id="cb14-345"><a href="#cb14-345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-346"><a href="#cb14-346" aria-hidden="true" tabindex="-1"></a><span class="co"># Posterior summary</span></span>
-<span id="cb14-347"><a href="#cb14-347" aria-hidden="true" tabindex="-1"></a>post_summary <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_cdr)</span>
-<span id="cb14-348"><a href="#cb14-348" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(post_summary)</span>
-<span id="cb14-349"><a href="#cb14-349" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-350"><a href="#cb14-350" aria-hidden="true" tabindex="-1"></a><span class="co"># Probability ED50 &lt; 50 mg (clinically relevant threshold)</span></span>
-<span id="cb14-351"><a href="#cb14-351" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="st">"ed50"</span> <span class="sc">%in%</span> <span class="fu">names</span>(post_summary)) {</span>
-<span id="cb14-352"><a href="#cb14-352" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"P(ED50 &lt; 50 mg) ="</span>,</span>
-<span id="cb14-353"><a href="#cb14-353" aria-hidden="true" tabindex="-1"></a>      <span class="fu">round</span>(<span class="fu">mean</span>(fit_cdr<span class="sc">$</span>mcmc[, <span class="st">"ed50"</span>] <span class="sc">&lt;</span> <span class="dv">50</span>), <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb14-324"><a href="#cb14-324" aria-hidden="true" tabindex="-1"></a>true_e0   <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb14-325"><a href="#cb14-325" aria-hidden="true" tabindex="-1"></a>true_emax <span class="ot">&lt;-</span> <span class="dv">12</span></span>
+<span id="cb14-326"><a href="#cb14-326" aria-hidden="true" tabindex="-1"></a>true_ed50 <span class="ot">&lt;-</span> <span class="dv">40</span></span>
+<span id="cb14-327"><a href="#cb14-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-328"><a href="#cb14-328" aria-hidden="true" tabindex="-1"></a>response_er <span class="ot">&lt;-</span> true_e0 <span class="sc">+</span></span>
+<span id="cb14-329"><a href="#cb14-329" aria-hidden="true" tabindex="-1"></a>  true_emax <span class="sc">*</span> doses_er <span class="sc">/</span> (doses_er <span class="sc">+</span> true_ed50) <span class="sc">+</span></span>
+<span id="cb14-330"><a href="#cb14-330" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(n_er, <span class="dv">0</span>, <span class="dv">3</span>)</span>
+<span id="cb14-331"><a href="#cb14-331" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-332"><a href="#cb14-332" aria-hidden="true" tabindex="-1"></a>er_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">dose =</span> doses_er, <span class="at">response =</span> response_er)</span>
+<span id="cb14-333"><a href="#cb14-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-334"><a href="#cb14-334" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit Bayesian Emax with meta-analytic priors</span></span>
+<span id="cb14-335"><a href="#cb14-335" aria-hidden="true" tabindex="-1"></a>fit_cdr <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb14-336"><a href="#cb14-336" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fitEmax</span>(response <span class="sc">~</span> dose, <span class="at">data =</span> er_data, <span class="at">modType =</span> <span class="st">"emax"</span>, <span class="at">nSim =</span> <span class="dv">2000</span>),</span>
+<span id="cb14-337"><a href="#cb14-337" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb14-338"><a href="#cb14-338" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"clinDR fitting failed: "</span>, e<span class="sc">$</span>message)</span>
+<span id="cb14-339"><a href="#cb14-339" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NULL</span></span>
+<span id="cb14-340"><a href="#cb14-340" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-341"><a href="#cb14-341" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-342"><a href="#cb14-342" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-343"><a href="#cb14-343" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_cdr)) {</span>
+<span id="cb14-344"><a href="#cb14-344" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(fit_cdr, <span class="at">xlab =</span> <span class="st">"Dose (mg)"</span>, <span class="at">ylab =</span> <span class="st">"Response"</span>,</span>
+<span id="cb14-345"><a href="#cb14-345" aria-hidden="true" tabindex="-1"></a>       <span class="at">col =</span> <span class="st">"#00A8B0"</span>, <span class="at">pch =</span> <span class="dv">16</span>)</span>
+<span id="cb14-346"><a href="#cb14-346" aria-hidden="true" tabindex="-1"></a>  post_summary <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_cdr)</span>
+<span id="cb14-347"><a href="#cb14-347" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(post_summary)</span>
+<span id="cb14-348"><a href="#cb14-348" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="st">"ed50"</span> <span class="sc">%in%</span> <span class="fu">names</span>(post_summary)) {</span>
+<span id="cb14-349"><a href="#cb14-349" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"P(ED50 &lt; 50 mg) ="</span>,</span>
+<span id="cb14-350"><a href="#cb14-350" aria-hidden="true" tabindex="-1"></a>        <span class="fu">round</span>(<span class="fu">mean</span>(fit_cdr<span class="sc">$</span>mcmc[, <span class="st">"ed50"</span>] <span class="sc">&lt;</span> <span class="dv">50</span>), <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb14-351"><a href="#cb14-351" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-352"><a href="#cb14-352" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb14-353"><a href="#cb14-353" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Bayesian Emax model skipped — install clinDR and JAGS to run."</span>)</span>
 <span id="cb14-354"><a href="#cb14-354" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb14-355"><a href="#cb14-355" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb14-356"><a href="#cb14-356" aria-hidden="true" tabindex="-1"></a></span>

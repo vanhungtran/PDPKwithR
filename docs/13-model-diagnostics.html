@@ -1095,56 +1095,65 @@ window.Quarto = {
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vpc)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyvpc)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate observed + simulated data for VPC</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4567</span>)</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>n_sim <span class="ot">&lt;-</span> <span class="dv">200</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>sim_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>obs_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (s <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_subj) {</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Simulate model predictions</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  CL_s <span class="ot">&lt;-</span> <span class="dv">5</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.3</span>))</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  V_s  <span class="ot">&lt;-</span> <span class="dv">80</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.25</span>))</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  ka_s <span class="ot">&lt;-</span> <span class="fl">1.2</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  t_s  <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>))</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  conc_pred <span class="ot">&lt;-</span> (<span class="dv">100</span> <span class="sc">/</span> V_s) <span class="sc">*</span> (ka_s <span class="sc">/</span> (ka_s <span class="sc">-</span> CL_s<span class="sc">/</span>V_s)) <span class="sc">*</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    (<span class="fu">exp</span>(<span class="sc">-</span>(CL_s<span class="sc">/</span>V_s) <span class="sc">*</span> t_s) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka_s <span class="sc">*</span> t_s))</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  obs_data <span class="ot">&lt;-</span> <span class="fu">rbind</span>(obs_data,</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">ID =</span> s, <span class="at">TIME =</span> t_s,</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>               <span class="at">DV =</span> <span class="fu">pmax</span>(conc_pred <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(t_s), <span class="dv">0</span>, <span class="fl">0.5</span>), <span class="fl">0.01</span>),</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>               <span class="at">PRED =</span> conc_pred))</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Simulated replicates</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (r <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_sim) {</span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    sim_data <span class="ot">&lt;-</span> <span class="fu">rbind</span>(sim_data,</span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">data.frame</span>(<span class="at">ID =</span> s, <span class="at">SIM =</span> r, <span class="at">TIME =</span> t_s,</span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>                 <span class="at">DV =</span> <span class="fu">pmax</span>(conc_pred <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(t_s), <span class="dv">0</span>, <span class="fl">0.5</span>), <span class="fl">0.01</span>)))</span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Binned VPC</span></span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>vpc_bin <span class="ot">&lt;-</span> <span class="fu">vpc</span>(<span class="at">sim =</span> sim_data, <span class="at">obs =</span> obs_data,</span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>               <span class="at">stratify =</span> <span class="sc">~</span> TIME,</span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>               <span class="at">bins =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>),</span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>               <span class="at">vpc_theme =</span> <span class="fu">create_vpc_theme</span>(<span class="fu">list</span>(</span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>                 <span class="at">obs_color  =</span> <span class="st">"#0A1628"</span>,</span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>                 <span class="at">sim_pi_fill =</span> <span class="st">"#00A8B0"</span>,</span>
-<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>                 <span class="at">sim_pi_alpha =</span> <span class="fl">0.2</span></span>
-<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>               )))</span>
-<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Binless VPC (AQR)</span></span>
-<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>vpc_binless <span class="ot">&lt;-</span> <span class="fu">observed</span>(obs_data, <span class="at">x =</span> TIME, <span class="at">y =</span> DV) <span class="sc">|&gt;</span></span>
-<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulated</span>(sim_data, <span class="at">y =</span> DV) <span class="sc">|&gt;</span></span>
-<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">censoring</span>(<span class="at">blq =</span> <span class="fl">0.05</span>, <span class="at">lloq =</span> <span class="fl">0.05</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">binless</span>() <span class="sc">|&gt;</span></span>
-<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">vpcstats</span>(<span class="at">vpc_type =</span> <span class="st">"continuous"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate data</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">exists</span>(<span class="st">"n_subj"</span>)) n_subj <span class="ot">&lt;-</span> <span class="dv">24</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate observed + simulated data for VPC</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4567</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>n_sim <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>sim_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>obs_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (s <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_subj) {</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Simulate model predictions</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  CL_s <span class="ot">&lt;-</span> <span class="dv">5</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.3</span>))</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  V_s  <span class="ot">&lt;-</span> <span class="dv">80</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.25</span>))</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  ka_s <span class="ot">&lt;-</span> <span class="fl">1.2</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  t_s  <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>))</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  conc_pred <span class="ot">&lt;-</span> (<span class="dv">100</span> <span class="sc">/</span> V_s) <span class="sc">*</span> (ka_s <span class="sc">/</span> (ka_s <span class="sc">-</span> CL_s<span class="sc">/</span>V_s)) <span class="sc">*</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    (<span class="fu">exp</span>(<span class="sc">-</span>(CL_s<span class="sc">/</span>V_s) <span class="sc">*</span> t_s) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka_s <span class="sc">*</span> t_s))</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  obs_data <span class="ot">&lt;-</span> <span class="fu">rbind</span>(obs_data,</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">ID =</span> s, <span class="at">TIME =</span> t_s,</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>               <span class="at">DV =</span> <span class="fu">pmax</span>(conc_pred <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(t_s), <span class="dv">0</span>, <span class="fl">0.5</span>), <span class="fl">0.01</span>),</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>               <span class="at">PRED =</span> conc_pred))</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Simulated replicates</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (r <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_sim) {</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    sim_data <span class="ot">&lt;-</span> <span class="fu">rbind</span>(sim_data,</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">data.frame</span>(<span class="at">ID =</span> s, <span class="at">SIM =</span> r, <span class="at">TIME =</span> t_s,</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>                 <span class="at">DV =</span> <span class="fu">pmax</span>(conc_pred <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(t_s), <span class="dv">0</span>, <span class="fl">0.5</span>), <span class="fl">0.01</span>)))</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Binned VPC</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>vpc_bin <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">vpc</span>(<span class="at">sim =</span> sim_data, <span class="at">obs =</span> obs_data,</span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>      <span class="at">stratify =</span> <span class="sc">~</span> TIME,</span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>      <span class="at">bins =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>),</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">vpc_theme =</span> <span class="fu">create_vpc_theme</span>(<span class="fu">list</span>(</span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>        <span class="at">obs_color  =</span> <span class="st">"#0A1628"</span>,</span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>        <span class="at">sim_pi_fill =</span> <span class="st">"#00A8B0"</span>,</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>        <span class="at">sim_pi_alpha =</span> <span class="fl">0.2</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>      ))),</span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">message</span>(<span class="st">"vpc package failed: "</span>, e<span class="sc">$</span>message); <span class="cn">NULL</span> }</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot both side by side</span></span>
-<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(vpc_bin) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Binned VPC"</span>) <span class="sc">+</span></span>
-<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(vpc_binless) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Binless VPC (AQR)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a><span class="co"># Binless VPC (AQR) with tidyvpc</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>vpc_binless <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">observed</span>(obs_data, <span class="at">x =</span> TIME, <span class="at">y =</span> DV) <span class="sc">|&gt;</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulated</span>(sim_data, <span class="at">y =</span> DV) <span class="sc">|&gt;</span></span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">censoring</span>(<span class="at">blq =</span> <span class="fl">0.05</span>, <span class="at">lloq =</span> <span class="fl">0.05</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">binless</span>() <span class="sc">|&gt;</span></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">vpcstats</span>(<span class="at">vpc_type =</span> <span class="st">"continuous"</span>)</span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">message</span>(<span class="st">"tidyvpc failed: "</span>, e<span class="sc">$</span>message); <span class="cn">NULL</span> })</span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(vpc_bin)) <span class="fu">plot</span>(vpc_bin) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Binned VPC"</span>)</span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(vpc_binless)) <span class="fu">plot</span>(vpc_binless) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Binless VPC (AQR)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -1157,21 +1166,23 @@ window.Quarto = {
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(xpose)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(xpose.nlmixr2)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nlmixr)) {</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  xpdb <span class="ot">&lt;-</span> <span class="fu">xpose_data</span>(fit_nlmixr)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  grid_plots <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">res_vs_time</span>(xpdb),</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">res_vs_pred</span>(xpdb),</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ind_plots</span>(xpdb, <span class="at">nrow =</span> <span class="dv">3</span>, <span class="at">ncol =</span> <span class="dv">3</span>),</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dv_vs_pred</span>(xpdb)</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(grid_plots[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>], <span class="at">ncol =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>()</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(grid_plots[<span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>], <span class="at">ncol =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">exists</span>(<span class="st">"fit_nlmixr"</span>) <span class="sc">||</span> <span class="fu">is.null</span>(fit_nlmixr)) {</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"No nlmixr2 fit available — skipping xpose diagnostic grid."</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  xpdb <span class="ot">&lt;-</span> <span class="fu">xpose_data</span>(fit_nlmixr)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  grid_plots <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">res_vs_time</span>(xpdb),</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">res_vs_pred</span>(xpdb),</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ind_plots</span>(xpdb, <span class="at">nrow =</span> <span class="dv">3</span>, <span class="at">ncol =</span> <span class="dv">3</span>),</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dv_vs_pred</span>(xpdb)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(grid_plots[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>], <span class="at">ncol =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
 <span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>()</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(grid_plots[<span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>], <span class="at">ncol =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>()</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <table class="caption-top table">
@@ -1960,238 +1971,250 @@ window.Quarto = {
 <span id="cb8-281"><a href="#cb8-281" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-284"><a href="#cb8-284" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb8-285"><a href="#cb8-285" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
-<span id="cb8-286"><a href="#cb8-286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-287"><a href="#cb8-287" aria-hidden="true" tabindex="-1"></a><span class="co"># Simplified bootstrap example</span></span>
-<span id="cb8-288"><a href="#cb8-288" aria-hidden="true" tabindex="-1"></a>n_boot <span class="ot">&lt;-</span> <span class="dv">200</span></span>
-<span id="cb8-289"><a href="#cb8-289" aria-hidden="true" tabindex="-1"></a>bootstrap_params <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, <span class="at">nrow =</span> n_boot, <span class="at">ncol =</span> <span class="dv">3</span>)</span>
-<span id="cb8-290"><a href="#cb8-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-291"><a href="#cb8-291" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_boot) {</span>
-<span id="cb8-292"><a href="#cb8-292" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Resample subjects with replacement</span></span>
-<span id="cb8-293"><a href="#cb8-293" aria-hidden="true" tabindex="-1"></a>  boot_ids <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">unique</span>(pk_data<span class="sc">$</span>ID), <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-294"><a href="#cb8-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-295"><a href="#cb8-295" aria-hidden="true" tabindex="-1"></a>  boot_data <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">seq_along</span>(boot_ids), <span class="cf">function</span>(j) {</span>
-<span id="cb8-296"><a href="#cb8-296" aria-hidden="true" tabindex="-1"></a>    orig_data <span class="ot">&lt;-</span> pk_data[pk_data<span class="sc">$</span>ID <span class="sc">==</span> boot_ids[j], ]</span>
-<span id="cb8-297"><a href="#cb8-297" aria-hidden="true" tabindex="-1"></a>    orig_data<span class="sc">$</span>ID <span class="ot">&lt;-</span> j  <span class="co"># Rename to avoid duplicates</span></span>
-<span id="cb8-298"><a href="#cb8-298" aria-hidden="true" tabindex="-1"></a>    orig_data</span>
-<span id="cb8-299"><a href="#cb8-299" aria-hidden="true" tabindex="-1"></a>  }))</span>
-<span id="cb8-300"><a href="#cb8-300" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-301"><a href="#cb8-301" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fit model to bootstrap sample and store parameters</span></span>
-<span id="cb8-302"><a href="#cb8-302" aria-hidden="true" tabindex="-1"></a>  <span class="co"># bootstrap_params[i, ] &lt;- coef(fit_boot)</span></span>
-<span id="cb8-303"><a href="#cb8-303" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-304"><a href="#cb8-304" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-305"><a href="#cb8-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-306"><a href="#cb8-306" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb8-307"><a href="#cb8-307" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-308"><a href="#cb8-308" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Selection Criteria</span></span>
-<span id="cb8-309"><a href="#cb8-309" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-310"><a href="#cb8-310" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Criterion <span class="pp">|</span> Formula <span class="pp">|</span> Notes <span class="pp">|</span></span>
-<span id="cb8-311"><a href="#cb8-311" aria-hidden="true" tabindex="-1"></a><span class="pp">|-----------|---------|-------|</span></span>
-<span id="cb8-312"><a href="#cb8-312" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **OFV** <span class="pp">|</span> $-2 \times \log(Likelihood)$ <span class="pp">|</span> Lower = better <span class="pp">|</span></span>
-<span id="cb8-313"><a href="#cb8-313" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **AIC** <span class="pp">|</span> $OFV + 2p$ <span class="pp">|</span> Penalizes for $p$ parameters <span class="pp">|</span></span>
-<span id="cb8-314"><a href="#cb8-314" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **BIC** <span class="pp">|</span> $OFV + p \cdot \ln(n)$ <span class="pp">|</span> Stronger penalty for large $n$ <span class="pp">|</span></span>
-<span id="cb8-315"><a href="#cb8-315" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **ΔOFV** <span class="pp">|</span> $OFV_1 - OFV_2$ <span class="pp">|</span> $\sim \chi^2$ with df = $p_2 - p_1$ <span class="pp">|</span></span>
-<span id="cb8-316"><a href="#cb8-316" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-317"><a href="#cb8-317" aria-hidden="true" tabindex="-1"></a>For nested models, a drop in OFV &gt; 3.84 (p &lt; 0.05, 1 df) is considered significant.</span>
-<span id="cb8-318"><a href="#cb8-318" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-319"><a href="#cb8-319" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb8-320"><a href="#cb8-320" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-321"><a href="#cb8-321" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Selection Decision Tree</span></span>
-<span id="cb8-322"><a href="#cb8-322" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-325"><a href="#cb8-325" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb8-326"><a href="#cb8-326" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: false</span></span>
-<span id="cb8-327"><a href="#cb8-327" aria-hidden="true" tabindex="-1"></a><span class="co"># Model selection decision tree as a flowchart</span></span>
-<span id="cb8-328"><a href="#cb8-328" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-329"><a href="#cb8-329" aria-hidden="true" tabindex="-1"></a>decision_steps <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb8-330"><a href="#cb8-330" aria-hidden="true" tabindex="-1"></a>  <span class="at">Step =</span> <span class="fu">c</span>(<span class="st">"Is clearance constant (linear PK)?"</span>,</span>
-<span id="cb8-331"><a href="#cb8-331" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Does effect lag concentration (hysteresis)?"</span>,</span>
-<span id="cb8-332"><a href="#cb8-332" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Multiple subjects with variability to explain?"</span>,</span>
-<span id="cb8-333"><a href="#cb8-333" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Need uncertainty quantification / priors?"</span>),</span>
-<span id="cb8-334"><a href="#cb8-334" aria-hidden="true" tabindex="-1"></a>  <span class="at">Yes =</span> <span class="fu">c</span>(<span class="st">"→ Analytical 1-/2-compartment (Ch 6-7)"</span>,</span>
-<span id="cb8-335"><a href="#cb8-335" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Add effect compartment (Ch 10)"</span>,</span>
-<span id="cb8-336"><a href="#cb8-336" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ NLME / Covariate model (Ch 12, 16)"</span>,</span>
-<span id="cb8-337"><a href="#cb8-337" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Bayesian MCMC/Stan (Ch 18)"</span>),</span>
-<span id="cb8-338"><a href="#cb8-338" aria-hidden="true" tabindex="-1"></a>  <span class="at">No  =</span> <span class="fu">c</span>(<span class="st">"→ ODE with MM/induction/inhibition (Ch 11, 16)"</span>,</span>
-<span id="cb8-339"><a href="#cb8-339" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Direct Cp→E Emax/Hill model (Ch 9)"</span>,</span>
-<span id="cb8-340"><a href="#cb8-340" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Standard NLS/MLE (Ch 9, 13)"</span>,</span>
-<span id="cb8-341"><a href="#cb8-341" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Frequentist NLS/MLE/NLME suffices"</span>)</span>
-<span id="cb8-342"><a href="#cb8-342" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-343"><a href="#cb8-343" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-344"><a href="#cb8-344" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(decision_steps,</span>
-<span id="cb8-345"><a href="#cb8-345" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Model Selection Decision Tree: Four Key Branching Points"</span>)</span>
-<span id="cb8-346"><a href="#cb8-346" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-347"><a href="#cb8-347" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-348"><a href="#cb8-348" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb8-349"><a href="#cb8-349" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-350"><a href="#cb8-350" aria-hidden="true" tabindex="-1"></a><span class="fu">## Identifiability: Can Your Data Support Your Model?</span></span>
-<span id="cb8-351"><a href="#cb8-351" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-352"><a href="#cb8-352" aria-hidden="true" tabindex="-1"></a>**Identifiability** asks whether unique parameter values can be recovered from available data. An unidentifiable model can produce the same fit with very different parameter combinations — making estimates meaningless.</span>
-<span id="cb8-353"><a href="#cb8-353" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-354"><a href="#cb8-354" aria-hidden="true" tabindex="-1"></a>::: {.warning-box}</span>
-<span id="cb8-355"><a href="#cb8-355" aria-hidden="true" tabindex="-1"></a><span class="fu">### Identifiability Red Flags</span></span>
-<span id="cb8-356"><a href="#cb8-356" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-357"><a href="#cb8-357" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Too many parameters for the data**: Estimating &gt; 4-5 parameters simultaneously from one dataset without fixing any externally-derivable values (e.g., $V$ from NCA, $k_a$ from literature)</span>
-<span id="cb8-358"><a href="#cb8-358" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-359"><a href="#cb8-359" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Coupled multi-state systems**: PK+PD+disease or two-drug DDI models where the parameter count grows faster than informative data points. Each new state typically adds 2-4 parameters.</span>
-<span id="cb8-360"><a href="#cb8-360" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-361"><a href="#cb8-361" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Flat or ridge-shaped likelihood/posterior**: Check via **profile likelihood** (fix one parameter at a range of values, re-optimize the rest, watch OFV) or **posterior pairs plots** — if the OFV barely changes as a parameter varies over a wide range, that parameter is unidentifiable.</span>
-<span id="cb8-362"><a href="#cb8-362" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-363"><a href="#cb8-363" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**High parameter correlations**: $|\rho| &gt; 0.95$ between estimates (e.g., $CL$ and $V$ in oral dosing without IV data). The correlation matrix from <span class="in">`nls`</span>/<span class="in">`nlme`</span> output is your first diagnostic.</span>
-<span id="cb8-364"><a href="#cb8-364" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-365"><a href="#cb8-365" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**$k_a$ and $k_e$ in oral data**: Without early sampling (&lt; 30 min post-dose), these two rate constants are notoriously confounded — the "flip-flop" phenomenon.</span>
-<span id="cb8-366"><a href="#cb8-366" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb8-367"><a href="#cb8-367" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-368"><a href="#cb8-368" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Sensitivity Triage Principle</span></span>
-<span id="cb8-369"><a href="#cb8-369" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-370"><a href="#cb8-370" aria-hidden="true" tabindex="-1"></a>**Run sensitivity analysis before estimation** to triage which parameters to fit vs fix. Parameters with first-order Sobol index $S_i &lt; 0.05$ (explain &lt; 5% of output variance) are strong candidates for fixing at literature values. This reduces the estimation burden and improves identifiability of the remaining parameters. See @sec-sensitivity for full methodology.</span>
-<span id="cb8-371"><a href="#cb8-371" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-372"><a href="#cb8-372" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb8-373"><a href="#cb8-373" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-374"><a href="#cb8-374" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Estimation Ladder</span></span>
-<span id="cb8-375"><a href="#cb8-375" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-376"><a href="#cb8-376" aria-hidden="true" tabindex="-1"></a>PK/PD parameter estimation forms a ladder of increasing complexity and information:</span>
-<span id="cb8-377"><a href="#cb8-377" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-378"><a href="#cb8-378" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Rung <span class="pp">|</span> Method <span class="pp">|</span> R Function <span class="pp">|</span> Use When <span class="pp">|</span></span>
-<span id="cb8-379"><a href="#cb8-379" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
-<span id="cb8-380"><a href="#cb8-380" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 <span class="pp">|</span> **OLS** (linearized) <span class="pp">|</span> <span class="in">`lm()`</span> <span class="pp">|</span> Quick initial estimates; log-transform C vs t for $k_e$ <span class="pp">|</span></span>
-<span id="cb8-381"><a href="#cb8-381" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 2 <span class="pp">|</span> **WLS** <span class="pp">|</span> <span class="in">`lm(weights = ...)`</span> <span class="pp">|</span> Heteroscedastic residuals (variance not constant) <span class="pp">|</span></span>
-<span id="cb8-382"><a href="#cb8-382" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 3 <span class="pp">|</span> **NLS** <span class="pp">|</span> <span class="in">`nls()`</span> / <span class="in">`nlsLM()`</span> <span class="pp">|</span> Nonlinear model with additive error on natural scale <span class="pp">|</span></span>
-<span id="cb8-383"><a href="#cb8-383" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 4 <span class="pp">|</span> **MLE** <span class="pp">|</span> <span class="in">`stats4::mle()`</span> <span class="pp">|</span> Need $\sigma$, asymptotic CIs, non-normal errors <span class="pp">|</span></span>
-<span id="cb8-384"><a href="#cb8-384" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 5 <span class="pp">|</span> **Bayesian** <span class="pp">|</span> Stan / <span class="in">`brms`</span> <span class="pp">|</span> Priors needed, full posterior uncertainty, sparse data <span class="pp">|</span></span>
-<span id="cb8-385"><a href="#cb8-385" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-386"><a href="#cb8-386" aria-hidden="true" tabindex="-1"></a>Each rung costs more computation but reduces bias (OLS linearization bias) or adds information (uncertainty quantification in Bayesian). Start low on the ladder for exploration, then climb as needed.</span>
-<span id="cb8-387"><a href="#cb8-387" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-388"><a href="#cb8-388" aria-hidden="true" tabindex="-1"></a>::: {.exercise-box}</span>
-<span id="cb8-389"><a href="#cb8-389" aria-hidden="true" tabindex="-1"></a><span class="fu">### Exercises</span></span>
-<span id="cb8-390"><a href="#cb8-390" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-391"><a href="#cb8-391" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Compare a one- vs two-compartment model using AIC and BIC. Which is preferred?</span>
-<span id="cb8-392"><a href="#cb8-392" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Create the four essential goodness-of-fit plots for a fitted model. What patterns indicate a good fit?</span>
-<span id="cb8-393"><a href="#cb8-393" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Generate a VPC for a PK model. Interpret what it means if &gt;10% of observed points fall outside the 90% PI.</span>
-<span id="cb8-394"><a href="#cb8-394" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>What does a funnel shape in CWRES vs PRED indicate about your residual error model?</span>
-<span id="cb8-395"><a href="#cb8-395" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Use bootstrap to compute 95% CI for CL from a population PK model.</span>
-<span id="cb8-396"><a href="#cb8-396" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb8-397"><a href="#cb8-397" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-398"><a href="#cb8-398" aria-hidden="true" tabindex="-1"></a>::: {.mistakes-box}</span>
-<span id="cb8-399"><a href="#cb8-399" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Mistakes</span></span>
-<span id="cb8-400"><a href="#cb8-400" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-401"><a href="#cb8-401" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Relying only on OFV**: Always check GOF plots, parameter precision, and scientific plausibility</span>
-<span id="cb8-402"><a href="#cb8-402" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ignoring correlated residuals**: Time series structure in residuals suggests model misspecification</span>
-<span id="cb8-403"><a href="#cb8-403" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**VPC with too few simulations**: Use at least 500–1000 simulations</span>
-<span id="cb8-404"><a href="#cb8-404" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Over-interpreting small OFV drops**: ΔOFV &lt; 3.84 may be noise, not signal</span>
-<span id="cb8-405"><a href="#cb8-405" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Not checking parameter identifiability**: High RSE (&gt; 50%) or correlations &gt; 0.95 are red flags</span>
-<span id="cb8-406"><a href="#cb8-406" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb8-407"><a href="#cb8-407" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-408"><a href="#cb8-408" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
-<span id="cb8-409"><a href="#cb8-409" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Takeaway</span></span>
-<span id="cb8-410"><a href="#cb8-410" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-411"><a href="#cb8-411" aria-hidden="true" tabindex="-1"></a>Model evaluation is as important as model fitting. Use a combination of OFV/AIC, goodness-of-fit plots, VPC, and bootstrap to build confidence in your model. A good model is not just statistically adequate — it must also be scientifically plausible and practically useful.</span>
-<span id="cb8-412"><a href="#cb8-412" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb8-413"><a href="#cb8-413" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-414"><a href="#cb8-414" aria-hidden="true" tabindex="-1"></a><span class="fu">## Visual Predictive Checks: vpc, tidyvpc &amp; xpose</span></span>
-<span id="cb8-415"><a href="#cb8-415" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-416"><a href="#cb8-416" aria-hidden="true" tabindex="-1"></a>A VPC compares observed data percentiles to simulated percentiles from the model — the gold standard for evaluating predictive performance.</span>
-<span id="cb8-417"><a href="#cb8-417" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-418"><a href="#cb8-418" aria-hidden="true" tabindex="-1"></a><span class="fu">### Classic Binned VPC with `vpc`</span></span>
-<span id="cb8-419"><a href="#cb8-419" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-422"><a href="#cb8-422" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb8-423"><a href="#cb8-423" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
-<span id="cb8-424"><a href="#cb8-424" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-vpc-comparison</span></span>
-<span id="cb8-425"><a href="#cb8-425" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "VPC comparison: classic binned VPC (left) vs binless AQR VPC (right). Both show good model performance but the binless approach reveals finer structure in the sparse tail region."</span></span>
-<span id="cb8-426"><a href="#cb8-426" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 10</span></span>
-<span id="cb8-427"><a href="#cb8-427" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
-<span id="cb8-428"><a href="#cb8-428" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-286"><a href="#cb8-286" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb8-287"><a href="#cb8-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-288"><a href="#cb8-288" aria-hidden="true" tabindex="-1"></a><span class="co"># Simplified bootstrap example</span></span>
+<span id="cb8-289"><a href="#cb8-289" aria-hidden="true" tabindex="-1"></a>n_boot <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb8-290"><a href="#cb8-290" aria-hidden="true" tabindex="-1"></a>bootstrap_params <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, <span class="at">nrow =</span> n_boot, <span class="at">ncol =</span> <span class="dv">3</span>)</span>
+<span id="cb8-291"><a href="#cb8-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-292"><a href="#cb8-292" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_boot) {</span>
+<span id="cb8-293"><a href="#cb8-293" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Resample subjects with replacement</span></span>
+<span id="cb8-294"><a href="#cb8-294" aria-hidden="true" tabindex="-1"></a>  boot_ids <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">unique</span>(pk_data<span class="sc">$</span>ID), <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-295"><a href="#cb8-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-296"><a href="#cb8-296" aria-hidden="true" tabindex="-1"></a>  boot_data <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">seq_along</span>(boot_ids), <span class="cf">function</span>(j) {</span>
+<span id="cb8-297"><a href="#cb8-297" aria-hidden="true" tabindex="-1"></a>    orig_data <span class="ot">&lt;-</span> pk_data[pk_data<span class="sc">$</span>ID <span class="sc">==</span> boot_ids[j], ]</span>
+<span id="cb8-298"><a href="#cb8-298" aria-hidden="true" tabindex="-1"></a>    orig_data<span class="sc">$</span>ID <span class="ot">&lt;-</span> j  <span class="co"># Rename to avoid duplicates</span></span>
+<span id="cb8-299"><a href="#cb8-299" aria-hidden="true" tabindex="-1"></a>    orig_data</span>
+<span id="cb8-300"><a href="#cb8-300" aria-hidden="true" tabindex="-1"></a>  }))</span>
+<span id="cb8-301"><a href="#cb8-301" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-302"><a href="#cb8-302" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fit model to bootstrap sample and store parameters</span></span>
+<span id="cb8-303"><a href="#cb8-303" aria-hidden="true" tabindex="-1"></a>  <span class="co"># bootstrap_params[i, ] &lt;- coef(fit_boot)</span></span>
+<span id="cb8-304"><a href="#cb8-304" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-305"><a href="#cb8-305" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-306"><a href="#cb8-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-307"><a href="#cb8-307" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb8-308"><a href="#cb8-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-309"><a href="#cb8-309" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Selection Criteria</span></span>
+<span id="cb8-310"><a href="#cb8-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-311"><a href="#cb8-311" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Criterion <span class="pp">|</span> Formula <span class="pp">|</span> Notes <span class="pp">|</span></span>
+<span id="cb8-312"><a href="#cb8-312" aria-hidden="true" tabindex="-1"></a><span class="pp">|-----------|---------|-------|</span></span>
+<span id="cb8-313"><a href="#cb8-313" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **OFV** <span class="pp">|</span> $-2 \times \log(Likelihood)$ <span class="pp">|</span> Lower = better <span class="pp">|</span></span>
+<span id="cb8-314"><a href="#cb8-314" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **AIC** <span class="pp">|</span> $OFV + 2p$ <span class="pp">|</span> Penalizes for $p$ parameters <span class="pp">|</span></span>
+<span id="cb8-315"><a href="#cb8-315" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **BIC** <span class="pp">|</span> $OFV + p \cdot \ln(n)$ <span class="pp">|</span> Stronger penalty for large $n$ <span class="pp">|</span></span>
+<span id="cb8-316"><a href="#cb8-316" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **ΔOFV** <span class="pp">|</span> $OFV_1 - OFV_2$ <span class="pp">|</span> $\sim \chi^2$ with df = $p_2 - p_1$ <span class="pp">|</span></span>
+<span id="cb8-317"><a href="#cb8-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-318"><a href="#cb8-318" aria-hidden="true" tabindex="-1"></a>For nested models, a drop in OFV &gt; 3.84 (p &lt; 0.05, 1 df) is considered significant.</span>
+<span id="cb8-319"><a href="#cb8-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-320"><a href="#cb8-320" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb8-321"><a href="#cb8-321" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-322"><a href="#cb8-322" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Selection Decision Tree</span></span>
+<span id="cb8-323"><a href="#cb8-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-326"><a href="#cb8-326" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-327"><a href="#cb8-327" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: false</span></span>
+<span id="cb8-328"><a href="#cb8-328" aria-hidden="true" tabindex="-1"></a><span class="co"># Model selection decision tree as a flowchart</span></span>
+<span id="cb8-329"><a href="#cb8-329" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-330"><a href="#cb8-330" aria-hidden="true" tabindex="-1"></a>decision_steps <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb8-331"><a href="#cb8-331" aria-hidden="true" tabindex="-1"></a>  <span class="at">Step =</span> <span class="fu">c</span>(<span class="st">"Is clearance constant (linear PK)?"</span>,</span>
+<span id="cb8-332"><a href="#cb8-332" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Does effect lag concentration (hysteresis)?"</span>,</span>
+<span id="cb8-333"><a href="#cb8-333" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Multiple subjects with variability to explain?"</span>,</span>
+<span id="cb8-334"><a href="#cb8-334" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Need uncertainty quantification / priors?"</span>),</span>
+<span id="cb8-335"><a href="#cb8-335" aria-hidden="true" tabindex="-1"></a>  <span class="at">Yes =</span> <span class="fu">c</span>(<span class="st">"→ Analytical 1-/2-compartment (Ch 6-7)"</span>,</span>
+<span id="cb8-336"><a href="#cb8-336" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Add effect compartment (Ch 10)"</span>,</span>
+<span id="cb8-337"><a href="#cb8-337" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ NLME / Covariate model (Ch 12, 16)"</span>,</span>
+<span id="cb8-338"><a href="#cb8-338" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Bayesian MCMC/Stan (Ch 18)"</span>),</span>
+<span id="cb8-339"><a href="#cb8-339" aria-hidden="true" tabindex="-1"></a>  <span class="at">No  =</span> <span class="fu">c</span>(<span class="st">"→ ODE with MM/induction/inhibition (Ch 11, 16)"</span>,</span>
+<span id="cb8-340"><a href="#cb8-340" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Direct Cp→E Emax/Hill model (Ch 9)"</span>,</span>
+<span id="cb8-341"><a href="#cb8-341" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Standard NLS/MLE (Ch 9, 13)"</span>,</span>
+<span id="cb8-342"><a href="#cb8-342" aria-hidden="true" tabindex="-1"></a>           <span class="st">"→ Frequentist NLS/MLE/NLME suffices"</span>)</span>
+<span id="cb8-343"><a href="#cb8-343" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-344"><a href="#cb8-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-345"><a href="#cb8-345" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(decision_steps,</span>
+<span id="cb8-346"><a href="#cb8-346" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Model Selection Decision Tree: Four Key Branching Points"</span>)</span>
+<span id="cb8-347"><a href="#cb8-347" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-348"><a href="#cb8-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-349"><a href="#cb8-349" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb8-350"><a href="#cb8-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-351"><a href="#cb8-351" aria-hidden="true" tabindex="-1"></a><span class="fu">## Identifiability: Can Your Data Support Your Model?</span></span>
+<span id="cb8-352"><a href="#cb8-352" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-353"><a href="#cb8-353" aria-hidden="true" tabindex="-1"></a>**Identifiability** asks whether unique parameter values can be recovered from available data. An unidentifiable model can produce the same fit with very different parameter combinations — making estimates meaningless.</span>
+<span id="cb8-354"><a href="#cb8-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-355"><a href="#cb8-355" aria-hidden="true" tabindex="-1"></a>::: {.warning-box}</span>
+<span id="cb8-356"><a href="#cb8-356" aria-hidden="true" tabindex="-1"></a><span class="fu">### Identifiability Red Flags</span></span>
+<span id="cb8-357"><a href="#cb8-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-358"><a href="#cb8-358" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Too many parameters for the data**: Estimating &gt; 4-5 parameters simultaneously from one dataset without fixing any externally-derivable values (e.g., $V$ from NCA, $k_a$ from literature)</span>
+<span id="cb8-359"><a href="#cb8-359" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-360"><a href="#cb8-360" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Coupled multi-state systems**: PK+PD+disease or two-drug DDI models where the parameter count grows faster than informative data points. Each new state typically adds 2-4 parameters.</span>
+<span id="cb8-361"><a href="#cb8-361" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-362"><a href="#cb8-362" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Flat or ridge-shaped likelihood/posterior**: Check via **profile likelihood** (fix one parameter at a range of values, re-optimize the rest, watch OFV) or **posterior pairs plots** — if the OFV barely changes as a parameter varies over a wide range, that parameter is unidentifiable.</span>
+<span id="cb8-363"><a href="#cb8-363" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-364"><a href="#cb8-364" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**High parameter correlations**: $|\rho| &gt; 0.95$ between estimates (e.g., $CL$ and $V$ in oral dosing without IV data). The correlation matrix from <span class="in">`nls`</span>/<span class="in">`nlme`</span> output is your first diagnostic.</span>
+<span id="cb8-365"><a href="#cb8-365" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-366"><a href="#cb8-366" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**$k_a$ and $k_e$ in oral data**: Without early sampling (&lt; 30 min post-dose), these two rate constants are notoriously confounded — the "flip-flop" phenomenon.</span>
+<span id="cb8-367"><a href="#cb8-367" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb8-368"><a href="#cb8-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-369"><a href="#cb8-369" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Sensitivity Triage Principle</span></span>
+<span id="cb8-370"><a href="#cb8-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-371"><a href="#cb8-371" aria-hidden="true" tabindex="-1"></a>**Run sensitivity analysis before estimation** to triage which parameters to fit vs fix. Parameters with first-order Sobol index $S_i &lt; 0.05$ (explain &lt; 5% of output variance) are strong candidates for fixing at literature values. This reduces the estimation burden and improves identifiability of the remaining parameters. See @sec-sensitivity for full methodology.</span>
+<span id="cb8-372"><a href="#cb8-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-373"><a href="#cb8-373" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb8-374"><a href="#cb8-374" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-375"><a href="#cb8-375" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Estimation Ladder</span></span>
+<span id="cb8-376"><a href="#cb8-376" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-377"><a href="#cb8-377" aria-hidden="true" tabindex="-1"></a>PK/PD parameter estimation forms a ladder of increasing complexity and information:</span>
+<span id="cb8-378"><a href="#cb8-378" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-379"><a href="#cb8-379" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Rung <span class="pp">|</span> Method <span class="pp">|</span> R Function <span class="pp">|</span> Use When <span class="pp">|</span></span>
+<span id="cb8-380"><a href="#cb8-380" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
+<span id="cb8-381"><a href="#cb8-381" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 <span class="pp">|</span> **OLS** (linearized) <span class="pp">|</span> <span class="in">`lm()`</span> <span class="pp">|</span> Quick initial estimates; log-transform C vs t for $k_e$ <span class="pp">|</span></span>
+<span id="cb8-382"><a href="#cb8-382" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 2 <span class="pp">|</span> **WLS** <span class="pp">|</span> <span class="in">`lm(weights = ...)`</span> <span class="pp">|</span> Heteroscedastic residuals (variance not constant) <span class="pp">|</span></span>
+<span id="cb8-383"><a href="#cb8-383" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 3 <span class="pp">|</span> **NLS** <span class="pp">|</span> <span class="in">`nls()`</span> / <span class="in">`nlsLM()`</span> <span class="pp">|</span> Nonlinear model with additive error on natural scale <span class="pp">|</span></span>
+<span id="cb8-384"><a href="#cb8-384" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 4 <span class="pp">|</span> **MLE** <span class="pp">|</span> <span class="in">`stats4::mle()`</span> <span class="pp">|</span> Need $\sigma$, asymptotic CIs, non-normal errors <span class="pp">|</span></span>
+<span id="cb8-385"><a href="#cb8-385" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 5 <span class="pp">|</span> **Bayesian** <span class="pp">|</span> Stan / <span class="in">`brms`</span> <span class="pp">|</span> Priors needed, full posterior uncertainty, sparse data <span class="pp">|</span></span>
+<span id="cb8-386"><a href="#cb8-386" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-387"><a href="#cb8-387" aria-hidden="true" tabindex="-1"></a>Each rung costs more computation but reduces bias (OLS linearization bias) or adds information (uncertainty quantification in Bayesian). Start low on the ladder for exploration, then climb as needed.</span>
+<span id="cb8-388"><a href="#cb8-388" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-389"><a href="#cb8-389" aria-hidden="true" tabindex="-1"></a>::: {.exercise-box}</span>
+<span id="cb8-390"><a href="#cb8-390" aria-hidden="true" tabindex="-1"></a><span class="fu">### Exercises</span></span>
+<span id="cb8-391"><a href="#cb8-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-392"><a href="#cb8-392" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Compare a one- vs two-compartment model using AIC and BIC. Which is preferred?</span>
+<span id="cb8-393"><a href="#cb8-393" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Create the four essential goodness-of-fit plots for a fitted model. What patterns indicate a good fit?</span>
+<span id="cb8-394"><a href="#cb8-394" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Generate a VPC for a PK model. Interpret what it means if &gt;10% of observed points fall outside the 90% PI.</span>
+<span id="cb8-395"><a href="#cb8-395" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>What does a funnel shape in CWRES vs PRED indicate about your residual error model?</span>
+<span id="cb8-396"><a href="#cb8-396" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Use bootstrap to compute 95% CI for CL from a population PK model.</span>
+<span id="cb8-397"><a href="#cb8-397" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb8-398"><a href="#cb8-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-399"><a href="#cb8-399" aria-hidden="true" tabindex="-1"></a>::: {.mistakes-box}</span>
+<span id="cb8-400"><a href="#cb8-400" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Mistakes</span></span>
+<span id="cb8-401"><a href="#cb8-401" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-402"><a href="#cb8-402" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Relying only on OFV**: Always check GOF plots, parameter precision, and scientific plausibility</span>
+<span id="cb8-403"><a href="#cb8-403" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ignoring correlated residuals**: Time series structure in residuals suggests model misspecification</span>
+<span id="cb8-404"><a href="#cb8-404" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**VPC with too few simulations**: Use at least 500–1000 simulations</span>
+<span id="cb8-405"><a href="#cb8-405" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Over-interpreting small OFV drops**: ΔOFV &lt; 3.84 may be noise, not signal</span>
+<span id="cb8-406"><a href="#cb8-406" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Not checking parameter identifiability**: High RSE (&gt; 50%) or correlations &gt; 0.95 are red flags</span>
+<span id="cb8-407"><a href="#cb8-407" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb8-408"><a href="#cb8-408" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-409"><a href="#cb8-409" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
+<span id="cb8-410"><a href="#cb8-410" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Takeaway</span></span>
+<span id="cb8-411"><a href="#cb8-411" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-412"><a href="#cb8-412" aria-hidden="true" tabindex="-1"></a>Model evaluation is as important as model fitting. Use a combination of OFV/AIC, goodness-of-fit plots, VPC, and bootstrap to build confidence in your model. A good model is not just statistically adequate — it must also be scientifically plausible and practically useful.</span>
+<span id="cb8-413"><a href="#cb8-413" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb8-414"><a href="#cb8-414" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-415"><a href="#cb8-415" aria-hidden="true" tabindex="-1"></a><span class="fu">## Visual Predictive Checks: vpc, tidyvpc &amp; xpose</span></span>
+<span id="cb8-416"><a href="#cb8-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-417"><a href="#cb8-417" aria-hidden="true" tabindex="-1"></a>A VPC compares observed data percentiles to simulated percentiles from the model — the gold standard for evaluating predictive performance.</span>
+<span id="cb8-418"><a href="#cb8-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-419"><a href="#cb8-419" aria-hidden="true" tabindex="-1"></a><span class="fu">### Classic Binned VPC with `vpc`</span></span>
+<span id="cb8-420"><a href="#cb8-420" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-423"><a href="#cb8-423" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-424"><a href="#cb8-424" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: true</span></span>
+<span id="cb8-425"><a href="#cb8-425" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-vpc-comparison</span></span>
+<span id="cb8-426"><a href="#cb8-426" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "VPC comparison: classic binned VPC (left) vs binless AQR VPC (right)."</span></span>
+<span id="cb8-427"><a href="#cb8-427" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 10</span></span>
+<span id="cb8-428"><a href="#cb8-428" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 5</span></span>
 <span id="cb8-429"><a href="#cb8-429" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-430"><a href="#cb8-430" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vpc)</span>
-<span id="cb8-431"><a href="#cb8-431" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyvpc)</span>
-<span id="cb8-432"><a href="#cb8-432" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-433"><a href="#cb8-433" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate observed + simulated data for VPC</span></span>
-<span id="cb8-434"><a href="#cb8-434" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4567</span>)</span>
-<span id="cb8-435"><a href="#cb8-435" aria-hidden="true" tabindex="-1"></a>n_sim <span class="ot">&lt;-</span> <span class="dv">200</span></span>
-<span id="cb8-436"><a href="#cb8-436" aria-hidden="true" tabindex="-1"></a>sim_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
-<span id="cb8-437"><a href="#cb8-437" aria-hidden="true" tabindex="-1"></a>obs_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
-<span id="cb8-438"><a href="#cb8-438" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-439"><a href="#cb8-439" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (s <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_subj) {</span>
-<span id="cb8-440"><a href="#cb8-440" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Simulate model predictions</span></span>
-<span id="cb8-441"><a href="#cb8-441" aria-hidden="true" tabindex="-1"></a>  CL_s <span class="ot">&lt;-</span> <span class="dv">5</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.3</span>))</span>
-<span id="cb8-442"><a href="#cb8-442" aria-hidden="true" tabindex="-1"></a>  V_s  <span class="ot">&lt;-</span> <span class="dv">80</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.25</span>))</span>
-<span id="cb8-443"><a href="#cb8-443" aria-hidden="true" tabindex="-1"></a>  ka_s <span class="ot">&lt;-</span> <span class="fl">1.2</span></span>
-<span id="cb8-444"><a href="#cb8-444" aria-hidden="true" tabindex="-1"></a>  t_s  <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>))</span>
-<span id="cb8-445"><a href="#cb8-445" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-446"><a href="#cb8-446" aria-hidden="true" tabindex="-1"></a>  conc_pred <span class="ot">&lt;-</span> (<span class="dv">100</span> <span class="sc">/</span> V_s) <span class="sc">*</span> (ka_s <span class="sc">/</span> (ka_s <span class="sc">-</span> CL_s<span class="sc">/</span>V_s)) <span class="sc">*</span></span>
-<span id="cb8-447"><a href="#cb8-447" aria-hidden="true" tabindex="-1"></a>    (<span class="fu">exp</span>(<span class="sc">-</span>(CL_s<span class="sc">/</span>V_s) <span class="sc">*</span> t_s) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka_s <span class="sc">*</span> t_s))</span>
-<span id="cb8-448"><a href="#cb8-448" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-449"><a href="#cb8-449" aria-hidden="true" tabindex="-1"></a>  obs_data <span class="ot">&lt;-</span> <span class="fu">rbind</span>(obs_data,</span>
-<span id="cb8-450"><a href="#cb8-450" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">ID =</span> s, <span class="at">TIME =</span> t_s,</span>
-<span id="cb8-451"><a href="#cb8-451" aria-hidden="true" tabindex="-1"></a>               <span class="at">DV =</span> <span class="fu">pmax</span>(conc_pred <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(t_s), <span class="dv">0</span>, <span class="fl">0.5</span>), <span class="fl">0.01</span>),</span>
-<span id="cb8-452"><a href="#cb8-452" aria-hidden="true" tabindex="-1"></a>               <span class="at">PRED =</span> conc_pred))</span>
+<span id="cb8-430"><a href="#cb8-430" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-431"><a href="#cb8-431" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vpc)</span>
+<span id="cb8-432"><a href="#cb8-432" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyvpc)</span>
+<span id="cb8-433"><a href="#cb8-433" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb8-434"><a href="#cb8-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-435"><a href="#cb8-435" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate data</span></span>
+<span id="cb8-436"><a href="#cb8-436" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">exists</span>(<span class="st">"n_subj"</span>)) n_subj <span class="ot">&lt;-</span> <span class="dv">24</span></span>
+<span id="cb8-437"><a href="#cb8-437" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-438"><a href="#cb8-438" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate observed + simulated data for VPC</span></span>
+<span id="cb8-439"><a href="#cb8-439" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4567</span>)</span>
+<span id="cb8-440"><a href="#cb8-440" aria-hidden="true" tabindex="-1"></a>n_sim <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb8-441"><a href="#cb8-441" aria-hidden="true" tabindex="-1"></a>sim_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb8-442"><a href="#cb8-442" aria-hidden="true" tabindex="-1"></a>obs_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb8-443"><a href="#cb8-443" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-444"><a href="#cb8-444" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (s <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_subj) {</span>
+<span id="cb8-445"><a href="#cb8-445" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Simulate model predictions</span></span>
+<span id="cb8-446"><a href="#cb8-446" aria-hidden="true" tabindex="-1"></a>  CL_s <span class="ot">&lt;-</span> <span class="dv">5</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.3</span>))</span>
+<span id="cb8-447"><a href="#cb8-447" aria-hidden="true" tabindex="-1"></a>  V_s  <span class="ot">&lt;-</span> <span class="dv">80</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.25</span>))</span>
+<span id="cb8-448"><a href="#cb8-448" aria-hidden="true" tabindex="-1"></a>  ka_s <span class="ot">&lt;-</span> <span class="fl">1.2</span></span>
+<span id="cb8-449"><a href="#cb8-449" aria-hidden="true" tabindex="-1"></a>  t_s  <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>))</span>
+<span id="cb8-450"><a href="#cb8-450" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-451"><a href="#cb8-451" aria-hidden="true" tabindex="-1"></a>  conc_pred <span class="ot">&lt;-</span> (<span class="dv">100</span> <span class="sc">/</span> V_s) <span class="sc">*</span> (ka_s <span class="sc">/</span> (ka_s <span class="sc">-</span> CL_s<span class="sc">/</span>V_s)) <span class="sc">*</span></span>
+<span id="cb8-452"><a href="#cb8-452" aria-hidden="true" tabindex="-1"></a>    (<span class="fu">exp</span>(<span class="sc">-</span>(CL_s<span class="sc">/</span>V_s) <span class="sc">*</span> t_s) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka_s <span class="sc">*</span> t_s))</span>
 <span id="cb8-453"><a href="#cb8-453" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-454"><a href="#cb8-454" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Simulated replicates</span></span>
-<span id="cb8-455"><a href="#cb8-455" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (r <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_sim) {</span>
-<span id="cb8-456"><a href="#cb8-456" aria-hidden="true" tabindex="-1"></a>    sim_data <span class="ot">&lt;-</span> <span class="fu">rbind</span>(sim_data,</span>
-<span id="cb8-457"><a href="#cb8-457" aria-hidden="true" tabindex="-1"></a>      <span class="fu">data.frame</span>(<span class="at">ID =</span> s, <span class="at">SIM =</span> r, <span class="at">TIME =</span> t_s,</span>
-<span id="cb8-458"><a href="#cb8-458" aria-hidden="true" tabindex="-1"></a>                 <span class="at">DV =</span> <span class="fu">pmax</span>(conc_pred <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(t_s), <span class="dv">0</span>, <span class="fl">0.5</span>), <span class="fl">0.01</span>)))</span>
-<span id="cb8-459"><a href="#cb8-459" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-460"><a href="#cb8-460" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-461"><a href="#cb8-461" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-462"><a href="#cb8-462" aria-hidden="true" tabindex="-1"></a><span class="co"># Binned VPC</span></span>
-<span id="cb8-463"><a href="#cb8-463" aria-hidden="true" tabindex="-1"></a>vpc_bin <span class="ot">&lt;-</span> <span class="fu">vpc</span>(<span class="at">sim =</span> sim_data, <span class="at">obs =</span> obs_data,</span>
-<span id="cb8-464"><a href="#cb8-464" aria-hidden="true" tabindex="-1"></a>               <span class="at">stratify =</span> <span class="sc">~</span> TIME,</span>
-<span id="cb8-465"><a href="#cb8-465" aria-hidden="true" tabindex="-1"></a>               <span class="at">bins =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>),</span>
-<span id="cb8-466"><a href="#cb8-466" aria-hidden="true" tabindex="-1"></a>               <span class="at">vpc_theme =</span> <span class="fu">create_vpc_theme</span>(<span class="fu">list</span>(</span>
-<span id="cb8-467"><a href="#cb8-467" aria-hidden="true" tabindex="-1"></a>                 <span class="at">obs_color  =</span> <span class="st">"#0A1628"</span>,</span>
-<span id="cb8-468"><a href="#cb8-468" aria-hidden="true" tabindex="-1"></a>                 <span class="at">sim_pi_fill =</span> <span class="st">"#00A8B0"</span>,</span>
-<span id="cb8-469"><a href="#cb8-469" aria-hidden="true" tabindex="-1"></a>                 <span class="at">sim_pi_alpha =</span> <span class="fl">0.2</span></span>
-<span id="cb8-470"><a href="#cb8-470" aria-hidden="true" tabindex="-1"></a>               )))</span>
-<span id="cb8-471"><a href="#cb8-471" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-472"><a href="#cb8-472" aria-hidden="true" tabindex="-1"></a><span class="co"># Binless VPC (AQR)</span></span>
-<span id="cb8-473"><a href="#cb8-473" aria-hidden="true" tabindex="-1"></a>vpc_binless <span class="ot">&lt;-</span> <span class="fu">observed</span>(obs_data, <span class="at">x =</span> TIME, <span class="at">y =</span> DV) <span class="sc">|&gt;</span></span>
-<span id="cb8-474"><a href="#cb8-474" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulated</span>(sim_data, <span class="at">y =</span> DV) <span class="sc">|&gt;</span></span>
-<span id="cb8-475"><a href="#cb8-475" aria-hidden="true" tabindex="-1"></a>  <span class="fu">censoring</span>(<span class="at">blq =</span> <span class="fl">0.05</span>, <span class="at">lloq =</span> <span class="fl">0.05</span>) <span class="sc">|&gt;</span></span>
-<span id="cb8-476"><a href="#cb8-476" aria-hidden="true" tabindex="-1"></a>  <span class="fu">binless</span>() <span class="sc">|&gt;</span></span>
-<span id="cb8-477"><a href="#cb8-477" aria-hidden="true" tabindex="-1"></a>  <span class="fu">vpcstats</span>(<span class="at">vpc_type =</span> <span class="st">"continuous"</span>)</span>
-<span id="cb8-478"><a href="#cb8-478" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-479"><a href="#cb8-479" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot both side by side</span></span>
-<span id="cb8-480"><a href="#cb8-480" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(vpc_bin) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Binned VPC"</span>) <span class="sc">+</span></span>
-<span id="cb8-481"><a href="#cb8-481" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(vpc_binless) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Binless VPC (AQR)"</span>)</span>
-<span id="cb8-482"><a href="#cb8-482" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-483"><a href="#cb8-483" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-484"><a href="#cb8-484" aria-hidden="true" tabindex="-1"></a><span class="fu">### xpose Diagnostic Grid</span></span>
-<span id="cb8-485"><a href="#cb8-485" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-486"><a href="#cb8-486" aria-hidden="true" tabindex="-1"></a>The <span class="in">`xpose`</span> package provides a comprehensive suite of model diagnostics for NONMEM and nlmixr2 models:</span>
-<span id="cb8-487"><a href="#cb8-487" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-490"><a href="#cb8-490" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb8-491"><a href="#cb8-491" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-xpose-grid</span></span>
-<span id="cb8-492"><a href="#cb8-492" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "xpose diagnostic grid for a PopPK model."</span></span>
-<span id="cb8-493"><a href="#cb8-493" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 9</span></span>
-<span id="cb8-494"><a href="#cb8-494" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 7</span></span>
-<span id="cb8-495"><a href="#cb8-495" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: false</span></span>
-<span id="cb8-496"><a href="#cb8-496" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-454"><a href="#cb8-454" aria-hidden="true" tabindex="-1"></a>  obs_data <span class="ot">&lt;-</span> <span class="fu">rbind</span>(obs_data,</span>
+<span id="cb8-455"><a href="#cb8-455" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">ID =</span> s, <span class="at">TIME =</span> t_s,</span>
+<span id="cb8-456"><a href="#cb8-456" aria-hidden="true" tabindex="-1"></a>               <span class="at">DV =</span> <span class="fu">pmax</span>(conc_pred <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(t_s), <span class="dv">0</span>, <span class="fl">0.5</span>), <span class="fl">0.01</span>),</span>
+<span id="cb8-457"><a href="#cb8-457" aria-hidden="true" tabindex="-1"></a>               <span class="at">PRED =</span> conc_pred))</span>
+<span id="cb8-458"><a href="#cb8-458" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-459"><a href="#cb8-459" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Simulated replicates</span></span>
+<span id="cb8-460"><a href="#cb8-460" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (r <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_sim) {</span>
+<span id="cb8-461"><a href="#cb8-461" aria-hidden="true" tabindex="-1"></a>    sim_data <span class="ot">&lt;-</span> <span class="fu">rbind</span>(sim_data,</span>
+<span id="cb8-462"><a href="#cb8-462" aria-hidden="true" tabindex="-1"></a>      <span class="fu">data.frame</span>(<span class="at">ID =</span> s, <span class="at">SIM =</span> r, <span class="at">TIME =</span> t_s,</span>
+<span id="cb8-463"><a href="#cb8-463" aria-hidden="true" tabindex="-1"></a>                 <span class="at">DV =</span> <span class="fu">pmax</span>(conc_pred <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(t_s), <span class="dv">0</span>, <span class="fl">0.5</span>), <span class="fl">0.01</span>)))</span>
+<span id="cb8-464"><a href="#cb8-464" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-465"><a href="#cb8-465" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-466"><a href="#cb8-466" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-467"><a href="#cb8-467" aria-hidden="true" tabindex="-1"></a><span class="co"># Binned VPC</span></span>
+<span id="cb8-468"><a href="#cb8-468" aria-hidden="true" tabindex="-1"></a>vpc_bin <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb8-469"><a href="#cb8-469" aria-hidden="true" tabindex="-1"></a>  <span class="fu">vpc</span>(<span class="at">sim =</span> sim_data, <span class="at">obs =</span> obs_data,</span>
+<span id="cb8-470"><a href="#cb8-470" aria-hidden="true" tabindex="-1"></a>      <span class="at">stratify =</span> <span class="sc">~</span> TIME,</span>
+<span id="cb8-471"><a href="#cb8-471" aria-hidden="true" tabindex="-1"></a>      <span class="at">bins =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>),</span>
+<span id="cb8-472"><a href="#cb8-472" aria-hidden="true" tabindex="-1"></a>      <span class="at">vpc_theme =</span> <span class="fu">create_vpc_theme</span>(<span class="fu">list</span>(</span>
+<span id="cb8-473"><a href="#cb8-473" aria-hidden="true" tabindex="-1"></a>        <span class="at">obs_color  =</span> <span class="st">"#0A1628"</span>,</span>
+<span id="cb8-474"><a href="#cb8-474" aria-hidden="true" tabindex="-1"></a>        <span class="at">sim_pi_fill =</span> <span class="st">"#00A8B0"</span>,</span>
+<span id="cb8-475"><a href="#cb8-475" aria-hidden="true" tabindex="-1"></a>        <span class="at">sim_pi_alpha =</span> <span class="fl">0.2</span></span>
+<span id="cb8-476"><a href="#cb8-476" aria-hidden="true" tabindex="-1"></a>      ))),</span>
+<span id="cb8-477"><a href="#cb8-477" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">message</span>(<span class="st">"vpc package failed: "</span>, e<span class="sc">$</span>message); <span class="cn">NULL</span> }</span>
+<span id="cb8-478"><a href="#cb8-478" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-479"><a href="#cb8-479" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-480"><a href="#cb8-480" aria-hidden="true" tabindex="-1"></a><span class="co"># Binless VPC (AQR) with tidyvpc</span></span>
+<span id="cb8-481"><a href="#cb8-481" aria-hidden="true" tabindex="-1"></a>vpc_binless <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb8-482"><a href="#cb8-482" aria-hidden="true" tabindex="-1"></a>  <span class="fu">observed</span>(obs_data, <span class="at">x =</span> TIME, <span class="at">y =</span> DV) <span class="sc">|&gt;</span></span>
+<span id="cb8-483"><a href="#cb8-483" aria-hidden="true" tabindex="-1"></a>  <span class="fu">simulated</span>(sim_data, <span class="at">y =</span> DV) <span class="sc">|&gt;</span></span>
+<span id="cb8-484"><a href="#cb8-484" aria-hidden="true" tabindex="-1"></a>  <span class="fu">censoring</span>(<span class="at">blq =</span> <span class="fl">0.05</span>, <span class="at">lloq =</span> <span class="fl">0.05</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-485"><a href="#cb8-485" aria-hidden="true" tabindex="-1"></a>  <span class="fu">binless</span>() <span class="sc">|&gt;</span></span>
+<span id="cb8-486"><a href="#cb8-486" aria-hidden="true" tabindex="-1"></a>  <span class="fu">vpcstats</span>(<span class="at">vpc_type =</span> <span class="st">"continuous"</span>)</span>
+<span id="cb8-487"><a href="#cb8-487" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">message</span>(<span class="st">"tidyvpc failed: "</span>, e<span class="sc">$</span>message); <span class="cn">NULL</span> })</span>
+<span id="cb8-488"><a href="#cb8-488" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-489"><a href="#cb8-489" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb8-490"><a href="#cb8-490" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(vpc_bin)) <span class="fu">plot</span>(vpc_bin) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Binned VPC"</span>)</span>
+<span id="cb8-491"><a href="#cb8-491" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(vpc_binless)) <span class="fu">plot</span>(vpc_binless) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"Binless VPC (AQR)"</span>)</span>
+<span id="cb8-492"><a href="#cb8-492" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-493"><a href="#cb8-493" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-494"><a href="#cb8-494" aria-hidden="true" tabindex="-1"></a><span class="fu">### xpose Diagnostic Grid</span></span>
+<span id="cb8-495"><a href="#cb8-495" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-496"><a href="#cb8-496" aria-hidden="true" tabindex="-1"></a>The <span class="in">`xpose`</span> package provides a comprehensive suite of model diagnostics for NONMEM and nlmixr2 models:</span>
 <span id="cb8-497"><a href="#cb8-497" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-498"><a href="#cb8-498" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(xpose)</span>
-<span id="cb8-499"><a href="#cb8-499" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(xpose.nlmixr2)</span>
-<span id="cb8-500"><a href="#cb8-500" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-501"><a href="#cb8-501" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nlmixr)) {</span>
-<span id="cb8-502"><a href="#cb8-502" aria-hidden="true" tabindex="-1"></a>  xpdb <span class="ot">&lt;-</span> <span class="fu">xpose_data</span>(fit_nlmixr)</span>
-<span id="cb8-503"><a href="#cb8-503" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-504"><a href="#cb8-504" aria-hidden="true" tabindex="-1"></a>  grid_plots <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb8-505"><a href="#cb8-505" aria-hidden="true" tabindex="-1"></a>    <span class="fu">res_vs_time</span>(xpdb),</span>
-<span id="cb8-506"><a href="#cb8-506" aria-hidden="true" tabindex="-1"></a>    <span class="fu">res_vs_pred</span>(xpdb),</span>
-<span id="cb8-507"><a href="#cb8-507" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ind_plots</span>(xpdb, <span class="at">nrow =</span> <span class="dv">3</span>, <span class="at">ncol =</span> <span class="dv">3</span>),</span>
-<span id="cb8-508"><a href="#cb8-508" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dv_vs_pred</span>(xpdb)</span>
-<span id="cb8-509"><a href="#cb8-509" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-500"><a href="#cb8-500" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-501"><a href="#cb8-501" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: true</span></span>
+<span id="cb8-502"><a href="#cb8-502" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-xpose-grid</span></span>
+<span id="cb8-503"><a href="#cb8-503" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "xpose diagnostic grid for a PopPK model."</span></span>
+<span id="cb8-504"><a href="#cb8-504" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 9</span></span>
+<span id="cb8-505"><a href="#cb8-505" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 7</span></span>
+<span id="cb8-506"><a href="#cb8-506" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-507"><a href="#cb8-507" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-508"><a href="#cb8-508" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(xpose)</span>
+<span id="cb8-509"><a href="#cb8-509" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(xpose.nlmixr2)</span>
 <span id="cb8-510"><a href="#cb8-510" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-511"><a href="#cb8-511" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(grid_plots[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>], <span class="at">ncol =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
-<span id="cb8-512"><a href="#cb8-512" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>()</span>
-<span id="cb8-513"><a href="#cb8-513" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(grid_plots[<span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>], <span class="at">ncol =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
-<span id="cb8-514"><a href="#cb8-514" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>()</span>
-<span id="cb8-515"><a href="#cb8-515" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-516"><a href="#cb8-516" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-517"><a href="#cb8-517" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-518"><a href="#cb8-518" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Diagnostic <span class="pp">|</span> What to Look For <span class="pp">|</span> Red Flags <span class="pp">|</span></span>
-<span id="cb8-519"><a href="#cb8-519" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb8-520"><a href="#cb8-520" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **CWRES vs TIME** <span class="pp">|</span> No trend, centered at 0 <span class="pp">|</span> U-shape, time trend <span class="pp">|</span></span>
-<span id="cb8-521"><a href="#cb8-521" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **CWRES vs PRED** <span class="pp">|</span> Random scatter <span class="pp">|</span> Funnel shape (heteroscedasticity) <span class="pp">|</span></span>
-<span id="cb8-522"><a href="#cb8-522" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **DV vs PRED** <span class="pp">|</span> Points along identity line <span class="pp">|</span> Systematic bias at extremes <span class="pp">|</span></span>
-<span id="cb8-523"><a href="#cb8-523" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **VPC** <span class="pp">|</span> Observed within simulation bands <span class="pp">|</span> &gt;10% outside 95% CI <span class="pp">|</span></span>
+<span id="cb8-511"><a href="#cb8-511" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">exists</span>(<span class="st">"fit_nlmixr"</span>) <span class="sc">||</span> <span class="fu">is.null</span>(fit_nlmixr)) {</span>
+<span id="cb8-512"><a href="#cb8-512" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"No nlmixr2 fit available — skipping xpose diagnostic grid."</span>)</span>
+<span id="cb8-513"><a href="#cb8-513" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb8-514"><a href="#cb8-514" aria-hidden="true" tabindex="-1"></a>  xpdb <span class="ot">&lt;-</span> <span class="fu">xpose_data</span>(fit_nlmixr)</span>
+<span id="cb8-515"><a href="#cb8-515" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-516"><a href="#cb8-516" aria-hidden="true" tabindex="-1"></a>  grid_plots <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb8-517"><a href="#cb8-517" aria-hidden="true" tabindex="-1"></a>    <span class="fu">res_vs_time</span>(xpdb),</span>
+<span id="cb8-518"><a href="#cb8-518" aria-hidden="true" tabindex="-1"></a>    <span class="fu">res_vs_pred</span>(xpdb),</span>
+<span id="cb8-519"><a href="#cb8-519" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ind_plots</span>(xpdb, <span class="at">nrow =</span> <span class="dv">3</span>, <span class="at">ncol =</span> <span class="dv">3</span>),</span>
+<span id="cb8-520"><a href="#cb8-520" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dv_vs_pred</span>(xpdb)</span>
+<span id="cb8-521"><a href="#cb8-521" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-522"><a href="#cb8-522" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-523"><a href="#cb8-523" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(grid_plots[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>], <span class="at">ncol =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-524"><a href="#cb8-524" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>()</span>
+<span id="cb8-525"><a href="#cb8-525" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(grid_plots[<span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>], <span class="at">ncol =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-526"><a href="#cb8-526" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>()</span>
+<span id="cb8-527"><a href="#cb8-527" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-528"><a href="#cb8-528" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-529"><a href="#cb8-529" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-530"><a href="#cb8-530" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Diagnostic <span class="pp">|</span> What to Look For <span class="pp">|</span> Red Flags <span class="pp">|</span></span>
+<span id="cb8-531"><a href="#cb8-531" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb8-532"><a href="#cb8-532" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **CWRES vs TIME** <span class="pp">|</span> No trend, centered at 0 <span class="pp">|</span> U-shape, time trend <span class="pp">|</span></span>
+<span id="cb8-533"><a href="#cb8-533" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **CWRES vs PRED** <span class="pp">|</span> Random scatter <span class="pp">|</span> Funnel shape (heteroscedasticity) <span class="pp">|</span></span>
+<span id="cb8-534"><a href="#cb8-534" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **DV vs PRED** <span class="pp">|</span> Points along identity line <span class="pp">|</span> Systematic bias at extremes <span class="pp">|</span></span>
+<span id="cb8-535"><a href="#cb8-535" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **VPC** <span class="pp">|</span> Observed within simulation bands <span class="pp">|</span> &gt;10% outside 95% CI <span class="pp">|</span></span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
