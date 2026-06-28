@@ -105,11 +105,36 @@ main.content > p:first-of-type::first-letter {
 }
 
 /* ============================================
+   NAVBAR & SIDEBAR
+   ============================================ */
+
+.navbar {
+  background: linear-gradient(135deg, #0A1628 0%, #061020 100%) !important;
+}
+
+.navbar .nav-link,
+.navbar .navbar-brand {
+  color: rgba(255, 255, 255, 0.90) !important;
+}
+
+.navbar .nav-link:hover {
+  color: #00A8B0 !important;
+}
+
+.navbar .active {
+  color: #00A8B0 !important;
+}
+
+.sidebar nav[role="doc-toc"] {
+  border-left: 3px solid #00A8B0;
+}
+
+/* ============================================
    COVER & TITLE STYLING
    ============================================ */
 
 #title-block-header.quarto-title-block {
-  background: linear-gradient(135deg, #0B1B3D 0%, #0F2E52 55%, #00A896 100%);
+  background: linear-gradient(135deg, #0A1628 0%, #061020 55%, #00A8B0 100%);
   color: #fff;
   padding: 4rem 3rem;
   margin: -2rem -2rem 3rem -2rem;
@@ -124,8 +149,8 @@ main.content > p:first-of-type::first-letter {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 85% 20%, rgba(0, 229, 255, 0.22) 0%, transparent 45%),
-    radial-gradient(circle at 10% 90%, rgba(0, 168, 150, 0.18) 0%, transparent 40%);
+    radial-gradient(circle at 85% 20%, rgba(0, 168, 176, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 10% 90%, rgba(32, 208, 200, 0.20) 0%, transparent 40%);
   pointer-events: none;
 }
 
