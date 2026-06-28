@@ -926,6 +926,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
+<p>In the flip-flop case (coral), the terminal slope is shallower because it reflects <span class="math inline">k_a</span> (the slower absorption rate), not <span class="math inline">k_e</span> (the faster elimination rate). On a semi-log plot, both curves eventually become linear, but you cannot determine which rate is <span class="math inline">k_a</span> and which is <span class="math inline">k_e</span> from oral data alone — this is the fundamental identifiability problem that requires an IV reference dose to resolve.</p>
 <hr>
 </section>
 <section id="parameter-estimation-from-data" class="level2" data-number="6.8">
@@ -977,6 +978,7 @@ Residual standard error: 0.4846 on 7 degrees of freedom
 Algorithm "port", convergence message: relative convergence (4)</code></pre>
 </div>
 </div>
+<p>The <code>summary()</code> output reports the estimated parameters with standard errors and p-values. Compare the estimates against the true values used to generate the data (<span class="math inline">V = 12</span>, <span class="math inline">k_a = 0.8</span>, <span class="math inline">k_e = 0.25</span>): the fitted parameters should be close, and the residual standard error quantifies how well the model captures the data. The correlation matrix of parameter estimates helps diagnose identifiability — high correlations (&gt;0.95) between <span class="math inline">V</span> and <span class="math inline">k_a</span> are common in oral models and indicate that these parameters are difficult to estimate independently from oral data alone.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1002,6 +1004,7 @@ Algorithm "port", convergence message: relative convergence (4)</code></pre>
 </div>
 </div>
 </div>
+<p>The coral points (observed data) align closely with the teal fitted curve, confirming that a one-compartment model with first-order absorption adequately describes this dataset. The characteristic oral PK shape is visible: rising concentrations during absorption, a peak (<span class="math inline">C_{\max}</span>) at roughly <span class="math inline">t_{\max} = \ln(k_a/k_e)/(k_a - k_e)</span> hours, and exponential decline during elimination.</p>
 <hr>
 </section>
 <section id="exercises" class="level3 exercise-box" data-number="6.8.2">
@@ -1924,200 +1927,206 @@ Figure&nbsp;6.1: ODE (rxode2, solid teal) vs closed-form (pmxTools, dashed coral
 <span id="cb21-295"><a href="#cb21-295" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
 <span id="cb21-296"><a href="#cb21-296" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb21-297"><a href="#cb21-297" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-298"><a href="#cb21-298" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb21-298"><a href="#cb21-298" aria-hidden="true" tabindex="-1"></a>In the flip-flop case (coral), the terminal slope is shallower because it reflects $k_a$ (the slower absorption rate), not $k_e$ (the faster elimination rate). On a semi-log plot, both curves eventually become linear, but you cannot determine which rate is $k_a$ and which is $k_e$ from oral data alone — this is the fundamental identifiability problem that requires an IV reference dose to resolve.</span>
 <span id="cb21-299"><a href="#cb21-299" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-300"><a href="#cb21-300" aria-hidden="true" tabindex="-1"></a><span class="fu">## Parameter Estimation from Data</span></span>
+<span id="cb21-300"><a href="#cb21-300" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb21-301"><a href="#cb21-301" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-302"><a href="#cb21-302" aria-hidden="true" tabindex="-1"></a><span class="fu">### Nonlinear Least Squares</span></span>
+<span id="cb21-302"><a href="#cb21-302" aria-hidden="true" tabindex="-1"></a><span class="fu">## Parameter Estimation from Data</span></span>
 <span id="cb21-303"><a href="#cb21-303" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-304"><a href="#cb21-304" aria-hidden="true" tabindex="-1"></a>Fit a one-compartment oral model to data using <span class="in">`nls()`</span>:</span>
+<span id="cb21-304"><a href="#cb21-304" aria-hidden="true" tabindex="-1"></a><span class="fu">### Nonlinear Least Squares</span></span>
 <span id="cb21-305"><a href="#cb21-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-308"><a href="#cb21-308" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb21-309"><a href="#cb21-309" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate some noisy oral data</span></span>
-<span id="cb21-310"><a href="#cb21-310" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb21-311"><a href="#cb21-311" aria-hidden="true" tabindex="-1"></a>sample_times <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>)</span>
-<span id="cb21-312"><a href="#cb21-312" aria-hidden="true" tabindex="-1"></a>true_params <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">V =</span> <span class="dv">12</span>, <span class="at">ka =</span> <span class="fl">0.8</span>, <span class="at">ke =</span> <span class="fl">0.25</span>)</span>
-<span id="cb21-313"><a href="#cb21-313" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-314"><a href="#cb21-314" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate "observed" data with noise</span></span>
-<span id="cb21-315"><a href="#cb21-315" aria-hidden="true" tabindex="-1"></a>obs_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb21-316"><a href="#cb21-316" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> sample_times,</span>
-<span id="cb21-317"><a href="#cb21-317" aria-hidden="true" tabindex="-1"></a>  <span class="at">conc =</span> (<span class="dv">100</span> <span class="sc">*</span> true_params<span class="sc">$</span>ka) <span class="sc">/</span> (true_params<span class="sc">$</span>V <span class="sc">*</span> (true_params<span class="sc">$</span>ka <span class="sc">-</span> true_params<span class="sc">$</span>ke)) <span class="sc">*</span></span>
-<span id="cb21-318"><a href="#cb21-318" aria-hidden="true" tabindex="-1"></a>         (<span class="fu">exp</span>(<span class="sc">-</span>true_params<span class="sc">$</span>ke <span class="sc">*</span> sample_times) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>true_params<span class="sc">$</span>ka <span class="sc">*</span> sample_times))</span>
-<span id="cb21-319"><a href="#cb21-319" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb21-320"><a href="#cb21-320" aria-hidden="true" tabindex="-1"></a>obs_data<span class="sc">$</span>conc <span class="ot">&lt;-</span> obs_data<span class="sc">$</span>conc <span class="sc">*</span> <span class="fu">rlnorm</span>(<span class="fu">nrow</span>(obs_data), <span class="dv">0</span>, <span class="fl">0.15</span>)</span>
-<span id="cb21-321"><a href="#cb21-321" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-322"><a href="#cb21-322" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model using nls</span></span>
-<span id="cb21-323"><a href="#cb21-323" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="dv">100</span>  <span class="co"># administered dose (mg)</span></span>
-<span id="cb21-324"><a href="#cb21-324" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">nls</span>(conc <span class="sc">~</span> (D <span class="sc">*</span> ka) <span class="sc">/</span> (V <span class="sc">*</span> (ka <span class="sc">-</span> ke)) <span class="sc">*</span> (<span class="fu">exp</span>(<span class="sc">-</span>ke <span class="sc">*</span> time) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka <span class="sc">*</span> time)),</span>
-<span id="cb21-325"><a href="#cb21-325" aria-hidden="true" tabindex="-1"></a>           <span class="at">data =</span> obs_data,</span>
-<span id="cb21-326"><a href="#cb21-326" aria-hidden="true" tabindex="-1"></a>           <span class="at">start =</span> <span class="fu">list</span>(<span class="at">V =</span> <span class="dv">10</span>, <span class="at">ka =</span> <span class="fl">1.0</span>, <span class="at">ke =</span> <span class="fl">0.3</span>),</span>
-<span id="cb21-327"><a href="#cb21-327" aria-hidden="true" tabindex="-1"></a>           <span class="at">lower =</span> <span class="fu">c</span>(<span class="fl">0.01</span>, <span class="fl">0.01</span>, <span class="fl">0.01</span>),</span>
-<span id="cb21-328"><a href="#cb21-328" aria-hidden="true" tabindex="-1"></a>           <span class="at">algorithm =</span> <span class="st">"port"</span>)</span>
-<span id="cb21-329"><a href="#cb21-329" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-330"><a href="#cb21-330" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit)</span>
-<span id="cb21-331"><a href="#cb21-331" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb21-332"><a href="#cb21-332" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-335"><a href="#cb21-335" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb21-336"><a href="#cb21-336" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot observed vs fitted</span></span>
-<span id="cb21-337"><a href="#cb21-337" aria-hidden="true" tabindex="-1"></a>coefs <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit)</span>
-<span id="cb21-338"><a href="#cb21-338" aria-hidden="true" tabindex="-1"></a>pred_times <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">24</span>, <span class="at">by =</span> <span class="fl">0.1</span>)</span>
-<span id="cb21-339"><a href="#cb21-339" aria-hidden="true" tabindex="-1"></a>pred_conc <span class="ot">&lt;-</span> (<span class="dv">100</span> <span class="sc">*</span> coefs[<span class="st">"ka"</span>]) <span class="sc">/</span> (coefs[<span class="st">"V"</span>] <span class="sc">*</span> (coefs[<span class="st">"ka"</span>] <span class="sc">-</span> coefs[<span class="st">"ke"</span>])) <span class="sc">*</span></span>
-<span id="cb21-340"><a href="#cb21-340" aria-hidden="true" tabindex="-1"></a>             (<span class="fu">exp</span>(<span class="sc">-</span>coefs[<span class="st">"ke"</span>] <span class="sc">*</span> pred_times) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>coefs[<span class="st">"ka"</span>] <span class="sc">*</span> pred_times))</span>
-<span id="cb21-341"><a href="#cb21-341" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-342"><a href="#cb21-342" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(obs_data, <span class="fu">aes</span>(time, conc)) <span class="sc">+</span></span>
-<span id="cb21-343"><a href="#cb21-343" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="st">"#C44536"</span>) <span class="sc">+</span></span>
-<span id="cb21-344"><a href="#cb21-344" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> pred_times, <span class="at">conc =</span> pred_conc),</span>
-<span id="cb21-345"><a href="#cb21-345" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(time, conc), <span class="at">color =</span> <span class="st">"#0B6E6B"</span>, <span class="at">linewidth =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
-<span id="cb21-346"><a href="#cb21-346" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Fitted One-Compartment Oral Model"</span>,</span>
-<span id="cb21-347"><a href="#cb21-347" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>) <span class="sc">+</span></span>
-<span id="cb21-348"><a href="#cb21-348" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb21-349"><a href="#cb21-349" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb21-350"><a href="#cb21-350" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-351"><a href="#cb21-351" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb21-352"><a href="#cb21-352" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-353"><a href="#cb21-353" aria-hidden="true" tabindex="-1"></a>::: {.exercise-box}</span>
-<span id="cb21-354"><a href="#cb21-354" aria-hidden="true" tabindex="-1"></a><span class="fu">### Exercises</span></span>
-<span id="cb21-355"><a href="#cb21-355" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-356"><a href="#cb21-356" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Simulate an IV bolus with $D$ = 50 mg, $V$ = 8 L, $k_e$ = 0.4 1/h. What is $C_0$ and $t_{1/2}$?</span>
-<span id="cb21-357"><a href="#cb21-357" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>For IV infusion at 5 mg/h with $CL$ = 2 L/h, compute $C_{ss}$. How does doubling the infusion rate affect $C_{ss}$ and time to steady state?</span>
-<span id="cb21-358"><a href="#cb21-358" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Simulate oral dosing with $k_a$ = 0.6 and $k_e$ = 0.3. Then swap $k_a$ = 0.3 and $k_e$ = 0.6. Why are the profiles different even though the parameters are the same values?</span>
-<span id="cb21-359"><a href="#cb21-359" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Fit a one-compartment oral model to a dataset and compute $t_{max}$ from the fitted parameters.</span>
-<span id="cb21-360"><a href="#cb21-360" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb21-306"><a href="#cb21-306" aria-hidden="true" tabindex="-1"></a>Fit a one-compartment oral model to data using <span class="in">`nls()`</span>:</span>
+<span id="cb21-307"><a href="#cb21-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-310"><a href="#cb21-310" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-311"><a href="#cb21-311" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate some noisy oral data</span></span>
+<span id="cb21-312"><a href="#cb21-312" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb21-313"><a href="#cb21-313" aria-hidden="true" tabindex="-1"></a>sample_times <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>)</span>
+<span id="cb21-314"><a href="#cb21-314" aria-hidden="true" tabindex="-1"></a>true_params <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">V =</span> <span class="dv">12</span>, <span class="at">ka =</span> <span class="fl">0.8</span>, <span class="at">ke =</span> <span class="fl">0.25</span>)</span>
+<span id="cb21-315"><a href="#cb21-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-316"><a href="#cb21-316" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate "observed" data with noise</span></span>
+<span id="cb21-317"><a href="#cb21-317" aria-hidden="true" tabindex="-1"></a>obs_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb21-318"><a href="#cb21-318" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> sample_times,</span>
+<span id="cb21-319"><a href="#cb21-319" aria-hidden="true" tabindex="-1"></a>  <span class="at">conc =</span> (<span class="dv">100</span> <span class="sc">*</span> true_params<span class="sc">$</span>ka) <span class="sc">/</span> (true_params<span class="sc">$</span>V <span class="sc">*</span> (true_params<span class="sc">$</span>ka <span class="sc">-</span> true_params<span class="sc">$</span>ke)) <span class="sc">*</span></span>
+<span id="cb21-320"><a href="#cb21-320" aria-hidden="true" tabindex="-1"></a>         (<span class="fu">exp</span>(<span class="sc">-</span>true_params<span class="sc">$</span>ke <span class="sc">*</span> sample_times) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>true_params<span class="sc">$</span>ka <span class="sc">*</span> sample_times))</span>
+<span id="cb21-321"><a href="#cb21-321" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-322"><a href="#cb21-322" aria-hidden="true" tabindex="-1"></a>obs_data<span class="sc">$</span>conc <span class="ot">&lt;-</span> obs_data<span class="sc">$</span>conc <span class="sc">*</span> <span class="fu">rlnorm</span>(<span class="fu">nrow</span>(obs_data), <span class="dv">0</span>, <span class="fl">0.15</span>)</span>
+<span id="cb21-323"><a href="#cb21-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-324"><a href="#cb21-324" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model using nls</span></span>
+<span id="cb21-325"><a href="#cb21-325" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="dv">100</span>  <span class="co"># administered dose (mg)</span></span>
+<span id="cb21-326"><a href="#cb21-326" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">nls</span>(conc <span class="sc">~</span> (D <span class="sc">*</span> ka) <span class="sc">/</span> (V <span class="sc">*</span> (ka <span class="sc">-</span> ke)) <span class="sc">*</span> (<span class="fu">exp</span>(<span class="sc">-</span>ke <span class="sc">*</span> time) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka <span class="sc">*</span> time)),</span>
+<span id="cb21-327"><a href="#cb21-327" aria-hidden="true" tabindex="-1"></a>           <span class="at">data =</span> obs_data,</span>
+<span id="cb21-328"><a href="#cb21-328" aria-hidden="true" tabindex="-1"></a>           <span class="at">start =</span> <span class="fu">list</span>(<span class="at">V =</span> <span class="dv">10</span>, <span class="at">ka =</span> <span class="fl">1.0</span>, <span class="at">ke =</span> <span class="fl">0.3</span>),</span>
+<span id="cb21-329"><a href="#cb21-329" aria-hidden="true" tabindex="-1"></a>           <span class="at">lower =</span> <span class="fu">c</span>(<span class="fl">0.01</span>, <span class="fl">0.01</span>, <span class="fl">0.01</span>),</span>
+<span id="cb21-330"><a href="#cb21-330" aria-hidden="true" tabindex="-1"></a>           <span class="at">algorithm =</span> <span class="st">"port"</span>)</span>
+<span id="cb21-331"><a href="#cb21-331" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-332"><a href="#cb21-332" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit)</span>
+<span id="cb21-333"><a href="#cb21-333" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-334"><a href="#cb21-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-335"><a href="#cb21-335" aria-hidden="true" tabindex="-1"></a>The <span class="in">`summary()`</span> output reports the estimated parameters with standard errors and p-values. Compare the estimates against the true values used to generate the data ($V = 12$, $k_a = 0.8$, $k_e = 0.25$): the fitted parameters should be close, and the residual standard error quantifies how well the model captures the data. The correlation matrix of parameter estimates helps diagnose identifiability — high correlations (&gt;0.95) between $V$ and $k_a$ are common in oral models and indicate that these parameters are difficult to estimate independently from oral data alone.</span>
+<span id="cb21-336"><a href="#cb21-336" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-339"><a href="#cb21-339" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-340"><a href="#cb21-340" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot observed vs fitted</span></span>
+<span id="cb21-341"><a href="#cb21-341" aria-hidden="true" tabindex="-1"></a>coefs <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit)</span>
+<span id="cb21-342"><a href="#cb21-342" aria-hidden="true" tabindex="-1"></a>pred_times <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">24</span>, <span class="at">by =</span> <span class="fl">0.1</span>)</span>
+<span id="cb21-343"><a href="#cb21-343" aria-hidden="true" tabindex="-1"></a>pred_conc <span class="ot">&lt;-</span> (<span class="dv">100</span> <span class="sc">*</span> coefs[<span class="st">"ka"</span>]) <span class="sc">/</span> (coefs[<span class="st">"V"</span>] <span class="sc">*</span> (coefs[<span class="st">"ka"</span>] <span class="sc">-</span> coefs[<span class="st">"ke"</span>])) <span class="sc">*</span></span>
+<span id="cb21-344"><a href="#cb21-344" aria-hidden="true" tabindex="-1"></a>             (<span class="fu">exp</span>(<span class="sc">-</span>coefs[<span class="st">"ke"</span>] <span class="sc">*</span> pred_times) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>coefs[<span class="st">"ka"</span>] <span class="sc">*</span> pred_times))</span>
+<span id="cb21-345"><a href="#cb21-345" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-346"><a href="#cb21-346" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(obs_data, <span class="fu">aes</span>(time, conc)) <span class="sc">+</span></span>
+<span id="cb21-347"><a href="#cb21-347" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="st">"#C44536"</span>) <span class="sc">+</span></span>
+<span id="cb21-348"><a href="#cb21-348" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> pred_times, <span class="at">conc =</span> pred_conc),</span>
+<span id="cb21-349"><a href="#cb21-349" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(time, conc), <span class="at">color =</span> <span class="st">"#0B6E6B"</span>, <span class="at">linewidth =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb21-350"><a href="#cb21-350" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Fitted One-Compartment Oral Model"</span>,</span>
+<span id="cb21-351"><a href="#cb21-351" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>) <span class="sc">+</span></span>
+<span id="cb21-352"><a href="#cb21-352" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb21-353"><a href="#cb21-353" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-354"><a href="#cb21-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-355"><a href="#cb21-355" aria-hidden="true" tabindex="-1"></a>The coral points (observed data) align closely with the teal fitted curve, confirming that a one-compartment model with first-order absorption adequately describes this dataset. The characteristic oral PK shape is visible: rising concentrations during absorption, a peak ($C_{\max}$) at roughly $t_{\max} = \ln(k_a/k_e)/(k_a - k_e)$ hours, and exponential decline during elimination.</span>
+<span id="cb21-356"><a href="#cb21-356" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-357"><a href="#cb21-357" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb21-358"><a href="#cb21-358" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-359"><a href="#cb21-359" aria-hidden="true" tabindex="-1"></a>::: {.exercise-box}</span>
+<span id="cb21-360"><a href="#cb21-360" aria-hidden="true" tabindex="-1"></a><span class="fu">### Exercises</span></span>
 <span id="cb21-361"><a href="#cb21-361" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-362"><a href="#cb21-362" aria-hidden="true" tabindex="-1"></a><span class="fu">## Alternative: ODE-Based Simulation with deSolve</span></span>
-<span id="cb21-363"><a href="#cb21-363" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-364"><a href="#cb21-364" aria-hidden="true" tabindex="-1"></a>While we use <span class="in">`rxode2`</span> throughout this book, the same model can be implemented with the <span class="in">`deSolve`</span> package for readers who prefer it:</span>
-<span id="cb21-365"><a href="#cb21-365" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-368"><a href="#cb21-368" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb21-369"><a href="#cb21-369" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(deSolve)</span>
-<span id="cb21-370"><a href="#cb21-370" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-371"><a href="#cb21-371" aria-hidden="true" tabindex="-1"></a><span class="co"># Single-compartment ODE with optional constant infusion input</span></span>
-<span id="cb21-372"><a href="#cb21-372" aria-hidden="true" tabindex="-1"></a>pk_ode <span class="ot">&lt;-</span> <span class="cf">function</span>(time, state, parameters) {</span>
-<span id="cb21-373"><a href="#cb21-373" aria-hidden="true" tabindex="-1"></a>  C <span class="ot">&lt;-</span> state[<span class="dv">1</span>]</span>
-<span id="cb21-374"><a href="#cb21-374" aria-hidden="true" tabindex="-1"></a>  k_e <span class="ot">&lt;-</span> parameters[<span class="st">"k_e"</span>]</span>
-<span id="cb21-375"><a href="#cb21-375" aria-hidden="true" tabindex="-1"></a>  V <span class="ot">&lt;-</span> parameters[<span class="st">"V"</span>]</span>
-<span id="cb21-376"><a href="#cb21-376" aria-hidden="true" tabindex="-1"></a>  input_rate <span class="ot">&lt;-</span> parameters[<span class="st">"RateIn"</span>]</span>
-<span id="cb21-377"><a href="#cb21-377" aria-hidden="true" tabindex="-1"></a>  dCdt <span class="ot">&lt;-</span> <span class="sc">-</span>k_e <span class="sc">*</span> C <span class="sc">+</span> input_rate <span class="sc">/</span> V</span>
-<span id="cb21-378"><a href="#cb21-378" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="fu">c</span>(dCdt))</span>
-<span id="cb21-379"><a href="#cb21-379" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb21-380"><a href="#cb21-380" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-381"><a href="#cb21-381" aria-hidden="true" tabindex="-1"></a>simulate_pk <span class="ot">&lt;-</span> <span class="cf">function</span>(k_e, V, Dose, RateIn, t_max, dt, <span class="at">route =</span> <span class="st">"IV-bolus"</span>) {</span>
-<span id="cb21-382"><a href="#cb21-382" aria-hidden="true" tabindex="-1"></a>  C0 <span class="ot">&lt;-</span> <span class="cf">if</span> (route <span class="sc">==</span> <span class="st">"IV-bolus"</span>) Dose <span class="sc">/</span> V <span class="cf">else</span> <span class="cf">if</span> (route <span class="sc">==</span> <span class="st">"Infusion"</span>) <span class="dv">0</span> <span class="cf">else</span></span>
-<span id="cb21-383"><a href="#cb21-383" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"Unsupported route. Choose 'IV-bolus' or 'Infusion'."</span>)</span>
-<span id="cb21-384"><a href="#cb21-384" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ode</span>(<span class="at">y =</span> <span class="fu">c</span>(<span class="at">C =</span> C0), <span class="at">times =</span> <span class="fu">seq</span>(<span class="dv">0</span>, t_max, <span class="at">by =</span> dt), <span class="at">func =</span> pk_ode,</span>
-<span id="cb21-385"><a href="#cb21-385" aria-hidden="true" tabindex="-1"></a>      <span class="at">parms =</span> <span class="fu">c</span>(<span class="at">k_e =</span> k_e, <span class="at">V =</span> V, <span class="at">RateIn =</span> RateIn)) <span class="sc">|&gt;</span> <span class="fu">as.data.frame</span>()</span>
-<span id="cb21-386"><a href="#cb21-386" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb21-387"><a href="#cb21-387" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-388"><a href="#cb21-388" aria-hidden="true" tabindex="-1"></a>calc_half_life <span class="ot">&lt;-</span> <span class="cf">function</span>(k_e) <span class="fu">log</span>(<span class="dv">2</span>) <span class="sc">/</span> k_e</span>
-<span id="cb21-389"><a href="#cb21-389" aria-hidden="true" tabindex="-1"></a>calc_clearance <span class="ot">&lt;-</span> <span class="cf">function</span>(k_e, V) k_e <span class="sc">*</span> V</span>
-<span id="cb21-390"><a href="#cb21-390" aria-hidden="true" tabindex="-1"></a>calc_auc       <span class="ot">&lt;-</span> <span class="cf">function</span>(Dose, CL) Dose <span class="sc">/</span> CL</span>
-<span id="cb21-391"><a href="#cb21-391" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb21-392"><a href="#cb21-392" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-393"><a href="#cb21-393" aria-hidden="true" tabindex="-1"></a>This demonstrates route-aware initial conditions ($C_0 = Dose/V$ for bolus vs $0$ for infusion) feeding a single shared ODE.</span>
-<span id="cb21-394"><a href="#cb21-394" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-395"><a href="#cb21-395" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb21-396"><a href="#cb21-396" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-397"><a href="#cb21-397" aria-hidden="true" tabindex="-1"></a>::: {.mistakes-box}</span>
-<span id="cb21-398"><a href="#cb21-398" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Mistakes</span></span>
-<span id="cb21-399"><a href="#cb21-399" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-400"><a href="#cb21-400" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Assuming $k_a &gt; k_e$ always** — always verify with IV data</span>
-<span id="cb21-401"><a href="#cb21-401" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Not checking for flip-flop**: oral-only data cannot distinguish $k_a$ from $k_e$ without IV reference</span>
-<span id="cb21-402"><a href="#cb21-402" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Using linear scale for terminal slope** — use semi-log</span>
-<span id="cb21-403"><a href="#cb21-403" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ignoring the absorption lag time** — some oral formulations have a delay before absorption begins</span>
-<span id="cb21-404"><a href="#cb21-404" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Fitting too many parameters with too few data points**</span>
-<span id="cb21-405"><a href="#cb21-405" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ignoring tissue/protein binding when V is unexpectedly large or small**: the one-compartment model assumes no significant binding alters free drug concentration. Large discrepancies in V often signal binding effects better handled in Ch 11.</span>
-<span id="cb21-406"><a href="#cb21-406" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Fitting $k_e$ and $V$ via `nls` with poor initial guesses**: nonlinear least squares can fail to converge or find local minima. Use <span class="in">`nls.control(maxiter = 500)`</span> and reasonable starting values. Always verify against the analytical formulas.</span>
-<span id="cb21-407"><a href="#cb21-407" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb21-408"><a href="#cb21-408" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-409"><a href="#cb21-409" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
-<span id="cb21-410"><a href="#cb21-410" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Takeaway</span></span>
-<span id="cb21-411"><a href="#cb21-411" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-412"><a href="#cb21-412" aria-hidden="true" tabindex="-1"></a>The one-compartment model is the foundation of all PK modeling. Key principles:</span>
-<span id="cb21-413"><a href="#cb21-413" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-414"><a href="#cb21-414" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**One ODE, many routes**: $dC/dt = -k_e C + D(t)/V$ — the master equation; $D(t) = 0$ for bolus, constant for infusion, involves $k_a$ for oral.</span>
-<span id="cb21-415"><a href="#cb21-415" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**CL-V-ke are interchangeable**: $CL = k_e \cdot V$, $t_{1/2} = \ln(2)/k_e$ — any two give the third.</span>
-<span id="cb21-416"><a href="#cb21-416" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**AUC = Dose/CL for IV** is a fast independent check on simulation correctness.</span>
-<span id="cb21-417"><a href="#cb21-417" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Always fit one-compartment first** as a baseline before adding compartments.</span>
-<span id="cb21-418"><a href="#cb21-418" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Check for flip-flop** when analyzing oral data without IV reference.</span>
-<span id="cb21-419"><a href="#cb21-419" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb21-420"><a href="#cb21-420" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-421"><a href="#cb21-421" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb21-422"><a href="#cb21-422" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-423"><a href="#cb21-423" aria-hidden="true" tabindex="-1"></a><span class="fu">## Connections to Other Chapters</span></span>
-<span id="cb21-424"><a href="#cb21-424" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-425"><a href="#cb21-425" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 1**: Reuses CL, V, $t_{1/2}$, F definitions</span>
-<span id="cb21-426"><a href="#cb21-426" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 5**: NCA provides model-independent AUC and $k_e$ estimates to validate compartmental fits</span>
-<span id="cb21-427"><a href="#cb21-427" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 7**: Extends to multi-compartment systems when one-compartment residuals show biphasic structure</span>
-<span id="cb21-428"><a href="#cb21-428" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 8**: Oral absorption solution here is generalized with zero-order and more complex absorption models</span>
-<span id="cb21-429"><a href="#cb21-429" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 13**: <span class="in">`nls()`</span>-based estimation here is a precursor to formal parameter-estimation techniques (OLS, WLS, MLE)</span>
+<span id="cb21-362"><a href="#cb21-362" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Simulate an IV bolus with $D$ = 50 mg, $V$ = 8 L, $k_e$ = 0.4 1/h. What is $C_0$ and $t_{1/2}$?</span>
+<span id="cb21-363"><a href="#cb21-363" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>For IV infusion at 5 mg/h with $CL$ = 2 L/h, compute $C_{ss}$. How does doubling the infusion rate affect $C_{ss}$ and time to steady state?</span>
+<span id="cb21-364"><a href="#cb21-364" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Simulate oral dosing with $k_a$ = 0.6 and $k_e$ = 0.3. Then swap $k_a$ = 0.3 and $k_e$ = 0.6. Why are the profiles different even though the parameters are the same values?</span>
+<span id="cb21-365"><a href="#cb21-365" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Fit a one-compartment oral model to a dataset and compute $t_{max}$ from the fitted parameters.</span>
+<span id="cb21-366"><a href="#cb21-366" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb21-367"><a href="#cb21-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-368"><a href="#cb21-368" aria-hidden="true" tabindex="-1"></a><span class="fu">## Alternative: ODE-Based Simulation with deSolve</span></span>
+<span id="cb21-369"><a href="#cb21-369" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-370"><a href="#cb21-370" aria-hidden="true" tabindex="-1"></a>While we use <span class="in">`rxode2`</span> throughout this book, the same model can be implemented with the <span class="in">`deSolve`</span> package for readers who prefer it:</span>
+<span id="cb21-371"><a href="#cb21-371" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-374"><a href="#cb21-374" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-375"><a href="#cb21-375" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(deSolve)</span>
+<span id="cb21-376"><a href="#cb21-376" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-377"><a href="#cb21-377" aria-hidden="true" tabindex="-1"></a><span class="co"># Single-compartment ODE with optional constant infusion input</span></span>
+<span id="cb21-378"><a href="#cb21-378" aria-hidden="true" tabindex="-1"></a>pk_ode <span class="ot">&lt;-</span> <span class="cf">function</span>(time, state, parameters) {</span>
+<span id="cb21-379"><a href="#cb21-379" aria-hidden="true" tabindex="-1"></a>  C <span class="ot">&lt;-</span> state[<span class="dv">1</span>]</span>
+<span id="cb21-380"><a href="#cb21-380" aria-hidden="true" tabindex="-1"></a>  k_e <span class="ot">&lt;-</span> parameters[<span class="st">"k_e"</span>]</span>
+<span id="cb21-381"><a href="#cb21-381" aria-hidden="true" tabindex="-1"></a>  V <span class="ot">&lt;-</span> parameters[<span class="st">"V"</span>]</span>
+<span id="cb21-382"><a href="#cb21-382" aria-hidden="true" tabindex="-1"></a>  input_rate <span class="ot">&lt;-</span> parameters[<span class="st">"RateIn"</span>]</span>
+<span id="cb21-383"><a href="#cb21-383" aria-hidden="true" tabindex="-1"></a>  dCdt <span class="ot">&lt;-</span> <span class="sc">-</span>k_e <span class="sc">*</span> C <span class="sc">+</span> input_rate <span class="sc">/</span> V</span>
+<span id="cb21-384"><a href="#cb21-384" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="fu">c</span>(dCdt))</span>
+<span id="cb21-385"><a href="#cb21-385" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-386"><a href="#cb21-386" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-387"><a href="#cb21-387" aria-hidden="true" tabindex="-1"></a>simulate_pk <span class="ot">&lt;-</span> <span class="cf">function</span>(k_e, V, Dose, RateIn, t_max, dt, <span class="at">route =</span> <span class="st">"IV-bolus"</span>) {</span>
+<span id="cb21-388"><a href="#cb21-388" aria-hidden="true" tabindex="-1"></a>  C0 <span class="ot">&lt;-</span> <span class="cf">if</span> (route <span class="sc">==</span> <span class="st">"IV-bolus"</span>) Dose <span class="sc">/</span> V <span class="cf">else</span> <span class="cf">if</span> (route <span class="sc">==</span> <span class="st">"Infusion"</span>) <span class="dv">0</span> <span class="cf">else</span></span>
+<span id="cb21-389"><a href="#cb21-389" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"Unsupported route. Choose 'IV-bolus' or 'Infusion'."</span>)</span>
+<span id="cb21-390"><a href="#cb21-390" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ode</span>(<span class="at">y =</span> <span class="fu">c</span>(<span class="at">C =</span> C0), <span class="at">times =</span> <span class="fu">seq</span>(<span class="dv">0</span>, t_max, <span class="at">by =</span> dt), <span class="at">func =</span> pk_ode,</span>
+<span id="cb21-391"><a href="#cb21-391" aria-hidden="true" tabindex="-1"></a>      <span class="at">parms =</span> <span class="fu">c</span>(<span class="at">k_e =</span> k_e, <span class="at">V =</span> V, <span class="at">RateIn =</span> RateIn)) <span class="sc">|&gt;</span> <span class="fu">as.data.frame</span>()</span>
+<span id="cb21-392"><a href="#cb21-392" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-393"><a href="#cb21-393" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-394"><a href="#cb21-394" aria-hidden="true" tabindex="-1"></a>calc_half_life <span class="ot">&lt;-</span> <span class="cf">function</span>(k_e) <span class="fu">log</span>(<span class="dv">2</span>) <span class="sc">/</span> k_e</span>
+<span id="cb21-395"><a href="#cb21-395" aria-hidden="true" tabindex="-1"></a>calc_clearance <span class="ot">&lt;-</span> <span class="cf">function</span>(k_e, V) k_e <span class="sc">*</span> V</span>
+<span id="cb21-396"><a href="#cb21-396" aria-hidden="true" tabindex="-1"></a>calc_auc       <span class="ot">&lt;-</span> <span class="cf">function</span>(Dose, CL) Dose <span class="sc">/</span> CL</span>
+<span id="cb21-397"><a href="#cb21-397" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-398"><a href="#cb21-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-399"><a href="#cb21-399" aria-hidden="true" tabindex="-1"></a>This demonstrates route-aware initial conditions ($C_0 = Dose/V$ for bolus vs $0$ for infusion) feeding a single shared ODE.</span>
+<span id="cb21-400"><a href="#cb21-400" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-401"><a href="#cb21-401" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb21-402"><a href="#cb21-402" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-403"><a href="#cb21-403" aria-hidden="true" tabindex="-1"></a>::: {.mistakes-box}</span>
+<span id="cb21-404"><a href="#cb21-404" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Mistakes</span></span>
+<span id="cb21-405"><a href="#cb21-405" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-406"><a href="#cb21-406" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Assuming $k_a &gt; k_e$ always** — always verify with IV data</span>
+<span id="cb21-407"><a href="#cb21-407" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Not checking for flip-flop**: oral-only data cannot distinguish $k_a$ from $k_e$ without IV reference</span>
+<span id="cb21-408"><a href="#cb21-408" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Using linear scale for terminal slope** — use semi-log</span>
+<span id="cb21-409"><a href="#cb21-409" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ignoring the absorption lag time** — some oral formulations have a delay before absorption begins</span>
+<span id="cb21-410"><a href="#cb21-410" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Fitting too many parameters with too few data points**</span>
+<span id="cb21-411"><a href="#cb21-411" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ignoring tissue/protein binding when V is unexpectedly large or small**: the one-compartment model assumes no significant binding alters free drug concentration. Large discrepancies in V often signal binding effects better handled in Ch 11.</span>
+<span id="cb21-412"><a href="#cb21-412" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Fitting $k_e$ and $V$ via `nls` with poor initial guesses**: nonlinear least squares can fail to converge or find local minima. Use <span class="in">`nls.control(maxiter = 500)`</span> and reasonable starting values. Always verify against the analytical formulas.</span>
+<span id="cb21-413"><a href="#cb21-413" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb21-414"><a href="#cb21-414" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-415"><a href="#cb21-415" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
+<span id="cb21-416"><a href="#cb21-416" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Takeaway</span></span>
+<span id="cb21-417"><a href="#cb21-417" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-418"><a href="#cb21-418" aria-hidden="true" tabindex="-1"></a>The one-compartment model is the foundation of all PK modeling. Key principles:</span>
+<span id="cb21-419"><a href="#cb21-419" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-420"><a href="#cb21-420" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**One ODE, many routes**: $dC/dt = -k_e C + D(t)/V$ — the master equation; $D(t) = 0$ for bolus, constant for infusion, involves $k_a$ for oral.</span>
+<span id="cb21-421"><a href="#cb21-421" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**CL-V-ke are interchangeable**: $CL = k_e \cdot V$, $t_{1/2} = \ln(2)/k_e$ — any two give the third.</span>
+<span id="cb21-422"><a href="#cb21-422" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**AUC = Dose/CL for IV** is a fast independent check on simulation correctness.</span>
+<span id="cb21-423"><a href="#cb21-423" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Always fit one-compartment first** as a baseline before adding compartments.</span>
+<span id="cb21-424"><a href="#cb21-424" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Check for flip-flop** when analyzing oral data without IV reference.</span>
+<span id="cb21-425"><a href="#cb21-425" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb21-426"><a href="#cb21-426" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-427"><a href="#cb21-427" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb21-428"><a href="#cb21-428" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-429"><a href="#cb21-429" aria-hidden="true" tabindex="-1"></a><span class="fu">## Connections to Other Chapters</span></span>
 <span id="cb21-430"><a href="#cb21-430" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-431"><a href="#cb21-431" aria-hidden="true" tabindex="-1"></a><span class="fu">## Closed-Form PK Solutions: pmxTools &amp; PKconverter</span></span>
-<span id="cb21-432"><a href="#cb21-432" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-433"><a href="#cb21-433" aria-hidden="true" tabindex="-1"></a>For linear compartmental models, you don't always need an ODE solver. Closed-form analytical solutions compute concentrations directly from micro-constants — faster and without compilation overhead.</span>
-<span id="cb21-434"><a href="#cb21-434" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-435"><a href="#cb21-435" aria-hidden="true" tabindex="-1"></a><span class="fu">### `pmxTools`: Direct Concentration Calculation</span></span>
+<span id="cb21-431"><a href="#cb21-431" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 1**: Reuses CL, V, $t_{1/2}$, F definitions</span>
+<span id="cb21-432"><a href="#cb21-432" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 5**: NCA provides model-independent AUC and $k_e$ estimates to validate compartmental fits</span>
+<span id="cb21-433"><a href="#cb21-433" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 7**: Extends to multi-compartment systems when one-compartment residuals show biphasic structure</span>
+<span id="cb21-434"><a href="#cb21-434" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 8**: Oral absorption solution here is generalized with zero-order and more complex absorption models</span>
+<span id="cb21-435"><a href="#cb21-435" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ch 13**: <span class="in">`nls()`</span>-based estimation here is a precursor to formal parameter-estimation techniques (OLS, WLS, MLE)</span>
 <span id="cb21-436"><a href="#cb21-436" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-437"><a href="#cb21-437" aria-hidden="true" tabindex="-1"></a><span class="in">`pmxTools`</span> provides closed-form PK functions for 1-, 2-, and 3-compartment models with IV bolus, infusion, oral absorption, and steady state. Let's verify that the analytical solution matches our ODE simulation:</span>
+<span id="cb21-437"><a href="#cb21-437" aria-hidden="true" tabindex="-1"></a><span class="fu">## Closed-Form PK Solutions: pmxTools &amp; PKconverter</span></span>
 <span id="cb21-438"><a href="#cb21-438" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-441"><a href="#cb21-441" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb21-442"><a href="#cb21-442" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-pmxtools-closedform</span></span>
-<span id="cb21-443"><a href="#cb21-443" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "ODE (rxode2, solid teal) vs closed-form (pmxTools, dashed coral) concentration predictions for a 1-compartment IV bolus."</span></span>
-<span id="cb21-444"><a href="#cb21-444" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 7</span></span>
-<span id="cb21-445"><a href="#cb21-445" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4.5</span></span>
-<span id="cb21-446"><a href="#cb21-446" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-447"><a href="#cb21-447" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pmxTools)</span>
-<span id="cb21-448"><a href="#cb21-448" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb21-449"><a href="#cb21-449" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
-<span id="cb21-450"><a href="#cb21-450" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-451"><a href="#cb21-451" aria-hidden="true" tabindex="-1"></a>params_1cmt <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">CL =</span> <span class="dv">5</span>, <span class="at">V =</span> <span class="dv">50</span>)</span>
-<span id="cb21-452"><a href="#cb21-452" aria-hidden="true" tabindex="-1"></a>times <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">48</span>, <span class="at">by =</span> <span class="fl">0.25</span>)</span>
-<span id="cb21-453"><a href="#cb21-453" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-454"><a href="#cb21-454" aria-hidden="true" tabindex="-1"></a>conc_closed <span class="ot">&lt;-</span> <span class="fu">calc_sd_1cmt_linear_bolus</span>(times, <span class="at">dose =</span> <span class="dv">500</span>, <span class="at">CL =</span> <span class="dv">5</span>, <span class="at">V =</span> <span class="dv">50</span>)</span>
-<span id="cb21-455"><a href="#cb21-455" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-456"><a href="#cb21-456" aria-hidden="true" tabindex="-1"></a>ode_1cmt <span class="ot">&lt;-</span> <span class="fu">rxode2</span>({</span>
-<span id="cb21-457"><a href="#cb21-457" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A1) <span class="ot">&lt;-</span> <span class="sc">-</span> (CL<span class="sc">/</span>V) <span class="sc">*</span> A1</span>
-<span id="cb21-458"><a href="#cb21-458" aria-hidden="true" tabindex="-1"></a>  Cp <span class="ot">&lt;-</span> A1 <span class="sc">/</span> V</span>
-<span id="cb21-459"><a href="#cb21-459" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb21-460"><a href="#cb21-460" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-461"><a href="#cb21-461" aria-hidden="true" tabindex="-1"></a>ode_sim <span class="ot">&lt;-</span> ode_1cmt <span class="sc">|&gt;</span></span>
-<span id="cb21-462"><a href="#cb21-462" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rxSolve</span>(<span class="at">params =</span> params_1cmt,</span>
-<span id="cb21-463"><a href="#cb21-463" aria-hidden="true" tabindex="-1"></a>          <span class="at">events =</span> <span class="fu">et</span>(<span class="at">time =</span> <span class="dv">0</span>, <span class="at">amt =</span> <span class="dv">500</span>) <span class="sc">|&gt;</span> <span class="fu">et</span>(times)) <span class="sc">|&gt;</span></span>
-<span id="cb21-464"><a href="#cb21-464" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>()</span>
-<span id="cb21-465"><a href="#cb21-465" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-466"><a href="#cb21-466" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">time =</span> times, <span class="at">ODE =</span> ode_sim<span class="sc">$</span>Cp, <span class="at">ClosedForm =</span> conc_closed) <span class="sc">|&gt;</span></span>
-<span id="cb21-467"><a href="#cb21-467" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>time, <span class="at">names_to =</span> <span class="st">"method"</span>, <span class="at">values_to =</span> <span class="st">"conc"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb21-468"><a href="#cb21-468" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> conc, <span class="at">color =</span> method, <span class="at">linetype =</span> method)) <span class="sc">+</span></span>
-<span id="cb21-469"><a href="#cb21-469" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.0</span>) <span class="sc">+</span></span>
-<span id="cb21-470"><a href="#cb21-470" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="at">ODE =</span> <span class="st">"#00A8B0"</span>, <span class="at">ClosedForm =</span> <span class="st">"#E0533D"</span>)) <span class="sc">+</span></span>
-<span id="cb21-471"><a href="#cb21-471" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
-<span id="cb21-472"><a href="#cb21-472" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"ODE vs Closed-Form: Identical Results"</span>,</span>
-<span id="cb21-473"><a href="#cb21-473" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"For linear PK models, analytical solutions are exact"</span>,</span>
-<span id="cb21-474"><a href="#cb21-474" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (h)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>) <span class="sc">+</span></span>
-<span id="cb21-475"><a href="#cb21-475" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span>
-<span id="cb21-476"><a href="#cb21-476" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb21-477"><a href="#cb21-477" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-478"><a href="#cb21-478" aria-hidden="true" tabindex="-1"></a><span class="fu">### Micro-Macro Parameter Translation</span></span>
-<span id="cb21-479"><a href="#cb21-479" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-480"><a href="#cb21-480" aria-hidden="true" tabindex="-1"></a>PK parameters come in two flavors. Micro-constants ($k_{e}$, $k_{10}$, $k_{12}$, $k_{21}$) describe rates between compartments. Macro-constants (CL, V, Q, Vp) are more clinically intuitive. The conversion is straightforward:</span>
-<span id="cb21-481"><a href="#cb21-481" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-484"><a href="#cb21-484" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb21-485"><a href="#cb21-485" aria-hidden="true" tabindex="-1"></a><span class="co"># 1-compartment: macro → micro</span></span>
-<span id="cb21-486"><a href="#cb21-486" aria-hidden="true" tabindex="-1"></a><span class="co"># CL = ke * V   →   ke = CL / V</span></span>
-<span id="cb21-487"><a href="#cb21-487" aria-hidden="true" tabindex="-1"></a>CL <span class="ot">&lt;-</span> <span class="dv">5</span>; V <span class="ot">&lt;-</span> <span class="dv">50</span></span>
-<span id="cb21-488"><a href="#cb21-488" aria-hidden="true" tabindex="-1"></a>ke <span class="ot">&lt;-</span> CL <span class="sc">/</span> V</span>
-<span id="cb21-489"><a href="#cb21-489" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"ke = CL / V ="</span>, ke, <span class="st">"1/h</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb21-490"><a href="#cb21-490" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-491"><a href="#cb21-491" aria-hidden="true" tabindex="-1"></a><span class="co"># 1-compartment: micro → macro</span></span>
-<span id="cb21-492"><a href="#cb21-492" aria-hidden="true" tabindex="-1"></a><span class="co"># V = Dose / C0,  CL = ke * V</span></span>
-<span id="cb21-493"><a href="#cb21-493" aria-hidden="true" tabindex="-1"></a>C0 <span class="ot">&lt;-</span> <span class="dv">10</span>; ke <span class="ot">&lt;-</span> <span class="fl">0.1</span></span>
-<span id="cb21-494"><a href="#cb21-494" aria-hidden="true" tabindex="-1"></a>V  <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">/</span> C0</span>
-<span id="cb21-495"><a href="#cb21-495" aria-hidden="true" tabindex="-1"></a>CL <span class="ot">&lt;-</span> ke <span class="sc">*</span> V</span>
-<span id="cb21-496"><a href="#cb21-496" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"V ="</span>, V, <span class="st">"L, CL ="</span>, CL, <span class="st">"L/h</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb21-497"><a href="#cb21-497" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb21-498"><a href="#cb21-498" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-499"><a href="#cb21-499" aria-hidden="true" tabindex="-1"></a>For 2-compartment models, the <span class="in">`PKconverter`</span> package automates these translations using <span class="in">`TwoComp_Volume_Clearance()`</span> and <span class="in">`TwoComp_Volume_RateConstant()`</span>.</span>
-<span id="cb21-500"><a href="#cb21-500" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-501"><a href="#cb21-501" aria-hidden="true" tabindex="-1"></a>This is especially useful when reading literature — papers often report one form or the other.</span>
+<span id="cb21-439"><a href="#cb21-439" aria-hidden="true" tabindex="-1"></a>For linear compartmental models, you don't always need an ODE solver. Closed-form analytical solutions compute concentrations directly from micro-constants — faster and without compilation overhead.</span>
+<span id="cb21-440"><a href="#cb21-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-441"><a href="#cb21-441" aria-hidden="true" tabindex="-1"></a><span class="fu">### `pmxTools`: Direct Concentration Calculation</span></span>
+<span id="cb21-442"><a href="#cb21-442" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-443"><a href="#cb21-443" aria-hidden="true" tabindex="-1"></a><span class="in">`pmxTools`</span> provides closed-form PK functions for 1-, 2-, and 3-compartment models with IV bolus, infusion, oral absorption, and steady state. Let's verify that the analytical solution matches our ODE simulation:</span>
+<span id="cb21-444"><a href="#cb21-444" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-447"><a href="#cb21-447" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-448"><a href="#cb21-448" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-pmxtools-closedform</span></span>
+<span id="cb21-449"><a href="#cb21-449" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "ODE (rxode2, solid teal) vs closed-form (pmxTools, dashed coral) concentration predictions for a 1-compartment IV bolus."</span></span>
+<span id="cb21-450"><a href="#cb21-450" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 7</span></span>
+<span id="cb21-451"><a href="#cb21-451" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4.5</span></span>
+<span id="cb21-452"><a href="#cb21-452" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-453"><a href="#cb21-453" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pmxTools)</span>
+<span id="cb21-454"><a href="#cb21-454" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb21-455"><a href="#cb21-455" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb21-456"><a href="#cb21-456" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-457"><a href="#cb21-457" aria-hidden="true" tabindex="-1"></a>params_1cmt <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">CL =</span> <span class="dv">5</span>, <span class="at">V =</span> <span class="dv">50</span>)</span>
+<span id="cb21-458"><a href="#cb21-458" aria-hidden="true" tabindex="-1"></a>times <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">48</span>, <span class="at">by =</span> <span class="fl">0.25</span>)</span>
+<span id="cb21-459"><a href="#cb21-459" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-460"><a href="#cb21-460" aria-hidden="true" tabindex="-1"></a>conc_closed <span class="ot">&lt;-</span> <span class="fu">calc_sd_1cmt_linear_bolus</span>(times, <span class="at">dose =</span> <span class="dv">500</span>, <span class="at">CL =</span> <span class="dv">5</span>, <span class="at">V =</span> <span class="dv">50</span>)</span>
+<span id="cb21-461"><a href="#cb21-461" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-462"><a href="#cb21-462" aria-hidden="true" tabindex="-1"></a>ode_1cmt <span class="ot">&lt;-</span> <span class="fu">rxode2</span>({</span>
+<span id="cb21-463"><a href="#cb21-463" aria-hidden="true" tabindex="-1"></a>  d<span class="sc">/</span><span class="fu">dt</span>(A1) <span class="ot">&lt;-</span> <span class="sc">-</span> (CL<span class="sc">/</span>V) <span class="sc">*</span> A1</span>
+<span id="cb21-464"><a href="#cb21-464" aria-hidden="true" tabindex="-1"></a>  Cp <span class="ot">&lt;-</span> A1 <span class="sc">/</span> V</span>
+<span id="cb21-465"><a href="#cb21-465" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb21-466"><a href="#cb21-466" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-467"><a href="#cb21-467" aria-hidden="true" tabindex="-1"></a>ode_sim <span class="ot">&lt;-</span> ode_1cmt <span class="sc">|&gt;</span></span>
+<span id="cb21-468"><a href="#cb21-468" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rxSolve</span>(<span class="at">params =</span> params_1cmt,</span>
+<span id="cb21-469"><a href="#cb21-469" aria-hidden="true" tabindex="-1"></a>          <span class="at">events =</span> <span class="fu">et</span>(<span class="at">time =</span> <span class="dv">0</span>, <span class="at">amt =</span> <span class="dv">500</span>) <span class="sc">|&gt;</span> <span class="fu">et</span>(times)) <span class="sc">|&gt;</span></span>
+<span id="cb21-470"><a href="#cb21-470" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb21-471"><a href="#cb21-471" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-472"><a href="#cb21-472" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">time =</span> times, <span class="at">ODE =</span> ode_sim<span class="sc">$</span>Cp, <span class="at">ClosedForm =</span> conc_closed) <span class="sc">|&gt;</span></span>
+<span id="cb21-473"><a href="#cb21-473" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>time, <span class="at">names_to =</span> <span class="st">"method"</span>, <span class="at">values_to =</span> <span class="st">"conc"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-474"><a href="#cb21-474" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> conc, <span class="at">color =</span> method, <span class="at">linetype =</span> method)) <span class="sc">+</span></span>
+<span id="cb21-475"><a href="#cb21-475" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.0</span>) <span class="sc">+</span></span>
+<span id="cb21-476"><a href="#cb21-476" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="at">ODE =</span> <span class="st">"#00A8B0"</span>, <span class="at">ClosedForm =</span> <span class="st">"#E0533D"</span>)) <span class="sc">+</span></span>
+<span id="cb21-477"><a href="#cb21-477" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb21-478"><a href="#cb21-478" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"ODE vs Closed-Form: Identical Results"</span>,</span>
+<span id="cb21-479"><a href="#cb21-479" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"For linear PK models, analytical solutions are exact"</span>,</span>
+<span id="cb21-480"><a href="#cb21-480" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (h)"</span>, <span class="at">y =</span> <span class="st">"Concentration (mg/L)"</span>) <span class="sc">+</span></span>
+<span id="cb21-481"><a href="#cb21-481" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>)</span>
+<span id="cb21-482"><a href="#cb21-482" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-483"><a href="#cb21-483" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-484"><a href="#cb21-484" aria-hidden="true" tabindex="-1"></a><span class="fu">### Micro-Macro Parameter Translation</span></span>
+<span id="cb21-485"><a href="#cb21-485" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-486"><a href="#cb21-486" aria-hidden="true" tabindex="-1"></a>PK parameters come in two flavors. Micro-constants ($k_{e}$, $k_{10}$, $k_{12}$, $k_{21}$) describe rates between compartments. Macro-constants (CL, V, Q, Vp) are more clinically intuitive. The conversion is straightforward:</span>
+<span id="cb21-487"><a href="#cb21-487" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-490"><a href="#cb21-490" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-491"><a href="#cb21-491" aria-hidden="true" tabindex="-1"></a><span class="co"># 1-compartment: macro → micro</span></span>
+<span id="cb21-492"><a href="#cb21-492" aria-hidden="true" tabindex="-1"></a><span class="co"># CL = ke * V   →   ke = CL / V</span></span>
+<span id="cb21-493"><a href="#cb21-493" aria-hidden="true" tabindex="-1"></a>CL <span class="ot">&lt;-</span> <span class="dv">5</span>; V <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb21-494"><a href="#cb21-494" aria-hidden="true" tabindex="-1"></a>ke <span class="ot">&lt;-</span> CL <span class="sc">/</span> V</span>
+<span id="cb21-495"><a href="#cb21-495" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"ke = CL / V ="</span>, ke, <span class="st">"1/h</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb21-496"><a href="#cb21-496" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-497"><a href="#cb21-497" aria-hidden="true" tabindex="-1"></a><span class="co"># 1-compartment: micro → macro</span></span>
+<span id="cb21-498"><a href="#cb21-498" aria-hidden="true" tabindex="-1"></a><span class="co"># V = Dose / C0,  CL = ke * V</span></span>
+<span id="cb21-499"><a href="#cb21-499" aria-hidden="true" tabindex="-1"></a>C0 <span class="ot">&lt;-</span> <span class="dv">10</span>; ke <span class="ot">&lt;-</span> <span class="fl">0.1</span></span>
+<span id="cb21-500"><a href="#cb21-500" aria-hidden="true" tabindex="-1"></a>V  <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">/</span> C0</span>
+<span id="cb21-501"><a href="#cb21-501" aria-hidden="true" tabindex="-1"></a>CL <span class="ot">&lt;-</span> ke <span class="sc">*</span> V</span>
+<span id="cb21-502"><a href="#cb21-502" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"V ="</span>, V, <span class="st">"L, CL ="</span>, CL, <span class="st">"L/h</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb21-503"><a href="#cb21-503" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-504"><a href="#cb21-504" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-505"><a href="#cb21-505" aria-hidden="true" tabindex="-1"></a>For 2-compartment models, the <span class="in">`PKconverter`</span> package automates these translations using <span class="in">`TwoComp_Volume_Clearance()`</span> and <span class="in">`TwoComp_Volume_RateConstant()`</span>.</span>
+<span id="cb21-506"><a href="#cb21-506" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-507"><a href="#cb21-507" aria-hidden="true" tabindex="-1"></a>This is especially useful when reading literature — papers often report one form or the other.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

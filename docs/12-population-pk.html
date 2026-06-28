@@ -682,6 +682,7 @@ window.Quarto = {
 10  7.451668    0</code></pre>
 </div>
 </div>
+<p>Each subject appears at 4 sparse time points (typical of Phase II/III trials where intensive sampling is infeasible). With 100 subjects but only 4 samples each, traditional individual fitting would fail — this is exactly why population PK pools information across subjects, “borrowing strength” to estimate both population-typical parameters and between-subject variability.</p>
 <section id="fitting-the-population-model" class="level3" data-number="12.4.1">
 <h3 data-number="12.4.1" class="anchored" data-anchor-id="fitting-the-population-model"><span class="header-section-number">12.4.1</span> Fitting the Population Model</h3>
 <div class="cell">
@@ -1146,6 +1147,7 @@ Figure&nbsp;12.1: Individual PK fits from three estimation methods. SAEM (teal) 
 </figure>
 </div>
 </div>
+<p>When all three methods succeed, compare the estimates against the truth column. FOCE typically recovers parameters closest to the true values under rich sampling, while SAEM excels with sparse data. The <code>nlme</code> package (first-order approximation) may show slight bias — this is expected because it approximates the likelihood rather than integrating over the random effects.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 20%">
@@ -1805,294 +1807,298 @@ Figure&nbsp;12.1: Individual PK fits from three estimation methods. SAEM (teal) 
 <span id="cb15-145"><a href="#cb15-145" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(pk_sparse, <span class="dv">10</span>)</span>
 <span id="cb15-146"><a href="#cb15-146" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-147"><a href="#cb15-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-148"><a href="#cb15-148" aria-hidden="true" tabindex="-1"></a><span class="fu">### Fitting the Population Model</span></span>
+<span id="cb15-148"><a href="#cb15-148" aria-hidden="true" tabindex="-1"></a>Each subject appears at 4 sparse time points (typical of Phase II/III trials where intensive sampling is infeasible). With 100 subjects but only 4 samples each, traditional individual fitting would fail — this is exactly why population PK pools information across subjects, "borrowing strength" to estimate both population-typical parameters and between-subject variability.</span>
 <span id="cb15-149"><a href="#cb15-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-152"><a href="#cb15-152" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-153"><a href="#cb15-153" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: true</span></span>
-<span id="cb15-154"><a href="#cb15-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-155"><a href="#cb15-155" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model (requires nlmixr2)</span></span>
-<span id="cb15-156"><a href="#cb15-156" aria-hidden="true" tabindex="-1"></a>fit_pop <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
-<span id="cb15-157"><a href="#cb15-157" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nlmixr2</span>(</span>
-<span id="cb15-158"><a href="#cb15-158" aria-hidden="true" tabindex="-1"></a>    pop_model,</span>
-<span id="cb15-159"><a href="#cb15-159" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> pk_sparse,</span>
-<span id="cb15-160"><a href="#cb15-160" aria-hidden="true" tabindex="-1"></a>    <span class="at">est =</span> <span class="st">"saem"</span>,</span>
-<span id="cb15-161"><a href="#cb15-161" aria-hidden="true" tabindex="-1"></a>    <span class="at">control =</span> <span class="fu">saemControl</span>(<span class="at">nBurn =</span> <span class="dv">100</span>, <span class="at">nEm =</span> <span class="dv">100</span>)</span>
-<span id="cb15-162"><a href="#cb15-162" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb15-163"><a href="#cb15-163" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb15-164"><a href="#cb15-164" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"SAEM fit skipped (requires longer runtime). Error: "</span>, e<span class="sc">$</span>message)</span>
-<span id="cb15-165"><a href="#cb15-165" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NULL</span></span>
-<span id="cb15-166"><a href="#cb15-166" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb15-167"><a href="#cb15-167" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-168"><a href="#cb15-168" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-169"><a href="#cb15-169" aria-hidden="true" tabindex="-1"></a><span class="co"># View results</span></span>
-<span id="cb15-170"><a href="#cb15-170" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_pop)) {</span>
-<span id="cb15-171"><a href="#cb15-171" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(fit_pop)</span>
-<span id="cb15-172"><a href="#cb15-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>(fit_pop)</span>
-<span id="cb15-173"><a href="#cb15-173" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb15-174"><a href="#cb15-174" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Model fitting was not performed — set control options for full estimation.</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb15-175"><a href="#cb15-175" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-176"><a href="#cb15-176" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-177"><a href="#cb15-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-178"><a href="#cb15-178" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb15-150"><a href="#cb15-150" aria-hidden="true" tabindex="-1"></a><span class="fu">### Fitting the Population Model</span></span>
+<span id="cb15-151"><a href="#cb15-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-154"><a href="#cb15-154" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb15-155"><a href="#cb15-155" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: true</span></span>
+<span id="cb15-156"><a href="#cb15-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-157"><a href="#cb15-157" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model (requires nlmixr2)</span></span>
+<span id="cb15-158"><a href="#cb15-158" aria-hidden="true" tabindex="-1"></a>fit_pop <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb15-159"><a href="#cb15-159" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nlmixr2</span>(</span>
+<span id="cb15-160"><a href="#cb15-160" aria-hidden="true" tabindex="-1"></a>    pop_model,</span>
+<span id="cb15-161"><a href="#cb15-161" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> pk_sparse,</span>
+<span id="cb15-162"><a href="#cb15-162" aria-hidden="true" tabindex="-1"></a>    <span class="at">est =</span> <span class="st">"saem"</span>,</span>
+<span id="cb15-163"><a href="#cb15-163" aria-hidden="true" tabindex="-1"></a>    <span class="at">control =</span> <span class="fu">saemControl</span>(<span class="at">nBurn =</span> <span class="dv">100</span>, <span class="at">nEm =</span> <span class="dv">100</span>)</span>
+<span id="cb15-164"><a href="#cb15-164" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb15-165"><a href="#cb15-165" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb15-166"><a href="#cb15-166" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"SAEM fit skipped (requires longer runtime). Error: "</span>, e<span class="sc">$</span>message)</span>
+<span id="cb15-167"><a href="#cb15-167" aria-hidden="true" tabindex="-1"></a>    <span class="cn">NULL</span></span>
+<span id="cb15-168"><a href="#cb15-168" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-169"><a href="#cb15-169" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-170"><a href="#cb15-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-171"><a href="#cb15-171" aria-hidden="true" tabindex="-1"></a><span class="co"># View results</span></span>
+<span id="cb15-172"><a href="#cb15-172" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_pop)) {</span>
+<span id="cb15-173"><a href="#cb15-173" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(fit_pop)</span>
+<span id="cb15-174"><a href="#cb15-174" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>(fit_pop)</span>
+<span id="cb15-175"><a href="#cb15-175" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb15-176"><a href="#cb15-176" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Model fitting was not performed — set control options for full estimation.</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb15-177"><a href="#cb15-177" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-178"><a href="#cb15-178" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-179"><a href="#cb15-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-180"><a href="#cb15-180" aria-hidden="true" tabindex="-1"></a><span class="fu">## Covariate Modeling</span></span>
+<span id="cb15-180"><a href="#cb15-180" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-181"><a href="#cb15-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-182"><a href="#cb15-182" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Covariates in PK</span></span>
+<span id="cb15-182"><a href="#cb15-182" aria-hidden="true" tabindex="-1"></a><span class="fu">## Covariate Modeling</span></span>
 <span id="cb15-183"><a href="#cb15-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-184"><a href="#cb15-184" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Covariate <span class="pp">|</span> Typical Effect On <span class="pp">|</span> Functional Form <span class="pp">|</span></span>
-<span id="cb15-185"><a href="#cb15-185" aria-hidden="true" tabindex="-1"></a><span class="pp">|-----------|-------------------|----------------|</span></span>
-<span id="cb15-186"><a href="#cb15-186" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Body weight (WT) <span class="pp">|</span> CL, V <span class="pp">|</span> Power: $(WT/70)^{0.75}$ for CL <span class="pp">|</span></span>
-<span id="cb15-187"><a href="#cb15-187" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Age <span class="pp">|</span> CL (maturation, decline) <span class="pp">|</span> Power or exponential <span class="pp">|</span></span>
-<span id="cb15-188"><a href="#cb15-188" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Renal function (eGFR) <span class="pp">|</span> CL (renal drugs) <span class="pp">|</span> Linear or power <span class="pp">|</span></span>
-<span id="cb15-189"><a href="#cb15-189" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Sex <span class="pp">|</span> V, CL <span class="pp">|</span> Categorical <span class="pp">|</span></span>
-<span id="cb15-190"><a href="#cb15-190" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Genotype (CYP450) <span class="pp">|</span> CL (metabolized drugs) <span class="pp">|</span> Categorical <span class="pp">|</span></span>
-<span id="cb15-191"><a href="#cb15-191" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Disease status <span class="pp">|</span> CL, V <span class="pp">|</span> Categorical <span class="pp">|</span></span>
-<span id="cb15-192"><a href="#cb15-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-195"><a href="#cb15-195" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-196"><a href="#cb15-196" aria-hidden="true" tabindex="-1"></a><span class="co"># Covariate model simulation: Effect of weight on CL</span></span>
-<span id="cb15-197"><a href="#cb15-197" aria-hidden="true" tabindex="-1"></a>weights <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">40</span>, <span class="dv">120</span>, <span class="at">by =</span> <span class="dv">5</span>)</span>
-<span id="cb15-198"><a href="#cb15-198" aria-hidden="true" tabindex="-1"></a>ref_wt <span class="ot">&lt;-</span> <span class="dv">70</span></span>
-<span id="cb15-199"><a href="#cb15-199" aria-hidden="true" tabindex="-1"></a>CL_ref <span class="ot">&lt;-</span> <span class="fl">5.0</span></span>
-<span id="cb15-200"><a href="#cb15-200" aria-hidden="true" tabindex="-1"></a>theta_wt <span class="ot">&lt;-</span> <span class="fl">0.75</span>  <span class="co"># allometric exponent for CL</span></span>
-<span id="cb15-201"><a href="#cb15-201" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-202"><a href="#cb15-202" aria-hidden="true" tabindex="-1"></a>CL_by_wt <span class="ot">&lt;-</span> CL_ref <span class="sc">*</span> (weights <span class="sc">/</span> ref_wt)<span class="sc">^</span>theta_wt</span>
+<span id="cb15-184"><a href="#cb15-184" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Covariates in PK</span></span>
+<span id="cb15-185"><a href="#cb15-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-186"><a href="#cb15-186" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Covariate <span class="pp">|</span> Typical Effect On <span class="pp">|</span> Functional Form <span class="pp">|</span></span>
+<span id="cb15-187"><a href="#cb15-187" aria-hidden="true" tabindex="-1"></a><span class="pp">|-----------|-------------------|----------------|</span></span>
+<span id="cb15-188"><a href="#cb15-188" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Body weight (WT) <span class="pp">|</span> CL, V <span class="pp">|</span> Power: $(WT/70)^{0.75}$ for CL <span class="pp">|</span></span>
+<span id="cb15-189"><a href="#cb15-189" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Age <span class="pp">|</span> CL (maturation, decline) <span class="pp">|</span> Power or exponential <span class="pp">|</span></span>
+<span id="cb15-190"><a href="#cb15-190" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Renal function (eGFR) <span class="pp">|</span> CL (renal drugs) <span class="pp">|</span> Linear or power <span class="pp">|</span></span>
+<span id="cb15-191"><a href="#cb15-191" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Sex <span class="pp">|</span> V, CL <span class="pp">|</span> Categorical <span class="pp">|</span></span>
+<span id="cb15-192"><a href="#cb15-192" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Genotype (CYP450) <span class="pp">|</span> CL (metabolized drugs) <span class="pp">|</span> Categorical <span class="pp">|</span></span>
+<span id="cb15-193"><a href="#cb15-193" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Disease status <span class="pp">|</span> CL, V <span class="pp">|</span> Categorical <span class="pp">|</span></span>
+<span id="cb15-194"><a href="#cb15-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-197"><a href="#cb15-197" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb15-198"><a href="#cb15-198" aria-hidden="true" tabindex="-1"></a><span class="co"># Covariate model simulation: Effect of weight on CL</span></span>
+<span id="cb15-199"><a href="#cb15-199" aria-hidden="true" tabindex="-1"></a>weights <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">40</span>, <span class="dv">120</span>, <span class="at">by =</span> <span class="dv">5</span>)</span>
+<span id="cb15-200"><a href="#cb15-200" aria-hidden="true" tabindex="-1"></a>ref_wt <span class="ot">&lt;-</span> <span class="dv">70</span></span>
+<span id="cb15-201"><a href="#cb15-201" aria-hidden="true" tabindex="-1"></a>CL_ref <span class="ot">&lt;-</span> <span class="fl">5.0</span></span>
+<span id="cb15-202"><a href="#cb15-202" aria-hidden="true" tabindex="-1"></a>theta_wt <span class="ot">&lt;-</span> <span class="fl">0.75</span>  <span class="co"># allometric exponent for CL</span></span>
 <span id="cb15-203"><a href="#cb15-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-204"><a href="#cb15-204" aria-hidden="true" tabindex="-1"></a>df_cov <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Weight =</span> weights, <span class="at">CL =</span> CL_by_wt)</span>
+<span id="cb15-204"><a href="#cb15-204" aria-hidden="true" tabindex="-1"></a>CL_by_wt <span class="ot">&lt;-</span> CL_ref <span class="sc">*</span> (weights <span class="sc">/</span> ref_wt)<span class="sc">^</span>theta_wt</span>
 <span id="cb15-205"><a href="#cb15-205" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-206"><a href="#cb15-206" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_cov, <span class="fu">aes</span>(Weight, CL)) <span class="sc">+</span></span>
-<span id="cb15-207"><a href="#cb15-207" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#0B6E6B"</span>, <span class="at">linewidth =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
-<span id="cb15-208"><a href="#cb15-208" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">color =</span> <span class="st">"#0B6E6B"</span>) <span class="sc">+</span></span>
-<span id="cb15-209"><a href="#cb15-209" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> ref_wt, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb15-210"><a href="#cb15-210" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Allometric Scaling of Clearance with Body Weight"</span>,</span>
-<span id="cb15-211"><a href="#cb15-211" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="fu">expression</span>(CL <span class="sc">==</span> CL[ref] <span class="sc">%.%</span> (WT<span class="sc">/</span><span class="dv">70</span>)<span class="sc">^</span><span class="fl">0.75</span>),</span>
-<span id="cb15-212"><a href="#cb15-212" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Body Weight (kg)"</span>, <span class="at">y =</span> <span class="st">"Clearance (L/h)"</span>) <span class="sc">+</span></span>
-<span id="cb15-213"><a href="#cb15-213" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb15-214"><a href="#cb15-214" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-215"><a href="#cb15-215" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-216"><a href="#cb15-216" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb15-206"><a href="#cb15-206" aria-hidden="true" tabindex="-1"></a>df_cov <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Weight =</span> weights, <span class="at">CL =</span> CL_by_wt)</span>
+<span id="cb15-207"><a href="#cb15-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-208"><a href="#cb15-208" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_cov, <span class="fu">aes</span>(Weight, CL)) <span class="sc">+</span></span>
+<span id="cb15-209"><a href="#cb15-209" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#0B6E6B"</span>, <span class="at">linewidth =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb15-210"><a href="#cb15-210" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">color =</span> <span class="st">"#0B6E6B"</span>) <span class="sc">+</span></span>
+<span id="cb15-211"><a href="#cb15-211" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> ref_wt, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb15-212"><a href="#cb15-212" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Allometric Scaling of Clearance with Body Weight"</span>,</span>
+<span id="cb15-213"><a href="#cb15-213" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="fu">expression</span>(CL <span class="sc">==</span> CL[ref] <span class="sc">%.%</span> (WT<span class="sc">/</span><span class="dv">70</span>)<span class="sc">^</span><span class="fl">0.75</span>),</span>
+<span id="cb15-214"><a href="#cb15-214" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Body Weight (kg)"</span>, <span class="at">y =</span> <span class="st">"Clearance (L/h)"</span>) <span class="sc">+</span></span>
+<span id="cb15-215"><a href="#cb15-215" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb15-216"><a href="#cb15-216" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-217"><a href="#cb15-217" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-218"><a href="#cb15-218" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sparse vs Rich Sampling</span></span>
+<span id="cb15-218"><a href="#cb15-218" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-219"><a href="#cb15-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-220"><a href="#cb15-220" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Design <span class="pp">|</span> Samples per Subject <span class="pp">|</span> Subjects <span class="pp">|</span> Analysis <span class="pp">|</span></span>
-<span id="cb15-221"><a href="#cb15-221" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------------|----------|----------|</span></span>
-<span id="cb15-222"><a href="#cb15-222" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Rich** <span class="pp">|</span> 10–15 <span class="pp">|</span> 12–24 <span class="pp">|</span> Individual PK (standard two-stage) <span class="pp">|</span></span>
-<span id="cb15-223"><a href="#cb15-223" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Sparse** <span class="pp">|</span> 1–6 <span class="pp">|</span> 100–1000 <span class="pp">|</span> Population PK (mixed effects) <span class="pp">|</span></span>
-<span id="cb15-224"><a href="#cb15-224" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Hybrid** <span class="pp">|</span> Mix of rich and sparse <span class="pp">|</span> Variable <span class="pp">|</span> Population PK <span class="pp">|</span></span>
-<span id="cb15-225"><a href="#cb15-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-228"><a href="#cb15-228" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-229"><a href="#cb15-229" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize sparse vs rich sampling designs</span></span>
-<span id="cb15-230"><a href="#cb15-230" aria-hidden="true" tabindex="-1"></a>rich_times <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>)</span>
-<span id="cb15-231"><a href="#cb15-231" aria-hidden="true" tabindex="-1"></a>sparse_times_viz <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">2</span>, <span class="dv">6</span>, <span class="dv">24</span>)</span>
-<span id="cb15-232"><a href="#cb15-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-233"><a href="#cb15-233" aria-hidden="true" tabindex="-1"></a>sample_designs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb15-234"><a href="#cb15-234" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> <span class="fu">c</span>(rich_times, sparse_times_viz),</span>
-<span id="cb15-235"><a href="#cb15-235" aria-hidden="true" tabindex="-1"></a>  <span class="at">conc =</span> <span class="dv">10</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.3</span> <span class="sc">*</span> <span class="fu">c</span>(rich_times, sparse_times_viz)),</span>
-<span id="cb15-236"><a href="#cb15-236" aria-hidden="true" tabindex="-1"></a>  <span class="at">Design =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"Rich (n=1–30)"</span>, <span class="st">"Sparse (n=100+)"</span>),</span>
-<span id="cb15-237"><a href="#cb15-237" aria-hidden="true" tabindex="-1"></a>               <span class="fu">c</span>(<span class="fu">length</span>(rich_times), <span class="fu">length</span>(sparse_times_viz)))</span>
-<span id="cb15-238"><a href="#cb15-238" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-239"><a href="#cb15-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-240"><a href="#cb15-240" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(sample_designs, <span class="fu">aes</span>(time, conc, <span class="at">color =</span> Design, <span class="at">shape =</span> Design)) <span class="sc">+</span></span>
-<span id="cb15-241"><a href="#cb15-241" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb15-242"><a href="#cb15-242" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
-<span id="cb15-243"><a href="#cb15-243" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Sampling Design Comparison"</span>,</span>
-<span id="cb15-244"><a href="#cb15-244" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (log scale)"</span>) <span class="sc">+</span></span>
-<span id="cb15-245"><a href="#cb15-245" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"#C44536"</span>, <span class="st">"#0B6E6B"</span>)) <span class="sc">+</span></span>
-<span id="cb15-246"><a href="#cb15-246" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb15-247"><a href="#cb15-247" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-248"><a href="#cb15-248" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-249"><a href="#cb15-249" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb15-220"><a href="#cb15-220" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sparse vs Rich Sampling</span></span>
+<span id="cb15-221"><a href="#cb15-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-222"><a href="#cb15-222" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Design <span class="pp">|</span> Samples per Subject <span class="pp">|</span> Subjects <span class="pp">|</span> Analysis <span class="pp">|</span></span>
+<span id="cb15-223"><a href="#cb15-223" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------------|----------|----------|</span></span>
+<span id="cb15-224"><a href="#cb15-224" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Rich** <span class="pp">|</span> 10–15 <span class="pp">|</span> 12–24 <span class="pp">|</span> Individual PK (standard two-stage) <span class="pp">|</span></span>
+<span id="cb15-225"><a href="#cb15-225" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Sparse** <span class="pp">|</span> 1–6 <span class="pp">|</span> 100–1000 <span class="pp">|</span> Population PK (mixed effects) <span class="pp">|</span></span>
+<span id="cb15-226"><a href="#cb15-226" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Hybrid** <span class="pp">|</span> Mix of rich and sparse <span class="pp">|</span> Variable <span class="pp">|</span> Population PK <span class="pp">|</span></span>
+<span id="cb15-227"><a href="#cb15-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-230"><a href="#cb15-230" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb15-231"><a href="#cb15-231" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize sparse vs rich sampling designs</span></span>
+<span id="cb15-232"><a href="#cb15-232" aria-hidden="true" tabindex="-1"></a>rich_times <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>)</span>
+<span id="cb15-233"><a href="#cb15-233" aria-hidden="true" tabindex="-1"></a>sparse_times_viz <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">2</span>, <span class="dv">6</span>, <span class="dv">24</span>)</span>
+<span id="cb15-234"><a href="#cb15-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-235"><a href="#cb15-235" aria-hidden="true" tabindex="-1"></a>sample_designs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-236"><a href="#cb15-236" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> <span class="fu">c</span>(rich_times, sparse_times_viz),</span>
+<span id="cb15-237"><a href="#cb15-237" aria-hidden="true" tabindex="-1"></a>  <span class="at">conc =</span> <span class="dv">10</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.3</span> <span class="sc">*</span> <span class="fu">c</span>(rich_times, sparse_times_viz)),</span>
+<span id="cb15-238"><a href="#cb15-238" aria-hidden="true" tabindex="-1"></a>  <span class="at">Design =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"Rich (n=1–30)"</span>, <span class="st">"Sparse (n=100+)"</span>),</span>
+<span id="cb15-239"><a href="#cb15-239" aria-hidden="true" tabindex="-1"></a>               <span class="fu">c</span>(<span class="fu">length</span>(rich_times), <span class="fu">length</span>(sparse_times_viz)))</span>
+<span id="cb15-240"><a href="#cb15-240" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-241"><a href="#cb15-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-242"><a href="#cb15-242" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(sample_designs, <span class="fu">aes</span>(time, conc, <span class="at">color =</span> Design, <span class="at">shape =</span> Design)) <span class="sc">+</span></span>
+<span id="cb15-243"><a href="#cb15-243" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb15-244"><a href="#cb15-244" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb15-245"><a href="#cb15-245" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Sampling Design Comparison"</span>,</span>
+<span id="cb15-246"><a href="#cb15-246" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Time (hours)"</span>, <span class="at">y =</span> <span class="st">"Concentration (log scale)"</span>) <span class="sc">+</span></span>
+<span id="cb15-247"><a href="#cb15-247" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"#C44536"</span>, <span class="st">"#0B6E6B"</span>)) <span class="sc">+</span></span>
+<span id="cb15-248"><a href="#cb15-248" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb15-249"><a href="#cb15-249" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-250"><a href="#cb15-250" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-251"><a href="#cb15-251" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Diagnostics for Population PK</span></span>
+<span id="cb15-251"><a href="#cb15-251" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-252"><a href="#cb15-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-253"><a href="#cb15-253" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Diagnostics</span></span>
+<span id="cb15-253"><a href="#cb15-253" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Diagnostics for Population PK</span></span>
 <span id="cb15-254"><a href="#cb15-254" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-255"><a href="#cb15-255" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Observed vs Predicted**: Individual predictions (IPRED) should follow identity</span>
-<span id="cb15-256"><a href="#cb15-256" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Residuals vs Predicted**: No trends, symmetric around zero</span>
-<span id="cb15-257"><a href="#cb15-257" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Distribution of random effects ($\eta$)**: Should be approximately normal</span>
-<span id="cb15-258"><a href="#cb15-258" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Shrinkage**: High shrinkage ($\eta$-shrinkage &gt; 20–30%) reduces reliability of individual estimates</span>
-<span id="cb15-259"><a href="#cb15-259" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-262"><a href="#cb15-262" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-263"><a href="#cb15-263" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate diagnostic plots</span></span>
-<span id="cb15-264"><a href="#cb15-264" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">456</span>)</span>
-<span id="cb15-265"><a href="#cb15-265" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">200</span></span>
-<span id="cb15-266"><a href="#cb15-266" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">runif</span>(n, <span class="fl">0.1</span>, <span class="dv">50</span>)</span>
-<span id="cb15-267"><a href="#cb15-267" aria-hidden="true" tabindex="-1"></a>obs <span class="ot">&lt;-</span> pred <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="fl">0.2</span>))</span>
-<span id="cb15-268"><a href="#cb15-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-269"><a href="#cb15-269" aria-hidden="true" tabindex="-1"></a>diag_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb15-270"><a href="#cb15-270" aria-hidden="true" tabindex="-1"></a>  <span class="at">PRED =</span> pred,</span>
-<span id="cb15-271"><a href="#cb15-271" aria-hidden="true" tabindex="-1"></a>  <span class="at">IPRED =</span> obs,</span>
-<span id="cb15-272"><a href="#cb15-272" aria-hidden="true" tabindex="-1"></a>  <span class="at">CWRES =</span> (<span class="fu">log</span>(obs) <span class="sc">-</span> <span class="fu">log</span>(pred)) <span class="sc">/</span> <span class="fl">0.2</span></span>
-<span id="cb15-273"><a href="#cb15-273" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-274"><a href="#cb15-274" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-275"><a href="#cb15-275" aria-hidden="true" tabindex="-1"></a><span class="co"># Observed vs Predicted</span></span>
-<span id="cb15-276"><a href="#cb15-276" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(diag_df, <span class="fu">aes</span>(PRED, IPRED)) <span class="sc">+</span></span>
-<span id="cb15-277"><a href="#cb15-277" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"#0B6E6B"</span>) <span class="sc">+</span></span>
-<span id="cb15-278"><a href="#cb15-278" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> <span class="dv">1</span>, <span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">"#C44536"</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb15-279"><a href="#cb15-279" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Observed vs Population Predicted"</span>, <span class="at">x =</span> <span class="st">"PRED"</span>, <span class="at">y =</span> <span class="st">"DV"</span>) <span class="sc">+</span></span>
-<span id="cb15-280"><a href="#cb15-280" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb15-281"><a href="#cb15-281" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-282"><a href="#cb15-282" aria-hidden="true" tabindex="-1"></a><span class="co"># Residuals vs Predicted</span></span>
-<span id="cb15-283"><a href="#cb15-283" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(diag_df, <span class="fu">aes</span>(PRED, CWRES)) <span class="sc">+</span></span>
-<span id="cb15-284"><a href="#cb15-284" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"#C44536"</span>) <span class="sc">+</span></span>
-<span id="cb15-285"><a href="#cb15-285" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb15-286"><a href="#cb15-286" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">2</span>), <span class="at">linetype =</span> <span class="st">"dotted"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb15-287"><a href="#cb15-287" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"CWRES vs Predicted"</span>, <span class="at">x =</span> <span class="st">"PRED"</span>, <span class="at">y =</span> <span class="st">"CWRES"</span>) <span class="sc">+</span></span>
-<span id="cb15-288"><a href="#cb15-288" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb15-289"><a href="#cb15-289" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-290"><a href="#cb15-290" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
-<span id="cb15-291"><a href="#cb15-291" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">+</span> p2</span>
-<span id="cb15-292"><a href="#cb15-292" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-293"><a href="#cb15-293" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-294"><a href="#cb15-294" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb15-255"><a href="#cb15-255" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Diagnostics</span></span>
+<span id="cb15-256"><a href="#cb15-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-257"><a href="#cb15-257" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Observed vs Predicted**: Individual predictions (IPRED) should follow identity</span>
+<span id="cb15-258"><a href="#cb15-258" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Residuals vs Predicted**: No trends, symmetric around zero</span>
+<span id="cb15-259"><a href="#cb15-259" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Distribution of random effects ($\eta$)**: Should be approximately normal</span>
+<span id="cb15-260"><a href="#cb15-260" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Shrinkage**: High shrinkage ($\eta$-shrinkage &gt; 20–30%) reduces reliability of individual estimates</span>
+<span id="cb15-261"><a href="#cb15-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-264"><a href="#cb15-264" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb15-265"><a href="#cb15-265" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate diagnostic plots</span></span>
+<span id="cb15-266"><a href="#cb15-266" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">456</span>)</span>
+<span id="cb15-267"><a href="#cb15-267" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb15-268"><a href="#cb15-268" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">runif</span>(n, <span class="fl">0.1</span>, <span class="dv">50</span>)</span>
+<span id="cb15-269"><a href="#cb15-269" aria-hidden="true" tabindex="-1"></a>obs <span class="ot">&lt;-</span> pred <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="fl">0.2</span>))</span>
+<span id="cb15-270"><a href="#cb15-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-271"><a href="#cb15-271" aria-hidden="true" tabindex="-1"></a>diag_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-272"><a href="#cb15-272" aria-hidden="true" tabindex="-1"></a>  <span class="at">PRED =</span> pred,</span>
+<span id="cb15-273"><a href="#cb15-273" aria-hidden="true" tabindex="-1"></a>  <span class="at">IPRED =</span> obs,</span>
+<span id="cb15-274"><a href="#cb15-274" aria-hidden="true" tabindex="-1"></a>  <span class="at">CWRES =</span> (<span class="fu">log</span>(obs) <span class="sc">-</span> <span class="fu">log</span>(pred)) <span class="sc">/</span> <span class="fl">0.2</span></span>
+<span id="cb15-275"><a href="#cb15-275" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-276"><a href="#cb15-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-277"><a href="#cb15-277" aria-hidden="true" tabindex="-1"></a><span class="co"># Observed vs Predicted</span></span>
+<span id="cb15-278"><a href="#cb15-278" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(diag_df, <span class="fu">aes</span>(PRED, IPRED)) <span class="sc">+</span></span>
+<span id="cb15-279"><a href="#cb15-279" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"#0B6E6B"</span>) <span class="sc">+</span></span>
+<span id="cb15-280"><a href="#cb15-280" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> <span class="dv">1</span>, <span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">"#C44536"</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb15-281"><a href="#cb15-281" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Observed vs Population Predicted"</span>, <span class="at">x =</span> <span class="st">"PRED"</span>, <span class="at">y =</span> <span class="st">"DV"</span>) <span class="sc">+</span></span>
+<span id="cb15-282"><a href="#cb15-282" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb15-283"><a href="#cb15-283" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-284"><a href="#cb15-284" aria-hidden="true" tabindex="-1"></a><span class="co"># Residuals vs Predicted</span></span>
+<span id="cb15-285"><a href="#cb15-285" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(diag_df, <span class="fu">aes</span>(PRED, CWRES)) <span class="sc">+</span></span>
+<span id="cb15-286"><a href="#cb15-286" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"#C44536"</span>) <span class="sc">+</span></span>
+<span id="cb15-287"><a href="#cb15-287" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb15-288"><a href="#cb15-288" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">2</span>), <span class="at">linetype =</span> <span class="st">"dotted"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb15-289"><a href="#cb15-289" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"CWRES vs Predicted"</span>, <span class="at">x =</span> <span class="st">"PRED"</span>, <span class="at">y =</span> <span class="st">"CWRES"</span>) <span class="sc">+</span></span>
+<span id="cb15-290"><a href="#cb15-290" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb15-291"><a href="#cb15-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-292"><a href="#cb15-292" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb15-293"><a href="#cb15-293" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">+</span> p2</span>
+<span id="cb15-294"><a href="#cb15-294" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb15-295"><a href="#cb15-295" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-296"><a href="#cb15-296" aria-hidden="true" tabindex="-1"></a><span class="fu">## Shrinkage</span></span>
+<span id="cb15-296"><a href="#cb15-296" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb15-297"><a href="#cb15-297" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-298"><a href="#cb15-298" aria-hidden="true" tabindex="-1"></a>Shrinkage occurs when individual data are sparse and individual estimates "shrink" toward the population mean:</span>
+<span id="cb15-298"><a href="#cb15-298" aria-hidden="true" tabindex="-1"></a><span class="fu">## Shrinkage</span></span>
 <span id="cb15-299"><a href="#cb15-299" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-300"><a href="#cb15-300" aria-hidden="true" tabindex="-1"></a>$$\eta\text{-shrinkage} = 1 - \frac{var(\hat{\eta}_i)}{\omega^2}$$</span>
+<span id="cb15-300"><a href="#cb15-300" aria-hidden="true" tabindex="-1"></a>Shrinkage occurs when individual data are sparse and individual estimates "shrink" toward the population mean:</span>
 <span id="cb15-301"><a href="#cb15-301" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-302"><a href="#cb15-302" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Low shrinkage (&lt; 10%)**: Individual estimates are reliable</span>
-<span id="cb15-303"><a href="#cb15-303" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Moderate shrinkage (10–30%)**: Caution needed for covariate selection using EBEs</span>
-<span id="cb15-304"><a href="#cb15-304" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**High shrinkage (&gt; 30%)**: Individual estimates unreliable; use population predictions</span>
-<span id="cb15-305"><a href="#cb15-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-306"><a href="#cb15-306" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb15-302"><a href="#cb15-302" aria-hidden="true" tabindex="-1"></a>$$\eta\text{-shrinkage} = 1 - \frac{var(\hat{\eta}_i)}{\omega^2}$$</span>
+<span id="cb15-303"><a href="#cb15-303" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-304"><a href="#cb15-304" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Low shrinkage (&lt; 10%)**: Individual estimates are reliable</span>
+<span id="cb15-305"><a href="#cb15-305" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Moderate shrinkage (10–30%)**: Caution needed for covariate selection using EBEs</span>
+<span id="cb15-306"><a href="#cb15-306" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**High shrinkage (&gt; 30%)**: Individual estimates unreliable; use population predictions</span>
 <span id="cb15-307"><a href="#cb15-307" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-308"><a href="#cb15-308" aria-hidden="true" tabindex="-1"></a>::: {.exercise-box}</span>
-<span id="cb15-309"><a href="#cb15-309" aria-hidden="true" tabindex="-1"></a><span class="fu">### Exercises</span></span>
-<span id="cb15-310"><a href="#cb15-310" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-311"><a href="#cb15-311" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Simulate a population PK dataset with 200 subjects, 3 samples each. Fit using nlmixr2 and report $\omega_{CL}$ and $\omega_V$.</span>
-<span id="cb15-312"><a href="#cb15-312" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Add body weight as a covariate on CL. Does it reduce $\omega_{CL}$? By how much?</span>
-<span id="cb15-313"><a href="#cb15-313" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Generate diagnostic plots for a fitted model. What patterns would indicate model misspecification?</span>
-<span id="cb15-314"><a href="#cb15-314" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Explain why shrinkage matters for covariate model building.</span>
-<span id="cb15-315"><a href="#cb15-315" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Compare rich vs sparse sampling designs: which gives better estimates of $\omega^2$?</span>
-<span id="cb15-316"><a href="#cb15-316" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb15-317"><a href="#cb15-317" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-318"><a href="#cb15-318" aria-hidden="true" tabindex="-1"></a>::: {.mistakes-box}</span>
-<span id="cb15-319"><a href="#cb15-319" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Mistakes</span></span>
-<span id="cb15-320"><a href="#cb15-320" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-321"><a href="#cb15-321" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Using individual PK methods on sparse data**: Leads to biased, imprecise estimates</span>
-<span id="cb15-322"><a href="#cb15-322" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ignoring shrinkage**: EBEs with high shrinkage should not be used for covariate screening</span>
-<span id="cb15-323"><a href="#cb15-323" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Overfitting covariates**: Each covariate consumes degrees of freedom; use scientific rationale</span>
-<span id="cb15-324"><a href="#cb15-324" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Assuming log-normal BSV for all parameters**: check ETA distributions</span>
-<span id="cb15-325"><a href="#cb15-325" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Not checking parameter correlations**: High correlations can destabilize the model</span>
-<span id="cb15-326"><a href="#cb15-326" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb15-327"><a href="#cb15-327" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-328"><a href="#cb15-328" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
-<span id="cb15-329"><a href="#cb15-329" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Takeaway</span></span>
-<span id="cb15-330"><a href="#cb15-330" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-331"><a href="#cb15-331" aria-hidden="true" tabindex="-1"></a>Population PK uses mixed-effects models to analyze all subjects simultaneously, quantifying both population-typical parameters and between-subject variability. Covariates like weight and renal function explain variability and enable dose individualization. Always check diagnostics and shrinkage before interpreting individual estimates.</span>
-<span id="cb15-332"><a href="#cb15-332" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb15-333"><a href="#cb15-333" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-334"><a href="#cb15-334" aria-hidden="true" tabindex="-1"></a><span class="fu">## Alternative Estimation Methods: SAEM and nlme</span></span>
+<span id="cb15-308"><a href="#cb15-308" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb15-309"><a href="#cb15-309" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-310"><a href="#cb15-310" aria-hidden="true" tabindex="-1"></a>::: {.exercise-box}</span>
+<span id="cb15-311"><a href="#cb15-311" aria-hidden="true" tabindex="-1"></a><span class="fu">### Exercises</span></span>
+<span id="cb15-312"><a href="#cb15-312" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-313"><a href="#cb15-313" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Simulate a population PK dataset with 200 subjects, 3 samples each. Fit using nlmixr2 and report $\omega_{CL}$ and $\omega_V$.</span>
+<span id="cb15-314"><a href="#cb15-314" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Add body weight as a covariate on CL. Does it reduce $\omega_{CL}$? By how much?</span>
+<span id="cb15-315"><a href="#cb15-315" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Generate diagnostic plots for a fitted model. What patterns would indicate model misspecification?</span>
+<span id="cb15-316"><a href="#cb15-316" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Explain why shrinkage matters for covariate model building.</span>
+<span id="cb15-317"><a href="#cb15-317" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Compare rich vs sparse sampling designs: which gives better estimates of $\omega^2$?</span>
+<span id="cb15-318"><a href="#cb15-318" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb15-319"><a href="#cb15-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-320"><a href="#cb15-320" aria-hidden="true" tabindex="-1"></a>::: {.mistakes-box}</span>
+<span id="cb15-321"><a href="#cb15-321" aria-hidden="true" tabindex="-1"></a><span class="fu">### Common Mistakes</span></span>
+<span id="cb15-322"><a href="#cb15-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-323"><a href="#cb15-323" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Using individual PK methods on sparse data**: Leads to biased, imprecise estimates</span>
+<span id="cb15-324"><a href="#cb15-324" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Ignoring shrinkage**: EBEs with high shrinkage should not be used for covariate screening</span>
+<span id="cb15-325"><a href="#cb15-325" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Overfitting covariates**: Each covariate consumes degrees of freedom; use scientific rationale</span>
+<span id="cb15-326"><a href="#cb15-326" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Assuming log-normal BSV for all parameters**: check ETA distributions</span>
+<span id="cb15-327"><a href="#cb15-327" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Not checking parameter correlations**: High correlations can destabilize the model</span>
+<span id="cb15-328"><a href="#cb15-328" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb15-329"><a href="#cb15-329" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-330"><a href="#cb15-330" aria-hidden="true" tabindex="-1"></a>::: {.key-box}</span>
+<span id="cb15-331"><a href="#cb15-331" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Takeaway</span></span>
+<span id="cb15-332"><a href="#cb15-332" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-333"><a href="#cb15-333" aria-hidden="true" tabindex="-1"></a>Population PK uses mixed-effects models to analyze all subjects simultaneously, quantifying both population-typical parameters and between-subject variability. Covariates like weight and renal function explain variability and enable dose individualization. Always check diagnostics and shrinkage before interpreting individual estimates.</span>
+<span id="cb15-334"><a href="#cb15-334" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb15-335"><a href="#cb15-335" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-336"><a href="#cb15-336" aria-hidden="true" tabindex="-1"></a>nlmixr2's FOCE is excellent, but other algorithms have strengths for certain problems. Let's compare SAEM (Stochastic Approximation Expectation-Maximization, via <span class="in">`saemix`</span>) and the classic <span class="in">`nlme`</span> package on a simulated PopPK dataset.</span>
+<span id="cb15-336"><a href="#cb15-336" aria-hidden="true" tabindex="-1"></a><span class="fu">## Alternative Estimation Methods: SAEM and nlme</span></span>
 <span id="cb15-337"><a href="#cb15-337" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-338"><a href="#cb15-338" aria-hidden="true" tabindex="-1"></a><span class="fu">### Simulated PopPK Dataset</span></span>
+<span id="cb15-338"><a href="#cb15-338" aria-hidden="true" tabindex="-1"></a>nlmixr2's FOCE is excellent, but other algorithms have strengths for certain problems. Let's compare SAEM (Stochastic Approximation Expectation-Maximization, via <span class="in">`saemix`</span>) and the classic <span class="in">`nlme`</span> package on a simulated PopPK dataset.</span>
 <span id="cb15-339"><a href="#cb15-339" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-342"><a href="#cb15-342" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-343"><a href="#cb15-343" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: true</span></span>
-<span id="cb15-344"><a href="#cb15-344" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-popest-comparison</span></span>
-<span id="cb15-345"><a href="#cb15-345" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Individual PK fits from three estimation methods. SAEM (teal) and FOCE (coral) produce nearly identical population predictions, while nlme (purple) shows slight bias due to its first-order approximation."</span></span>
-<span id="cb15-346"><a href="#cb15-346" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 9</span></span>
-<span id="cb15-347"><a href="#cb15-347" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 6</span></span>
-<span id="cb15-348"><a href="#cb15-348" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-349"><a href="#cb15-349" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-350"><a href="#cb15-350" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nlmixr2)</span>
-<span id="cb15-351"><a href="#cb15-351" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(saemix)</span>
-<span id="cb15-352"><a href="#cb15-352" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nlme)</span>
-<span id="cb15-353"><a href="#cb15-353" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-354"><a href="#cb15-354" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate 1-cmt oral PopPK: 50 subjects, sparse sampling</span></span>
-<span id="cb15-355"><a href="#cb15-355" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb15-356"><a href="#cb15-356" aria-hidden="true" tabindex="-1"></a>n_subj <span class="ot">&lt;-</span> <span class="dv">50</span></span>
-<span id="cb15-357"><a href="#cb15-357" aria-hidden="true" tabindex="-1"></a>pop_pk <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
-<span id="cb15-358"><a href="#cb15-358" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_subj) {</span>
-<span id="cb15-359"><a href="#cb15-359" aria-hidden="true" tabindex="-1"></a>  CL_i  <span class="ot">&lt;-</span> <span class="dv">5</span>  <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.3</span>))   <span class="co"># BSV 30%</span></span>
-<span id="cb15-360"><a href="#cb15-360" aria-hidden="true" tabindex="-1"></a>  V_i   <span class="ot">&lt;-</span> <span class="dv">80</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.25</span>))  <span class="co"># BSV 25%</span></span>
-<span id="cb15-361"><a href="#cb15-361" aria-hidden="true" tabindex="-1"></a>  ka_i  <span class="ot">&lt;-</span> <span class="fl">1.2</span></span>
-<span id="cb15-362"><a href="#cb15-362" aria-hidden="true" tabindex="-1"></a>  t_i   <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>))</span>
-<span id="cb15-363"><a href="#cb15-363" aria-hidden="true" tabindex="-1"></a>  conc_i <span class="ot">&lt;-</span> (<span class="dv">100</span> <span class="sc">/</span> V_i) <span class="sc">*</span> (ka_i <span class="sc">/</span> (ka_i <span class="sc">-</span> CL_i<span class="sc">/</span>V_i)) <span class="sc">*</span></span>
-<span id="cb15-364"><a href="#cb15-364" aria-hidden="true" tabindex="-1"></a>    (<span class="fu">exp</span>(<span class="sc">-</span>(CL_i<span class="sc">/</span>V_i) <span class="sc">*</span> t_i) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka_i <span class="sc">*</span> t_i)) <span class="sc">+</span></span>
-<span id="cb15-365"><a href="#cb15-365" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rnorm</span>(<span class="fu">length</span>(t_i), <span class="dv">0</span>, <span class="fl">0.5</span>)</span>
-<span id="cb15-366"><a href="#cb15-366" aria-hidden="true" tabindex="-1"></a>  pop_pk <span class="ot">&lt;-</span> <span class="fu">rbind</span>(pop_pk,</span>
-<span id="cb15-367"><a href="#cb15-367" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">ID =</span> i, <span class="at">TIME =</span> t_i, <span class="at">DV =</span> <span class="fu">pmax</span>(conc_i, <span class="fl">0.01</span>),</span>
-<span id="cb15-368"><a href="#cb15-368" aria-hidden="true" tabindex="-1"></a>               <span class="at">AMT =</span> <span class="dv">0</span>, <span class="at">EVID =</span> <span class="dv">0</span>))</span>
-<span id="cb15-369"><a href="#cb15-369" aria-hidden="true" tabindex="-1"></a>  pop_pk <span class="ot">&lt;-</span> <span class="fu">rbind</span>(pop_pk,</span>
-<span id="cb15-370"><a href="#cb15-370" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">ID =</span> i, <span class="at">TIME =</span> <span class="dv">0</span>, <span class="at">DV =</span> <span class="dv">0</span>, <span class="at">AMT =</span> <span class="dv">100</span>, <span class="at">EVID =</span> <span class="dv">1</span>))</span>
-<span id="cb15-371"><a href="#cb15-371" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-372"><a href="#cb15-372" aria-hidden="true" tabindex="-1"></a>pop_pk <span class="ot">&lt;-</span> pop_pk[<span class="fu">order</span>(pop_pk<span class="sc">$</span>ID, pop_pk<span class="sc">$</span>TIME), ]</span>
-<span id="cb15-373"><a href="#cb15-373" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-374"><a href="#cb15-374" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- nlmixr2 (FOCE) ----</span></span>
-<span id="cb15-375"><a href="#cb15-375" aria-hidden="true" tabindex="-1"></a>fit_nlmixr <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
-<span id="cb15-376"><a href="#cb15-376" aria-hidden="true" tabindex="-1"></a>  mod_nlmixr <span class="ot">&lt;-</span> <span class="fu">nlmixr2</span>({</span>
-<span id="cb15-377"><a href="#cb15-377" aria-hidden="true" tabindex="-1"></a>    ka     <span class="ot">&lt;-</span> <span class="fu">exp</span>(tka <span class="sc">+</span> eta.ka)</span>
-<span id="cb15-378"><a href="#cb15-378" aria-hidden="true" tabindex="-1"></a>    cl     <span class="ot">&lt;-</span> <span class="fu">exp</span>(tcl <span class="sc">+</span> eta.cl)</span>
-<span id="cb15-379"><a href="#cb15-379" aria-hidden="true" tabindex="-1"></a>    v      <span class="ot">&lt;-</span> <span class="fu">exp</span>(tv  <span class="sc">+</span> eta.v)</span>
-<span id="cb15-380"><a href="#cb15-380" aria-hidden="true" tabindex="-1"></a>    d<span class="sc">/</span><span class="fu">dt</span>(A1) <span class="ot">&lt;-</span> <span class="sc">-</span>ka <span class="sc">*</span> A1</span>
-<span id="cb15-381"><a href="#cb15-381" aria-hidden="true" tabindex="-1"></a>    d<span class="sc">/</span><span class="fu">dt</span>(A2) <span class="ot">&lt;-</span>  ka <span class="sc">*</span> A1 <span class="sc">-</span> (cl<span class="sc">/</span>v) <span class="sc">*</span> A2</span>
-<span id="cb15-382"><a href="#cb15-382" aria-hidden="true" tabindex="-1"></a>    cp <span class="ot">&lt;-</span> A2 <span class="sc">/</span> v</span>
-<span id="cb15-383"><a href="#cb15-383" aria-hidden="true" tabindex="-1"></a>    cp <span class="sc">~</span> <span class="fu">add</span>(add.sd)</span>
-<span id="cb15-384"><a href="#cb15-384" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb15-385"><a href="#cb15-385" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nlmixr</span>(mod_nlmixr, pop_pk, <span class="at">est =</span> <span class="st">"focei"</span>,</span>
-<span id="cb15-386"><a href="#cb15-386" aria-hidden="true" tabindex="-1"></a>         <span class="at">control =</span> <span class="fu">foceiControl</span>(<span class="at">maxOuterIterations =</span> <span class="dv">0</span>))</span>
-<span id="cb15-387"><a href="#cb15-387" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb15-388"><a href="#cb15-388" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"nlmixr2 FOCE fitting failed: "</span>, e<span class="sc">$</span>message)</span>
-<span id="cb15-389"><a href="#cb15-389" aria-hidden="true" tabindex="-1"></a>  <span class="cn">NULL</span></span>
-<span id="cb15-390"><a href="#cb15-390" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb15-391"><a href="#cb15-391" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-392"><a href="#cb15-392" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- saemix ----</span></span>
-<span id="cb15-393"><a href="#cb15-393" aria-hidden="true" tabindex="-1"></a>fit_saem <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
-<span id="cb15-394"><a href="#cb15-394" aria-hidden="true" tabindex="-1"></a>  saemix_data <span class="ot">&lt;-</span> <span class="fu">saemixData</span>(</span>
-<span id="cb15-395"><a href="#cb15-395" aria-hidden="true" tabindex="-1"></a>    <span class="at">name.data =</span> pop_pk[pop_pk<span class="sc">$</span>EVID <span class="sc">==</span> <span class="dv">0</span>, <span class="fu">c</span>(<span class="st">"ID"</span>, <span class="st">"TIME"</span>, <span class="st">"DV"</span>)],</span>
-<span id="cb15-396"><a href="#cb15-396" aria-hidden="true" tabindex="-1"></a>    <span class="at">name.group =</span> <span class="st">"ID"</span>, <span class="at">name.predictors =</span> <span class="st">"TIME"</span>,</span>
-<span id="cb15-397"><a href="#cb15-397" aria-hidden="true" tabindex="-1"></a>    <span class="at">name.response =</span> <span class="st">"DV"</span></span>
-<span id="cb15-398"><a href="#cb15-398" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb15-399"><a href="#cb15-399" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb15-400"><a href="#cb15-400" aria-hidden="true" tabindex="-1"></a>  model_saemix <span class="ot">&lt;-</span> <span class="cf">function</span>(psi, id, xidep) {</span>
-<span id="cb15-401"><a href="#cb15-401" aria-hidden="true" tabindex="-1"></a>    CL <span class="ot">&lt;-</span> psi[id, <span class="dv">1</span>]; V <span class="ot">&lt;-</span> psi[id, <span class="dv">2</span>]; ka <span class="ot">&lt;-</span> psi[id, <span class="dv">3</span>]</span>
-<span id="cb15-402"><a href="#cb15-402" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">100</span> <span class="sc">/</span> V) <span class="sc">*</span> (ka <span class="sc">/</span> (ka <span class="sc">-</span> CL<span class="sc">/</span>V)) <span class="sc">*</span> (<span class="fu">exp</span>(<span class="sc">-</span>(CL<span class="sc">/</span>V) <span class="sc">*</span> xidep) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka <span class="sc">*</span> xidep))</span>
-<span id="cb15-403"><a href="#cb15-403" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb15-404"><a href="#cb15-404" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb15-405"><a href="#cb15-405" aria-hidden="true" tabindex="-1"></a>  fit_saemix <span class="ot">&lt;-</span> <span class="fu">saemixModel</span>(</span>
-<span id="cb15-406"><a href="#cb15-406" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> model_saemix,</span>
-<span id="cb15-407"><a href="#cb15-407" aria-hidden="true" tabindex="-1"></a>    <span class="at">psi0  =</span> <span class="fu">c</span>(<span class="at">CL =</span> <span class="dv">5</span>, <span class="at">V =</span> <span class="dv">80</span>, <span class="at">ka =</span> <span class="fl">1.2</span>),</span>
-<span id="cb15-408"><a href="#cb15-408" aria-hidden="true" tabindex="-1"></a>    <span class="at">omega.init =</span> <span class="fu">diag</span>(<span class="fu">c</span>(<span class="fl">0.09</span>, <span class="fl">0.06</span>, <span class="fl">0.01</span>)),</span>
-<span id="cb15-409"><a href="#cb15-409" aria-hidden="true" tabindex="-1"></a>    <span class="at">error.model =</span> <span class="st">"constant"</span></span>
-<span id="cb15-410"><a href="#cb15-410" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb15-411"><a href="#cb15-411" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb15-412"><a href="#cb15-412" aria-hidden="true" tabindex="-1"></a>  <span class="fu">saemix</span>(fit_saemix, saemix_data,</span>
-<span id="cb15-413"><a href="#cb15-413" aria-hidden="true" tabindex="-1"></a>         <span class="fu">saemix.options</span>(<span class="at">seed =</span> <span class="dv">123</span>, <span class="at">displayProgress =</span> <span class="cn">FALSE</span>))</span>
-<span id="cb15-414"><a href="#cb15-414" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
-<span id="cb15-415"><a href="#cb15-415" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-416"><a href="#cb15-416" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- nlme ----</span></span>
-<span id="cb15-417"><a href="#cb15-417" aria-hidden="true" tabindex="-1"></a>fit_nlme <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
-<span id="cb15-418"><a href="#cb15-418" aria-hidden="true" tabindex="-1"></a>  lme_model <span class="ot">&lt;-</span> <span class="cf">function</span>(CL, V, ka, TIME) {</span>
-<span id="cb15-419"><a href="#cb15-419" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">100</span> <span class="sc">/</span> V) <span class="sc">*</span> (ka <span class="sc">/</span> (ka <span class="sc">-</span> CL<span class="sc">/</span>V)) <span class="sc">*</span> (<span class="fu">exp</span>(<span class="sc">-</span>(CL<span class="sc">/</span>V) <span class="sc">*</span> TIME) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka <span class="sc">*</span> TIME))</span>
-<span id="cb15-420"><a href="#cb15-420" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb15-421"><a href="#cb15-421" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb15-422"><a href="#cb15-422" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nlme</span>(DV <span class="sc">~</span> <span class="fu">lme_model</span>(CL, V, ka, TIME),</span>
-<span id="cb15-423"><a href="#cb15-423" aria-hidden="true" tabindex="-1"></a>       <span class="at">data   =</span> pop_pk[pop_pk<span class="sc">$</span>EVID <span class="sc">==</span> <span class="dv">0</span>, ],</span>
-<span id="cb15-424"><a href="#cb15-424" aria-hidden="true" tabindex="-1"></a>       <span class="at">fixed  =</span> CL <span class="sc">+</span> V <span class="sc">+</span> ka <span class="sc">~</span> <span class="dv">1</span>,</span>
-<span id="cb15-425"><a href="#cb15-425" aria-hidden="true" tabindex="-1"></a>       <span class="at">random =</span> CL <span class="sc">+</span> V <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> ID,</span>
-<span id="cb15-426"><a href="#cb15-426" aria-hidden="true" tabindex="-1"></a>       <span class="at">start  =</span> <span class="fu">c</span>(<span class="at">CL =</span> <span class="dv">5</span>, <span class="at">V =</span> <span class="dv">80</span>, <span class="at">ka =</span> <span class="fl">1.2</span>),</span>
-<span id="cb15-427"><a href="#cb15-427" aria-hidden="true" tabindex="-1"></a>       <span class="at">method =</span> <span class="st">"ML"</span>)</span>
-<span id="cb15-428"><a href="#cb15-428" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
-<span id="cb15-429"><a href="#cb15-429" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-430"><a href="#cb15-430" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Parameter comparison table ----</span></span>
-<span id="cb15-431"><a href="#cb15-431" aria-hidden="true" tabindex="-1"></a>est_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb15-432"><a href="#cb15-432" aria-hidden="true" tabindex="-1"></a>  <span class="at">Parameter =</span> <span class="fu">c</span>(<span class="st">"CL (L/h)"</span>, <span class="st">"V (L)"</span>, <span class="st">"ka (1/h)"</span>),</span>
-<span id="cb15-433"><a href="#cb15-433" aria-hidden="true" tabindex="-1"></a>  <span class="at">Truth     =</span> <span class="fu">c</span>(<span class="fl">5.0</span>, <span class="dv">80</span>, <span class="fl">1.2</span>),</span>
-<span id="cb15-434"><a href="#cb15-434" aria-hidden="true" tabindex="-1"></a>  <span class="at">FOCE      =</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nlmixr)) <span class="fu">round</span>(<span class="fu">fixef</span>(fit_nlmixr)[<span class="st">"tcl"</span>] <span class="sc">|&gt;</span> <span class="fu">exp</span>(), <span class="dv">1</span>) <span class="cf">else</span> <span class="cn">NA</span>,</span>
-<span id="cb15-435"><a href="#cb15-435" aria-hidden="true" tabindex="-1"></a>  <span class="at">SAEM      =</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_saem)) <span class="fu">round</span>(fit_saem<span class="sc">@</span>results<span class="sc">@</span>fixed.effects[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>], <span class="dv">1</span>) <span class="cf">else</span> <span class="cn">NA</span>,</span>
-<span id="cb15-436"><a href="#cb15-436" aria-hidden="true" tabindex="-1"></a>  <span class="at">nlme      =</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nlme)) <span class="fu">round</span>(<span class="fu">fixef</span>(fit_nlme), <span class="dv">1</span>) <span class="cf">else</span> <span class="cn">NA</span></span>
-<span id="cb15-437"><a href="#cb15-437" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-438"><a href="#cb15-438" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(est_table, <span class="at">caption =</span> <span class="st">"Parameter estimates from 3 PopPK methods"</span>)</span>
-<span id="cb15-439"><a href="#cb15-439" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-440"><a href="#cb15-440" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-441"><a href="#cb15-441" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method <span class="pp">|</span> Algorithm <span class="pp">|</span> Speed <span class="pp">|</span> Handles ODEs <span class="pp">|</span> Best For <span class="pp">|</span></span>
-<span id="cb15-442"><a href="#cb15-442" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|---|</span></span>
-<span id="cb15-443"><a href="#cb15-443" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **FOCE (nlmixr2)** <span class="pp">|</span> Linearized likelihood <span class="pp">|</span> Medium <span class="pp">|</span> Yes <span class="pp">|</span> Rich data, complex models <span class="pp">|</span></span>
-<span id="cb15-444"><a href="#cb15-444" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **SAEM (saemix)** <span class="pp">|</span> Stochastic EM <span class="pp">|</span> Fast <span class="pp">|</span> Yes <span class="pp">|</span> Sparse data, many random effects <span class="pp">|</span></span>
-<span id="cb15-445"><a href="#cb15-445" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **nlme** <span class="pp">|</span> First-order/adaptive <span class="pp">|</span> Very fast <span class="pp">|</span> No (need closed-form) <span class="pp">|</span> Simple models, exploratory <span class="pp">|</span></span>
+<span id="cb15-340"><a href="#cb15-340" aria-hidden="true" tabindex="-1"></a><span class="fu">### Simulated PopPK Dataset</span></span>
+<span id="cb15-341"><a href="#cb15-341" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-344"><a href="#cb15-344" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb15-345"><a href="#cb15-345" aria-hidden="true" tabindex="-1"></a><span class="co">#| eval: true</span></span>
+<span id="cb15-346"><a href="#cb15-346" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-popest-comparison</span></span>
+<span id="cb15-347"><a href="#cb15-347" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Individual PK fits from three estimation methods. SAEM (teal) and FOCE (coral) produce nearly identical population predictions, while nlme (purple) shows slight bias due to its first-order approximation."</span></span>
+<span id="cb15-348"><a href="#cb15-348" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 9</span></span>
+<span id="cb15-349"><a href="#cb15-349" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 6</span></span>
+<span id="cb15-350"><a href="#cb15-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-351"><a href="#cb15-351" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-352"><a href="#cb15-352" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nlmixr2)</span>
+<span id="cb15-353"><a href="#cb15-353" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(saemix)</span>
+<span id="cb15-354"><a href="#cb15-354" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nlme)</span>
+<span id="cb15-355"><a href="#cb15-355" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-356"><a href="#cb15-356" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate 1-cmt oral PopPK: 50 subjects, sparse sampling</span></span>
+<span id="cb15-357"><a href="#cb15-357" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb15-358"><a href="#cb15-358" aria-hidden="true" tabindex="-1"></a>n_subj <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb15-359"><a href="#cb15-359" aria-hidden="true" tabindex="-1"></a>pop_pk <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb15-360"><a href="#cb15-360" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_subj) {</span>
+<span id="cb15-361"><a href="#cb15-361" aria-hidden="true" tabindex="-1"></a>  CL_i  <span class="ot">&lt;-</span> <span class="dv">5</span>  <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.3</span>))   <span class="co"># BSV 30%</span></span>
+<span id="cb15-362"><a href="#cb15-362" aria-hidden="true" tabindex="-1"></a>  V_i   <span class="ot">&lt;-</span> <span class="dv">80</span> <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="fl">0.25</span>))  <span class="co"># BSV 25%</span></span>
+<span id="cb15-363"><a href="#cb15-363" aria-hidden="true" tabindex="-1"></a>  ka_i  <span class="ot">&lt;-</span> <span class="fl">1.2</span></span>
+<span id="cb15-364"><a href="#cb15-364" aria-hidden="true" tabindex="-1"></a>  t_i   <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">24</span>))</span>
+<span id="cb15-365"><a href="#cb15-365" aria-hidden="true" tabindex="-1"></a>  conc_i <span class="ot">&lt;-</span> (<span class="dv">100</span> <span class="sc">/</span> V_i) <span class="sc">*</span> (ka_i <span class="sc">/</span> (ka_i <span class="sc">-</span> CL_i<span class="sc">/</span>V_i)) <span class="sc">*</span></span>
+<span id="cb15-366"><a href="#cb15-366" aria-hidden="true" tabindex="-1"></a>    (<span class="fu">exp</span>(<span class="sc">-</span>(CL_i<span class="sc">/</span>V_i) <span class="sc">*</span> t_i) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka_i <span class="sc">*</span> t_i)) <span class="sc">+</span></span>
+<span id="cb15-367"><a href="#cb15-367" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rnorm</span>(<span class="fu">length</span>(t_i), <span class="dv">0</span>, <span class="fl">0.5</span>)</span>
+<span id="cb15-368"><a href="#cb15-368" aria-hidden="true" tabindex="-1"></a>  pop_pk <span class="ot">&lt;-</span> <span class="fu">rbind</span>(pop_pk,</span>
+<span id="cb15-369"><a href="#cb15-369" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">ID =</span> i, <span class="at">TIME =</span> t_i, <span class="at">DV =</span> <span class="fu">pmax</span>(conc_i, <span class="fl">0.01</span>),</span>
+<span id="cb15-370"><a href="#cb15-370" aria-hidden="true" tabindex="-1"></a>               <span class="at">AMT =</span> <span class="dv">0</span>, <span class="at">EVID =</span> <span class="dv">0</span>))</span>
+<span id="cb15-371"><a href="#cb15-371" aria-hidden="true" tabindex="-1"></a>  pop_pk <span class="ot">&lt;-</span> <span class="fu">rbind</span>(pop_pk,</span>
+<span id="cb15-372"><a href="#cb15-372" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">ID =</span> i, <span class="at">TIME =</span> <span class="dv">0</span>, <span class="at">DV =</span> <span class="dv">0</span>, <span class="at">AMT =</span> <span class="dv">100</span>, <span class="at">EVID =</span> <span class="dv">1</span>))</span>
+<span id="cb15-373"><a href="#cb15-373" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-374"><a href="#cb15-374" aria-hidden="true" tabindex="-1"></a>pop_pk <span class="ot">&lt;-</span> pop_pk[<span class="fu">order</span>(pop_pk<span class="sc">$</span>ID, pop_pk<span class="sc">$</span>TIME), ]</span>
+<span id="cb15-375"><a href="#cb15-375" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-376"><a href="#cb15-376" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- nlmixr2 (FOCE) ----</span></span>
+<span id="cb15-377"><a href="#cb15-377" aria-hidden="true" tabindex="-1"></a>fit_nlmixr <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb15-378"><a href="#cb15-378" aria-hidden="true" tabindex="-1"></a>  mod_nlmixr <span class="ot">&lt;-</span> <span class="fu">nlmixr2</span>({</span>
+<span id="cb15-379"><a href="#cb15-379" aria-hidden="true" tabindex="-1"></a>    ka     <span class="ot">&lt;-</span> <span class="fu">exp</span>(tka <span class="sc">+</span> eta.ka)</span>
+<span id="cb15-380"><a href="#cb15-380" aria-hidden="true" tabindex="-1"></a>    cl     <span class="ot">&lt;-</span> <span class="fu">exp</span>(tcl <span class="sc">+</span> eta.cl)</span>
+<span id="cb15-381"><a href="#cb15-381" aria-hidden="true" tabindex="-1"></a>    v      <span class="ot">&lt;-</span> <span class="fu">exp</span>(tv  <span class="sc">+</span> eta.v)</span>
+<span id="cb15-382"><a href="#cb15-382" aria-hidden="true" tabindex="-1"></a>    d<span class="sc">/</span><span class="fu">dt</span>(A1) <span class="ot">&lt;-</span> <span class="sc">-</span>ka <span class="sc">*</span> A1</span>
+<span id="cb15-383"><a href="#cb15-383" aria-hidden="true" tabindex="-1"></a>    d<span class="sc">/</span><span class="fu">dt</span>(A2) <span class="ot">&lt;-</span>  ka <span class="sc">*</span> A1 <span class="sc">-</span> (cl<span class="sc">/</span>v) <span class="sc">*</span> A2</span>
+<span id="cb15-384"><a href="#cb15-384" aria-hidden="true" tabindex="-1"></a>    cp <span class="ot">&lt;-</span> A2 <span class="sc">/</span> v</span>
+<span id="cb15-385"><a href="#cb15-385" aria-hidden="true" tabindex="-1"></a>    cp <span class="sc">~</span> <span class="fu">add</span>(add.sd)</span>
+<span id="cb15-386"><a href="#cb15-386" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb15-387"><a href="#cb15-387" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nlmixr</span>(mod_nlmixr, pop_pk, <span class="at">est =</span> <span class="st">"focei"</span>,</span>
+<span id="cb15-388"><a href="#cb15-388" aria-hidden="true" tabindex="-1"></a>         <span class="at">control =</span> <span class="fu">foceiControl</span>(<span class="at">maxOuterIterations =</span> <span class="dv">0</span>))</span>
+<span id="cb15-389"><a href="#cb15-389" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb15-390"><a href="#cb15-390" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"nlmixr2 FOCE fitting failed: "</span>, e<span class="sc">$</span>message)</span>
+<span id="cb15-391"><a href="#cb15-391" aria-hidden="true" tabindex="-1"></a>  <span class="cn">NULL</span></span>
+<span id="cb15-392"><a href="#cb15-392" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb15-393"><a href="#cb15-393" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-394"><a href="#cb15-394" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- saemix ----</span></span>
+<span id="cb15-395"><a href="#cb15-395" aria-hidden="true" tabindex="-1"></a>fit_saem <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb15-396"><a href="#cb15-396" aria-hidden="true" tabindex="-1"></a>  saemix_data <span class="ot">&lt;-</span> <span class="fu">saemixData</span>(</span>
+<span id="cb15-397"><a href="#cb15-397" aria-hidden="true" tabindex="-1"></a>    <span class="at">name.data =</span> pop_pk[pop_pk<span class="sc">$</span>EVID <span class="sc">==</span> <span class="dv">0</span>, <span class="fu">c</span>(<span class="st">"ID"</span>, <span class="st">"TIME"</span>, <span class="st">"DV"</span>)],</span>
+<span id="cb15-398"><a href="#cb15-398" aria-hidden="true" tabindex="-1"></a>    <span class="at">name.group =</span> <span class="st">"ID"</span>, <span class="at">name.predictors =</span> <span class="st">"TIME"</span>,</span>
+<span id="cb15-399"><a href="#cb15-399" aria-hidden="true" tabindex="-1"></a>    <span class="at">name.response =</span> <span class="st">"DV"</span></span>
+<span id="cb15-400"><a href="#cb15-400" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb15-401"><a href="#cb15-401" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-402"><a href="#cb15-402" aria-hidden="true" tabindex="-1"></a>  model_saemix <span class="ot">&lt;-</span> <span class="cf">function</span>(psi, id, xidep) {</span>
+<span id="cb15-403"><a href="#cb15-403" aria-hidden="true" tabindex="-1"></a>    CL <span class="ot">&lt;-</span> psi[id, <span class="dv">1</span>]; V <span class="ot">&lt;-</span> psi[id, <span class="dv">2</span>]; ka <span class="ot">&lt;-</span> psi[id, <span class="dv">3</span>]</span>
+<span id="cb15-404"><a href="#cb15-404" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">100</span> <span class="sc">/</span> V) <span class="sc">*</span> (ka <span class="sc">/</span> (ka <span class="sc">-</span> CL<span class="sc">/</span>V)) <span class="sc">*</span> (<span class="fu">exp</span>(<span class="sc">-</span>(CL<span class="sc">/</span>V) <span class="sc">*</span> xidep) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka <span class="sc">*</span> xidep))</span>
+<span id="cb15-405"><a href="#cb15-405" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-406"><a href="#cb15-406" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-407"><a href="#cb15-407" aria-hidden="true" tabindex="-1"></a>  fit_saemix <span class="ot">&lt;-</span> <span class="fu">saemixModel</span>(</span>
+<span id="cb15-408"><a href="#cb15-408" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> model_saemix,</span>
+<span id="cb15-409"><a href="#cb15-409" aria-hidden="true" tabindex="-1"></a>    <span class="at">psi0  =</span> <span class="fu">c</span>(<span class="at">CL =</span> <span class="dv">5</span>, <span class="at">V =</span> <span class="dv">80</span>, <span class="at">ka =</span> <span class="fl">1.2</span>),</span>
+<span id="cb15-410"><a href="#cb15-410" aria-hidden="true" tabindex="-1"></a>    <span class="at">omega.init =</span> <span class="fu">diag</span>(<span class="fu">c</span>(<span class="fl">0.09</span>, <span class="fl">0.06</span>, <span class="fl">0.01</span>)),</span>
+<span id="cb15-411"><a href="#cb15-411" aria-hidden="true" tabindex="-1"></a>    <span class="at">error.model =</span> <span class="st">"constant"</span></span>
+<span id="cb15-412"><a href="#cb15-412" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb15-413"><a href="#cb15-413" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-414"><a href="#cb15-414" aria-hidden="true" tabindex="-1"></a>  <span class="fu">saemix</span>(fit_saemix, saemix_data,</span>
+<span id="cb15-415"><a href="#cb15-415" aria-hidden="true" tabindex="-1"></a>         <span class="fu">saemix.options</span>(<span class="at">seed =</span> <span class="dv">123</span>, <span class="at">displayProgress =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb15-416"><a href="#cb15-416" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb15-417"><a href="#cb15-417" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-418"><a href="#cb15-418" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- nlme ----</span></span>
+<span id="cb15-419"><a href="#cb15-419" aria-hidden="true" tabindex="-1"></a>fit_nlme <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb15-420"><a href="#cb15-420" aria-hidden="true" tabindex="-1"></a>  lme_model <span class="ot">&lt;-</span> <span class="cf">function</span>(CL, V, ka, TIME) {</span>
+<span id="cb15-421"><a href="#cb15-421" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">100</span> <span class="sc">/</span> V) <span class="sc">*</span> (ka <span class="sc">/</span> (ka <span class="sc">-</span> CL<span class="sc">/</span>V)) <span class="sc">*</span> (<span class="fu">exp</span>(<span class="sc">-</span>(CL<span class="sc">/</span>V) <span class="sc">*</span> TIME) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>ka <span class="sc">*</span> TIME))</span>
+<span id="cb15-422"><a href="#cb15-422" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-423"><a href="#cb15-423" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-424"><a href="#cb15-424" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nlme</span>(DV <span class="sc">~</span> <span class="fu">lme_model</span>(CL, V, ka, TIME),</span>
+<span id="cb15-425"><a href="#cb15-425" aria-hidden="true" tabindex="-1"></a>       <span class="at">data   =</span> pop_pk[pop_pk<span class="sc">$</span>EVID <span class="sc">==</span> <span class="dv">0</span>, ],</span>
+<span id="cb15-426"><a href="#cb15-426" aria-hidden="true" tabindex="-1"></a>       <span class="at">fixed  =</span> CL <span class="sc">+</span> V <span class="sc">+</span> ka <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb15-427"><a href="#cb15-427" aria-hidden="true" tabindex="-1"></a>       <span class="at">random =</span> CL <span class="sc">+</span> V <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> ID,</span>
+<span id="cb15-428"><a href="#cb15-428" aria-hidden="true" tabindex="-1"></a>       <span class="at">start  =</span> <span class="fu">c</span>(<span class="at">CL =</span> <span class="dv">5</span>, <span class="at">V =</span> <span class="dv">80</span>, <span class="at">ka =</span> <span class="fl">1.2</span>),</span>
+<span id="cb15-429"><a href="#cb15-429" aria-hidden="true" tabindex="-1"></a>       <span class="at">method =</span> <span class="st">"ML"</span>)</span>
+<span id="cb15-430"><a href="#cb15-430" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb15-431"><a href="#cb15-431" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-432"><a href="#cb15-432" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Parameter comparison table ----</span></span>
+<span id="cb15-433"><a href="#cb15-433" aria-hidden="true" tabindex="-1"></a>est_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-434"><a href="#cb15-434" aria-hidden="true" tabindex="-1"></a>  <span class="at">Parameter =</span> <span class="fu">c</span>(<span class="st">"CL (L/h)"</span>, <span class="st">"V (L)"</span>, <span class="st">"ka (1/h)"</span>),</span>
+<span id="cb15-435"><a href="#cb15-435" aria-hidden="true" tabindex="-1"></a>  <span class="at">Truth     =</span> <span class="fu">c</span>(<span class="fl">5.0</span>, <span class="dv">80</span>, <span class="fl">1.2</span>),</span>
+<span id="cb15-436"><a href="#cb15-436" aria-hidden="true" tabindex="-1"></a>  <span class="at">FOCE      =</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nlmixr)) <span class="fu">round</span>(<span class="fu">fixef</span>(fit_nlmixr)[<span class="st">"tcl"</span>] <span class="sc">|&gt;</span> <span class="fu">exp</span>(), <span class="dv">1</span>) <span class="cf">else</span> <span class="cn">NA</span>,</span>
+<span id="cb15-437"><a href="#cb15-437" aria-hidden="true" tabindex="-1"></a>  <span class="at">SAEM      =</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_saem)) <span class="fu">round</span>(fit_saem<span class="sc">@</span>results<span class="sc">@</span>fixed.effects[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>], <span class="dv">1</span>) <span class="cf">else</span> <span class="cn">NA</span>,</span>
+<span id="cb15-438"><a href="#cb15-438" aria-hidden="true" tabindex="-1"></a>  <span class="at">nlme      =</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit_nlme)) <span class="fu">round</span>(<span class="fu">fixef</span>(fit_nlme), <span class="dv">1</span>) <span class="cf">else</span> <span class="cn">NA</span></span>
+<span id="cb15-439"><a href="#cb15-439" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-440"><a href="#cb15-440" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(est_table, <span class="at">caption =</span> <span class="st">"Parameter estimates from 3 PopPK methods"</span>)</span>
+<span id="cb15-441"><a href="#cb15-441" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-442"><a href="#cb15-442" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-443"><a href="#cb15-443" aria-hidden="true" tabindex="-1"></a>When all three methods succeed, compare the estimates against the truth column. FOCE typically recovers parameters closest to the true values under rich sampling, while SAEM excels with sparse data. The <span class="in">`nlme`</span> package (first-order approximation) may show slight bias — this is expected because it approximates the likelihood rather than integrating over the random effects.</span>
+<span id="cb15-444"><a href="#cb15-444" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-445"><a href="#cb15-445" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method <span class="pp">|</span> Algorithm <span class="pp">|</span> Speed <span class="pp">|</span> Handles ODEs <span class="pp">|</span> Best For <span class="pp">|</span></span>
+<span id="cb15-446"><a href="#cb15-446" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|---|</span></span>
+<span id="cb15-447"><a href="#cb15-447" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **FOCE (nlmixr2)** <span class="pp">|</span> Linearized likelihood <span class="pp">|</span> Medium <span class="pp">|</span> Yes <span class="pp">|</span> Rich data, complex models <span class="pp">|</span></span>
+<span id="cb15-448"><a href="#cb15-448" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **SAEM (saemix)** <span class="pp">|</span> Stochastic EM <span class="pp">|</span> Fast <span class="pp">|</span> Yes <span class="pp">|</span> Sparse data, many random effects <span class="pp">|</span></span>
+<span id="cb15-449"><a href="#cb15-449" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **nlme** <span class="pp">|</span> First-order/adaptive <span class="pp">|</span> Very fast <span class="pp">|</span> No (need closed-form) <span class="pp">|</span> Simple models, exploratory <span class="pp">|</span></span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
